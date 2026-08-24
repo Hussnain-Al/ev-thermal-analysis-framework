@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+title: EV Thermal Analysis Framework
+message: If you use the calculation framework, please cite this repository.
+type: software
+authors:
+  - family-names: Ali
+    given-names: Hassnain
+version: 2.0.5
+date-released: 2026-08-25
+license: MIT
+abstract: >-
+  A reusable MATLAB framework for preliminary battery, integrated-drive,
+  refrigerant-capacity, radiator and coolant-loop assessment in
+  battery-electric vehicles.

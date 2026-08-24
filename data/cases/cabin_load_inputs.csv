@@ -1,0 +1,4 @@
+LoadComponent,Load_kW,CabinSetpoint_C,InteriorRelativeHumidity_pct,SourceWorkbook,SourceStatus
+Body and glazing sensible load,3.336,25,50,Cabin Cooling Load AutoRecovered.xlsx,Recovered subtotal; exterior design condition not recovered
+Occupant metabolic sensible load,0.594,25,50,Cabin Cooling Load AutoRecovered.xlsx,Recovered subtotal
+Infiltration sensible load,0.226,25,50,Cabin Cooling Load AutoRecovered.xlsx,Recovered subtotal

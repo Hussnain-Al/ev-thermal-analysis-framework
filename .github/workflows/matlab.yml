@@ -1,0 +1,22 @@
+name: MATLAB checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+
+      - name: Run framework and regression checks
+        uses: matlab-actions/run-command@v3
+        with:
+          command: results = verify_framework;

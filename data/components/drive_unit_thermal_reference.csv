@@ -1,0 +1,4 @@
+ReferenceCase,CoolantInlet_C,CoolantFlow_Lmin,ReportedWindingTemperature_C,Duration_s,EvidenceStatus
+Rated temperature rise,60,8,143,NaN,Sample reference point; operating speed and duration need confirmation
+Peak temperature rise,60,8,103,30,Sample reference point; exact torque and speed need confirmation
+Front working condition,60,8,135,30,Sample reference point; exact drive sequence needs confirmation

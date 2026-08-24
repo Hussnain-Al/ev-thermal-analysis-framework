@@ -24,13 +24,14 @@ Simulink, Simscape, and Simscape Fluids are not required for this release.
 Open MATLAB in the repository root and run:
 
 ```matlab
-results = run_all;
+results = verify_framework;
 ```
 
-Run the regression and interface checks with:
+This executes `run_all` and then the regression and interface checks. To run
+the analysis without the tests, use:
 
 ```matlab
-run(fullfile('tests','run_sanity_checks.m'));
+results = run_all;
 ```
 
 Results are written to `outputs/` as CSV and PNG files.

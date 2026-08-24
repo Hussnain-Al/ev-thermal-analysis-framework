@@ -1,0 +1,14 @@
+Flow_Lmin,Flow_Lh,InactivePumpResistance_kPa,DigitizationUncertainty_kPa,EvidenceStatus
+0.000,0,0.0,1.0,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+4.167,250,1.5,1.5,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+8.333,500,5.5,1.5,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+12.500,750,10.5,2.0,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+16.667,1000,17.5,2.0,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+20.833,1250,26.0,2.0,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+25.000,1500,36.5,2.5,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+29.167,1750,48.0,2.5,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+33.333,2000,61.5,3.0,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+37.500,2250,76.0,3.0,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+41.667,2500,93.0,3.0,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+45.833,2750,108.0,3.5,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol
+50.000,3000,126.0,3.5,Approximate digitization of an inactive-pump reference curve at 23 C with 50/50 water-glycol

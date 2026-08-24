@@ -1,0 +1,7 @@
+outputs/*
+!outputs/.gitkeep
+*.asv
+*.m~
+slprj/
+*.slxc
+*.autosave
