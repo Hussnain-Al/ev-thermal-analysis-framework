@@ -25,3 +25,6 @@ Time-speed traces used by the transient vehicle calculation. The included urban 
 Records the source class and limitation of important sample inputs. Maintain an equivalent register for each new study.
 
 File schemas are defined in `docs/COMPONENT_DATA_GUIDE.md`.
+All CSV files are imported with an explicit comma delimiter, first-row column
+names, fixed column count, and numeric-field validation. Do not change headers
+without also updating the documented data contract.

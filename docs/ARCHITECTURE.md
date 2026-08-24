@@ -5,14 +5,19 @@
 ```mermaid
 flowchart TD
   A[system_config] --> B[validation]
-  B --> C[scenario readers]
-  C --> D[component calculations]
+  B --> C[explicit data readers]
+  C --> D[scenario and component calculations]
   D --> E[system checks]
   E --> F[CSV and figures]
   F --> G[regression tests]
 ```
 
-`run_all.m` coordinates the workflow but contains no component ratings. Domain-level functions in `examples/` assemble reusable functions from `src/calculations/`.
+`verify_framework.m` executes the complete analysis and regression checks.
+`run_all.m` coordinates the engineering workflow but contains no component
+ratings. Domain-level functions in `examples/` assemble reusable calculations
+from `src/calculations/`. Project-controlled CSV inputs pass through
+`src/io/read_project_csv.m`, which fixes the delimiter and validates the schema
+before data reaches a calculation.
 
 ## Physical-system boundary
 
@@ -33,4 +38,7 @@ The propulsion coolant loop is separate from the battery coolant/refrigerant bra
 
 ## Extension rule
 
-Add new vehicle or component data through `config/` and `data/`. Add new physics through a calculation function with a defined input/output interface and a regression test. Do not put component constants inside calculation functions.
+Add new vehicle or component data through the root-level `system_config.m` and
+`data/`. Add new physics through a calculation function with a defined
+input/output interface and a regression test. Do not put component constants
+inside calculation functions.

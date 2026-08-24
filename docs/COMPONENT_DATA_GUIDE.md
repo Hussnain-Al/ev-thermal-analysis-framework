@@ -2,6 +2,10 @@
 
 This document defines the minimum data required to replace the sample vehicle or components without editing the calculation functions.
 
+All framework CSV files must be comma-delimited with the required names in the
+first row. `read_project_csv` rejects missing, extra, ambiguous, or nonnumeric
+fields before an analysis begins.
+
 ## Driving inputs and calculated responses
 
 The framework keeps imposed conditions separate from calculated quantities:
@@ -101,6 +105,15 @@ cfg.pump.checkTemperature_C
 ```
 
 This point is only a screening check. Final selection requires the full active pump `Q-H` curve and its intersection with the system curve.
+
+The optional inactive-pump series-flow curve uses:
+
+```text
+Flow_Lmin,Flow_Lh,InactivePumpResistance_kPa,DigitizationUncertainty_kPa,EvidenceStatus
+```
+
+It represents passive restriction through a non-running pump. It is not an
+active pump head curve and must not be added to normal active-pump head.
 
 ## Heat exchanger and radiator
 

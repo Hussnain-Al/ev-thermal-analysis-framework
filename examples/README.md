@@ -12,6 +12,7 @@ hydraulics = run_cooling_loop_analysis(cfg);
 cabin = run_cabin_load_analysis(cfg);
 ```
 
-Use `run_all` for the complete workflow. The examples contain orchestration
-and plotting only. Reusable equations and data-processing functions are in
+Use `verify_framework` for the complete workflow plus regression checks, or
+`run_all` for the analysis alone. The examples contain orchestration and
+plotting only. Reusable equations and data-processing functions are in
 `src/calculations`.

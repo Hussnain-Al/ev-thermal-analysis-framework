@@ -8,6 +8,9 @@
 - Added full schema-import checks for every CSV used by `run_all`.
 - Added `verify_framework` as the single full-run and regression-test entry
   point for desktop MATLAB, MATLAB Online and continuous integration.
+- Confirmed the complete release with `verify_framework` in MATLAB Online.
+- Updated repository documentation, citation metadata, data contracts and
+  workflow links for the public v2.0.5 release.
 
 ## 2.0.4 — 2026-08-25
 

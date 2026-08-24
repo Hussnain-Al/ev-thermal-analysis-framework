@@ -1,5 +1,8 @@
 # EV Thermal Analysis Framework
 
+[![MATLAB checks](https://github.com/Hussnain-Al/ev-thermal-analysis-framework/actions/workflows/matlab.yml/badge.svg)](https://github.com/Hussnain-Al/ev-thermal-analysis-framework/actions/workflows/matlab.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Version **2.0.5**
 
 A reusable MATLAB framework for preliminary thermal and hydraulic assessment of battery-electric vehicles. The repository calculates:
@@ -36,14 +39,22 @@ results = run_all;
 
 Results are written to `outputs/` as CSV and PNG files.
 
+## Verification status
+
+The complete v2.0.5 package passed `verify_framework` in MATLAB Online on
+25 August 2026. The command executes the full analysis, confirms all expected
+outputs, and runs the regression and interface checks. The workflow badge above
+reports the independent GitHub Actions result for the published `main` branch.
+
 ## Release traceability
 
 The technical report records the verified MATLAB **v1.5.1** result archive. This
 repository is the subsequent **v2.0.5** code release: it retains the same core
 drive-cycle equations, adds clearer interfaces and calculation comments, and
 corrects downstream radiator, pump, battery-path, and compressor screening.
-Run `run_all` and `tests/run_sanity_checks.m` in MATLAB before publishing a new
-set of v2.0.5 result files. Generated outputs are not treated as source code.
+The v2.0.5 source has been runtime verified, but its generated outputs remain
+separate from the v1.5.1 report record. Generated outputs are not treated as
+source code.
 
 ## Configure another vehicle or component set
 
@@ -68,6 +79,8 @@ results = run_all(cfg);
 ```
 
 Startup validation stops the analysis when a required field, file, or table column is missing.
+CSV inputs are read through one deterministic interface that fixes the comma
+delimiter, header row, expected column count, variable names, and numeric fields.
 
 ## Model architecture
 
@@ -100,6 +113,7 @@ docs/                             Methods, data contracts, and extension guide
 references/                       Evidence and standards guidance
 outputs/                          Generated results
 run_all.m                         Main entry point
+verify_framework.m                Full analysis and regression entry point
 ```
 
 ## Input evidence
@@ -127,4 +141,7 @@ Do not combine these categories into an unqualified result.
 
 ## License and third-party data
 
-Original source code is released under the repository license. Third-party drawings and branded source documents are not included. Users are responsible for the right to use any component maps or test data they add to the repository.
+Original source code is released under the repository license. The included
+component workbook and maps are published as sample calculation inputs; their
+fitness, accuracy, and reuse rights must be independently confirmed before use
+in a commercial design. Users are responsible for any replacement data they add.
