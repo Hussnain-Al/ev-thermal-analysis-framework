@@ -5,7 +5,8 @@
 
 Version **2.0.5**
 
-A reusable MATLAB framework for preliminary thermal and hydraulic assessment of battery-electric vehicles. The repository calculates:
+A reusable MATLAB framework for preliminary thermal and hydraulic assessment of
+battery-electric vehicles. The repository calculates:
 
 - battery resistive heat and a lumped cell-to-coolant response;
 - integrated drive-unit loss over time-based speed cycles;
@@ -13,7 +14,13 @@ A reusable MATLAB framework for preliminary thermal and hydraulic assessment of 
 - coolant-loop pressure loss and pump operating-point margin;
 - cabin sensible load and shared cabin/battery compressor capacity.
 
-The calculation functions are independent of the sample vehicle. Vehicle, battery, coolant, pump, heat-exchanger, and compressor inputs are defined in one configuration file or loaded from documented tables.
+**This is a preliminary sizing and screening tool. It is not a validated thermal
+model, not a prototype-validation record, and not a replacement for Simulink or
+Simscape system simulation.** See [Engineering boundaries](#engineering-boundaries).
+
+The calculation functions are independent of the sample vehicle. Vehicle,
+battery, coolant, pump, heat-exchanger, and compressor inputs are defined in one
+configuration file or loaded from documented tables.
 
 ## Requirements
 
@@ -22,16 +29,23 @@ The calculation functions are independent of the sample vehicle. Vehicle, batter
 
 Simulink, Simscape, and Simscape Fluids are not required for this release.
 
-## Run the sample case
+## Install
 
-Open MATLAB in the repository root and run:
+```bash
+git clone https://github.com/Hussnain-Al/ev-thermal-analysis-framework.git
+cd ev-thermal-analysis-framework
+```
+
+Then open MATLAB with the repository root as the working directory.
+
+## Run the sample case
 
 ```matlab
 results = verify_framework;
 ```
 
-This executes `run_all` and then the regression and interface checks. To run
-the analysis without the tests, use:
+This executes `run_all` and then the regression and interface checks. To run the
+analysis without the tests, use:
 
 ```matlab
 results = run_all;
@@ -39,12 +53,28 @@ results = run_all;
 
 Results are written to `outputs/` as CSV and PNG files.
 
-## Verification status
+### What you get back
 
-The complete v2.0.5 package passed `verify_framework` in MATLAB Online on
-25 August 2026. The command executes the full analysis, confirms all expected
-outputs, and runs the regression and interface checks. The workflow badge above
-reports the independent GitHub Actions result for the published `main` branch.
+`results` is a struct with one field per analysis domain:
+
+```
+results.battery          % resistive heat trace, peak and mean, cell temperature rise
+results.driveUnit        % integrated loss over each cycle, peak and mean
+results.coolant          % mass flow, bulk temperature rise, radiator UA requirement
+results.hydraulic        % loop pressure loss vs flow, pump margin
+results.compressor       % cabin and battery demand, candidate capacity margins
+```
+
+### Sample output
+
+The hydraulic screening plots loop pressure loss against the documented pump
+head, so an inadequate pump point is visible immediately:
+
+![Loop pressure loss against documented pump head](outputs/pressure_loss.png)
+
+In the sample case the loop requirement crosses the documented 60 kPa pump head
+below the 20 L/min design flow, so pump adequacy is not demonstrated on the
+available evidence.
 
 ## Release traceability
 
@@ -56,9 +86,17 @@ The v2.0.5 source has been runtime verified, but its generated outputs remain
 separate from the v1.5.1 report record. Generated outputs are not treated as
 source code.
 
+## Verification status
+
+The complete v2.0.5 package passed `verify_framework` in MATLAB Online on
+25 August 2026. The command executes the full analysis, confirms all expected
+outputs, and runs the regression and interface checks. The workflow badge above
+reports the independent GitHub Actions result for the published `main` branch.
+
 ## Configure another vehicle or component set
 
-Start with [`system_config.m`](system_config.m) in the project root. It is the only MATLAB file intended for routine input changes.
+Start with [`system_config.m`](system_config.m) in the project root. It is the
+only MATLAB file intended for routine input changes.
 
 1. Enter the vehicle mass, wheel size, reduction ratio, and road-load coefficients.
 2. Enter the battery capacity, series-cell count, resistance model, thermal mass, and control thresholds.
@@ -66,7 +104,8 @@ Start with [`system_config.m`](system_config.m) in the project root. It is the o
 4. Add compressor candidates and the intended compressor-map operating point.
 5. Replace component maps and scenario files in `data/` without changing the calculation functions.
 
-The detailed field and table requirements are defined in [`docs/COMPONENT_DATA_GUIDE.md`](docs/COMPONENT_DATA_GUIDE.md).
+The detailed field and table requirements are defined in
+[`docs/COMPONENT_DATA_GUIDE.md`](docs/COMPONENT_DATA_GUIDE.md).
 
 Custom configurations can also be created programmatically:
 
@@ -78,9 +117,10 @@ cfg.propulsionCooling.designFlow_Lmin = 24;
 results = run_all(cfg);
 ```
 
-Startup validation stops the analysis when a required field, file, or table column is missing.
-CSV inputs are read through one deterministic interface that fixes the comma
-delimiter, header row, expected column count, variable names, and numeric fields.
+Startup validation stops the analysis when a required field, file, or table
+column is missing. CSV inputs are read through one deterministic interface that
+fixes the comma delimiter, header row, expected column count, variable names,
+and numeric fields.
 
 ## Model architecture
 
@@ -91,14 +131,20 @@ The repository follows four clear layers:
 3. **Calculations** — heat generation, energy balance, pressure loss, map interpolation, and capacity checks.
 4. **Reporting** — exported traces, summaries, plots, and regression checks.
 
-This separation is consistent with the system-modeling approach described by MathWorks for EV thermal management: parameterize pumps, compressors, valves, cold plates, heat exchangers, and piping from component data; then evaluate their interaction under drive cycles and transient conditions. This repository implements the preliminary numerical layer in MATLAB and provides a clean input boundary for later Simulink or Simscape development.
+This separation is consistent with the system-modeling approach described by
+MathWorks for EV thermal management: parameterize pumps, compressors, valves,
+cold plates, heat exchangers, and piping from component data; then evaluate
+their interaction under drive cycles and transient conditions. This repository
+implements the preliminary numerical layer in MATLAB and provides a clean input
+boundary for later Simulink or Simscape development.
 
 Reference: [MathWorks — EV Thermal Management](https://www.mathworks.com/discovery/ev-thermal-management.html)
 
 ## Repository structure
 
-```text
+```
 system_config.m                   User-editable system definition
+setup_project.m                   Adds source folders to the MATLAB path
 data/
   cycles/                         Time-speed scenarios
   components/                     Component maps and reference curves
@@ -116,9 +162,15 @@ run_all.m                         Main entry point
 verify_framework.m                Full analysis and regression entry point
 ```
 
+`setup_project.m` is called automatically by `run_all` and `verify_framework`.
+Run it directly only if you intend to call functions in `src/` on their own.
+
 ## Input evidence
 
-The included dataset is a neutral sample case. It preserves the calculation behaviour of the original study but does not identify a vehicle or component manufacturer. Replace sample component curves before using the framework for a real design decision.
+The included dataset is a neutral sample case. It preserves the calculation
+behaviour of the original study but does not identify a vehicle or component
+manufacturer. Replace sample component curves before using the framework for a
+real design decision.
 
 Recommended evidence labels are:
 
@@ -138,6 +190,15 @@ Do not combine these categories into an unqualified result.
 - The hydraulic result is incomplete until all component pressure-drop curves and an active pump `Q-H` curve are available.
 - Compressor capacity is valid only at comparable refrigerant boundary conditions.
 - The framework is not a prototype-validation record or a standards-conformity assessment.
+
+## Citation
+
+If you use this framework, please cite it as:
+
+> Ali, H. (2026). *EV Thermal Analysis Framework* (Version 2.0.5) [Computer software].
+> https://github.com/Hussnain-Al/ev-thermal-analysis-framework
+
+Machine-readable metadata is in [`CITATION.cff`](CITATION.cff).
 
 ## License and third-party data
 
