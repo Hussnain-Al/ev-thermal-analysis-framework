@@ -2,7 +2,7 @@
 rootDir = fileparts(fileparts(mfilename('fullpath')));
 addpath(rootDir,'-begin');
 cfg = setup_project();
-assert(strcmp(cfg.project.version,"3.0.0-rc1"));
+assert(strcmp(cfg.project.version,"3.0.0"));
 
 % Every active CSV is imported through the deterministic project reader.
 csvChecks = { ...

@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.0-rc1 — 2026-09-11
+## 3.0.0 — 2026-09-11
 
 - Split configuration, data, execution and outputs into motor heat, motor
   cooling, battery cooling, cabin cooling and shared compressor domains.
@@ -15,6 +15,7 @@
   against the official EPA source files.
 - Added a staged Simulink/Simscape extension and experimental-validation plan.
 - Removed the unused v2 monolithic wrappers and duplicate calculation paths.
+- Passed the complete modular workflow and regression suite in MATLAB R2024b.
 
 ## 2.0.5 — 2026-08-25
 
