@@ -2,61 +2,57 @@
 
 ## Motor heat
 
-The motor module converts a time-speed cycle into wheel force, shaft speed,
-torque and power. The original torque/power workbook defines the operating
-envelope and the digitized integrated map defines efficiency. Energy balance
-gives DC-link power and combined motor/inverter/reducer heat.
+Vehicle speed gives acceleration, wheel speed, drive-unit speed, road force,
+grade force and wheel power. The original torque/power workbook defines the
+operating envelope. A digitized integrated motor/inverter/reducer map gives
+efficiency and drive-unit heat by energy balance.
 
-The same magnitude-based efficiency surface is still used for regeneration.
-A separate measured regeneration map is required for validation.
+NYCC and HWFET are supplemented by a 20-minute 10% grade at 40 km/h and a
+30-minute 5% grade at 15 km/h, both at 45 C ambient.
 
-## Motor cooling
+## Motor and coolant transient
 
-The motor-cooling module receives only average and peak motor heat. Bulk coolant
-rise follows `Q = m_dot Cp deltaT`. Radiator `UA` is a requirement calculated
-from LMTD, not a prediction of the archived radiator geometry. Darcy-Weisbach
-and fitting `K` losses define the coolant-loop system curve.
+The two thermal states are:
 
-The documented pump point is a screening point. A final operating point needs
-the complete active pump `Q-H` curve at the installed coolant temperature.
+\[
+C_m\frac{dT_m}{dt}=\dot Q_{drive}-\frac{T_m-T_c}{R_{mc}}
+\]
 
-## Battery cooling
+\[
+C_c\frac{dT_c}{dt}=\frac{T_m-T_c}{R_{mc}}-UA\max(T_c-T_a,0)
+\]
 
-The battery module converts DC-link power to pack current using the battery's
-own nominal voltage. Minimum resistive heat is `I^2R` per series cell. A lumped
-cell thermal state removes heat through the reconstructed base resistance when
-cooling is active.
+`C_m`, `C_c`, `R_mc` and `UA` are exposed calibration assumptions. The model
+reports temperatures and energy balance but issues no component pass/fail.
 
-The 0.40 mOhm value is an ACR limit at one temperature and state of charge. It
-is not a complete DC resistance model, and the lumped state cannot predict
-cell-to-cell gradients.
+Darcy-Weisbach and fitting losses define the known partial-loop system curve.
+The 60 kPa documented pump point is plotted against that curve.
 
-The recovered construction drawings, equivalent circuits and the exact model
-simplification are shown in
-[`BATTERY_THERMAL_MODEL.md`](BATTERY_THERMAL_MODEL.md).
+## Battery sustained screen
 
-## Cabin cooling
+The battery module is independent of drive cycles. For sustained C-rate `C`:
 
-The cabin module reproduces the recoverable sensible-load subtotal and records
-the Karachi ambient, hot-soak and humidity boundaries. It does not invent the
-missing solar, latent, ventilation or transient pull-down terms.
+\[
+I=134C,\qquad \dot Q_{cell}=I^2R_{ACR}
+\]
 
-The full load-path figure and the current model boundary are shown in
-[`CABIN_COOLING_MODEL.md`](CABIN_COOLING_MODEL.md).
+\[
+T_{coolant,max}=T_{limit}-\dot Q_{cell}R_{base}
+\]
 
-## Shared compressor
+`R_ACR = 0.40 mOhm` is the only available resistance and is a minimum heat
+proxy. The model uses the SVOLT 55 C charging cutoff and 60 C absolute limit.
+It does not calculate transient cell temperature or delivered cooling.
 
-Only the shared-compressor module combines battery plate demand and cabin duty.
-It interpolates the manufacturer R134a map inside its original axes, applies a
-declared allocation priority, and reports capacity shortfall. This remains a
-gross capacity balance until the condenser, heat exchangers, pressure losses,
-refrigerant states and controls are modeled.
+## Cabin load
+
+The surface-load subtotal is read from the recovered Excel workbook and checked
+against the derived input table. The module then adds the recovered occupant
+and infiltration terms. It remains an independent partial sensible-load result.
 
 ## Validation target
 
-The future experiment should record synchronized electrical power, motor loss
-or calorimetric heat, coolant inlet/outlet temperatures, flow, component
-pressure drop, battery temperature, cabin temperature, compressor electrical
-power and ambient conditions. Predictions should be compared with measurement
-error and sensor uncertainty, not described as proven from agreement at one
-point.
+Future measurements should identify motor thermal capacitance,
+motor-to-coolant resistance, radiator performance, coolant volume, flow and
+pressure loss. Battery work requires DC resistance or calorimetric heat and a
+measured cell-to-coolant thermal response.

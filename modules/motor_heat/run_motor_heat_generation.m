@@ -8,8 +8,10 @@ ensure_output_folder(outputDir);
 out.curves = load_propulsion_curves( ...
     p.files.driveLimitWorkbook,p.files.driveEfficiencyMap);
 nCycles = height(cfg.cycles);
-details = cell(nCycles,1);
-summaries = cell(nCycles,1);
+nCases = height(p.operatingCases);
+details = cell(nCycles+nCases,1);
+summaries = cell(nCycles+nCases,1);
+fileStems = [cfg.cycles.FileStem;p.operatingCases.FileStem];
 
 for i = 1:nCycles
     cycle = read_drive_cycle(cfg.cycles.File(i),cfg.cycles.Name(i));
@@ -20,14 +22,31 @@ for i = 1:nCycles
         cfg.cycles.FileStem(i)+"_motor_heat_trace.csv"));
 end
 
+for j = 1:nCases
+    i = nCycles+j;
+    caseInput = p.operatingCases(j,:);
+    cycle = make_constant_speed_case(caseInput);
+    caseVehicle = cfg.vehicle;
+    caseVehicle.grade_pct = caseInput.Grade_pct;
+    details{i} = calculate_motor_operating_trace(cycle,caseVehicle,out.curves);
+    summaries{i} = summarize_motor_heat(details{i});
+    writetable(details{i},fullfile(outputDir, ...
+        caseInput.FileStem+"_motor_heat_trace.csv"));
+end
+
 out.details = details;
 out.summary = vertcat(summaries{:});
 writetable(out.summary,fullfile(outputDir,"motor_heat_summary.csv"));
 
-fig = figure('Visible','off','Color','w');
-layout = tiledlayout(nCycles,1,'TileSpacing','compact');
+out.fileStems = fileStems;
+out.ambient_C = [repmat(cfg.motorCooling.transient.designAmbient_C,nCycles,1); ...
+    p.operatingCases.Ambient_C];
+out.fanOnly = [false(nCycles,1);p.operatingCases.FanOnly];
+
+fig = figure('Visible','off','Color','w','Position',[100 100 1250 820]);
+layout = tiledlayout(2,2,'TileSpacing','compact');
 maximumHeat_kW = max(cellfun(@(x) max(x.DriveUnitHeat_kW),details));
-for i = 1:nCycles
+for i = 1:numel(details)
     nexttile;
     plot(details{i}.Time_s,details{i}.DriveUnitHeat_kW,'LineWidth',1.1);
     hold on;
@@ -35,12 +54,20 @@ for i = 1:nCycles
     grid on;
     ylabel('Heat (kW)');
     ylim([0 1.08*maximumHeat_kW]);
-    title(cfg.cycles.Name(i));
+    title(details{i}.Cycle(1));
 end
 xlabel(layout,'Time (s)');
 exportgraphics(fig,fullfile(outputDir,"motor_heat_traces.png"), ...
     'Resolution',180);
 close(fig);
+end
+
+function cycle = make_constant_speed_case(caseInput)
+time_s = (0:caseInput.Duration_s)';
+speed_mph = repmat(caseInput.Speed_kmh/1.609344,numel(time_s),1);
+cycle = table(repmat(caseInput.Name,numel(time_s),1),time_s,speed_mph, ...
+    speed_mph*0.44704, ...
+    'VariableNames',{'Cycle','Time_s','Speed_mph','Speed_ms'});
 end
 
 function mark_extrema(time_s,signal)

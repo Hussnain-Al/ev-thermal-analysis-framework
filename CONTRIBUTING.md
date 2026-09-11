@@ -1,6 +1,6 @@
 # Contributing
 
-Changes must preserve the five subsystem boundaries and explicit result
+Changes must preserve the four domain boundaries and explicit result
 interfaces described in `docs/ARCHITECTURE.md`.
 
 ## Pull-request requirements

@@ -3,14 +3,14 @@
 See [`SOURCE_PROVENANCE.md`](SOURCE_PROVENANCE.md) for the audited mapping from
 the archived project files to each active MATLAB module.
 
-Branded component drawings and third-party documents are retained in the local
-source folder but intentionally excluded from the public Git repository.
+Original component drawings and third-party documents are retained for source
+traceability. Their presence does not grant third-party reuse rights.
 
 For a new study, record the following beside each imported component file:
 
 - document title and revision;
 - manufacturer or test source;
-- test voltage, coolant, refrigerant, and temperature conditions;
+- test voltage, coolant and temperature conditions;
 - units and conversion steps;
 - whether values are measured, tabulated, digitized, reconstructed, or assumed;
 - permitted interpolation range;

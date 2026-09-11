@@ -7,6 +7,8 @@ end
 
 cabin.files.loadInputs = fullfile(rootDir,"data", ...
     "cabin_cooling","cabin_load_inputs.csv");
+cabin.files.sourceWorkbook = fullfile(rootDir,"data", ...
+    "cabin_cooling","Cabin_Cooling_Load_AutoRecovered.xlsx");
 cabin.designLocation = "Karachi, Pakistan";
 cabin.designAmbient_C = 45;
 cabin.initialHotSoak_C = 80;

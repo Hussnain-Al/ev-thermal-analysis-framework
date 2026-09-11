@@ -1,9 +1,7 @@
 # Local source documents
 
-This folder is intentionally excluded from Git because the archived project
-contains vendor-controlled documents and files marked confidential. Keep the
-original material here for local traceability; publish only numerical inputs
-whose reuse status has been confirmed.
+This folder retains the archived project documents for traceability. The
+repository owner explicitly authorized their publication. Their presence does
+not grant reuse or redistribution rights beyond the rights held by the owner.
 
-The committed source manifest records the file hashes, model role and evidence
-status without redistributing the documents.
+The source manifest records file hashes, model roles and evidence status.

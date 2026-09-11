@@ -1,27 +1,33 @@
-# Battery thermal model
+# Battery sustained thermal screen
 
-The archived design study resolves heat flow from the cell casing through two
-lateral epoxy paths and one base path into the coolant channel.
+The active battery model uses only the SVOLT 134 Ah specification and the
+reconstructed 3.10 K/W cell-base thermal path.
 
-## Single-cell network
+| Input | Value | Status |
+|---|---:|---|
+| Capacity | 134 Ah | SVOLT specification |
+| ACR | <=0.40 mOhm | 1 kHz, 25 C, 60% SOC; lower-bound proxy |
+| Continuous discharge | 2C maximum | SVOLT specification at 25 +/- 3 C |
+| Charging cutoff | 55 C | SVOLT continuous-charge table |
+| Absolute limit | 60 C | SVOLT protection requirement |
+| Base thermal path | 3.10 K/W | Reconstructed; requires validation |
 
-<img src="images/battery_single_cell_network.png" width="620" alt="Single-cell construction and thermal-resistance network">
+The model reports minimum ohmic heat and the maximum coolant temperature that
+would keep the cell at 55 C or 60 C under a sustained load. It does not impose
+a coolant temperature or simulate a transient cell state.
 
-<img src="images/battery_single_cell_equivalent.png" width="620" alt="Single-cell equivalent thermal circuit">
+## Archived thermal-network figures
 
-The reconstructed equivalent resistances are `16.67 K/W` for each lateral path
-and `3.10 K/W` from the cell base to the coolant channel.
+<img src="images/battery_single_cell_network.png" width="620" alt="Archived single-cell construction and thermal-resistance network">
 
-## Cell-row network
+<img src="images/battery_single_cell_equivalent.png" width="620" alt="Archived single-cell equivalent thermal circuit">
 
-<img src="images/battery_three_cell_network.png" width="620" alt="Three-cell construction and thermal-resistance network">
+<img src="images/battery_three_cell_network.png" width="620" alt="Archived three-cell thermal network">
 
-<img src="images/battery_three_cell_equivalent.png" width="620" alt="Three-cell equivalent thermal circuit">
+<img src="images/battery_three_cell_equivalent.png" width="620" alt="Archived three-cell equivalent circuit">
 
-## Module-row network
+<img src="images/battery_module_network.png" width="680" alt="Archived nine-cell module-row thermal network">
 
-<img src="images/battery_module_network.png" width="680" alt="Nine-cell module-row thermal network">
-
-The transient MATLAB model uses the base resistance for a lumped cell-to-plate
-energy balance. Lateral resistance is retained in the sensitivity calculation,
-but the current uniform-cell model does not predict spatial cell gradients.
+The lateral resistances are not used as external heat-rejection paths. A
+spatial model would need one temperature state per cell before lateral
+conduction could be represented correctly.

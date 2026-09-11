@@ -8,7 +8,7 @@ arguments
 end
 
 cfg.project.name = "EV Thermal Analysis Framework";
-cfg.project.version = "3.1.0";
+cfg.project.version = "4.0.0";
 cfg.project.rootDir = rootDir;
 cfg.project.outputDir = fullfile(rootDir,"outputs");
 cfg.project.parameterRegister = fullfile(rootDir,"data", ...
@@ -19,5 +19,4 @@ cfg.motorHeat = motor_heat_config(rootDir);
 cfg.motorCooling = motor_cooling_config(rootDir);
 cfg.batteryCooling = battery_cooling_config(rootDir);
 cfg.cabinCooling = cabin_cooling_config(rootDir);
-cfg.sharedCompressor = shared_compressor_config(rootDir);
 end

@@ -27,6 +27,21 @@ thermal.airOut_C = 55;
 thermal.airCp_JkgK = 1005;
 motorCooling.thermal = thermal;
 
+% Two-node transient calibration assumptions. They are exposed here because
+% the archived source does not provide identified thermal capacitances or a
+% measured motor-to-coolant resistance.
+transient.motorThermalCapacity_JK = 45000;
+transient.coolantThermalCapacity_JK = 17500;
+transient.motorToCoolantResistance_KW = 0.015;
+transient.radiatorUA_WK = 665;
+transient.fanOnlyRadiatorUA_WK = 300;
+transient.initialMotorTemperature_C = 45;
+transient.initialCoolantTemperature_C = 45;
+transient.designAmbient_C = 45;
+transient.modelBoundary = ...
+    "Two-node lumped screen with uncalibrated thermal capacitance, resistance and normal/fan-only radiator UA";
+motorCooling.transient = transient;
+
 loop.names = ["Hose 1";"Hose 2";"Hose 3";"Hose 4";"Hose 5";"Hose 6"; ...
     "Heat-exchanger route"];
 loop.length_m = [1.02385;0.35000;1.55540;0.43617;0.29800;0.73536;4.64000];

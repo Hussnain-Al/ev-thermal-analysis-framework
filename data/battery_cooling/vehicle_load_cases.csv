@@ -1,8 +1,0 @@
-LoadCase,Description,WheelPower_W,MotorPower_W,Current_A,Status
-L1,60 km/h cruise,11379,11611,36,Archived project input
-L2,100 km/h cruise,24707,25211,79,Archived project input
-L3,15 percent temporary gradient partial load 80 kg,42798,45969,137,Archived project input
-L4,15 percent temporary gradient full load 350 kg,52954,54034.69,170,Motor power reconstructed as wheel power divided by 0.98; archived 21399 W cell rejected
-L5,8 percent continuous gradient partial load 80 kg,54198,55304,173,Archived project input
-L6,8 percent continuous gradient full load 350 kg,61520,62775,199,Archived project input
-L7,0-100 km/h in 17 s,60000,61224,195,Archived project input

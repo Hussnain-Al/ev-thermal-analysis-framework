@@ -1,58 +1,24 @@
 # Architecture
 
-## Calculation dependencies
-
 ```mermaid
 flowchart TD
-  A["Vehicle configuration"] --> B["Motor heat module"]
-  C["Torque, power and efficiency data"] --> B
-  B --> D["Motor cooling module"]
-  B --> E["Battery cooling module"]
-  F["Cabin configuration and loads"] --> G["Cabin cooling module"]
-  E --> H["Shared compressor module"]
-  G --> H
-  I["Compressor map"] --> H
+  A["Vehicle cases"] --> B["Motor heat"]
+  C["Torque and efficiency data"] --> B
+  B --> D["Motor and coolant transient"]
+  E["Battery C-rate"] --> F["Battery thermal screen"]
+  G["Cabin workbook"] --> H["Cabin-load result"]
 ```
 
-There are two intentional cross-module interfaces:
-
-| Producer | Consumer | Interface |
-|---|---|---|
-| Motor heat | Motor cooling | Cycle summary containing average and peak integrated-drive heat |
-| Motor heat | Battery cooling | Time-aligned `DCLinkPower_kW` trace |
-| Battery cooling | Shared compressor | Time-aligned plate cooling request and battery summary |
-| Cabin cooling | Shared compressor | Independent cabin-duty summary |
-
-No module reads another module's configuration file. `run_all.m` owns the
-dependency order and passes result structs explicitly.
-
-## Physical circuits
-
-### System cooling loops
-
-<img src="images/system_cooling_loops.png" width="900" alt="Battery, cabin-refrigerant and propulsion cooling-loop architecture">
-
-### Propulsion coolant loop
-
-<img src="images/propulsion_cooling_loop.png" width="560" alt="Radiator, pump, power-distribution unit, motor controller and motor coolant loop">
-
-The MATLAB release treats the shared refrigerant system as a capacity
-allocation problem. It does not solve pressure, enthalpy, charge inventory or
-branch-valve dynamics.
-
-## Software layers
+Only one cross-module interface remains: `motor_heat` passes its time-aligned
+heat traces to `motor_cooling`. Battery and cabin results are independent.
 
 | Layer | Responsibility |
 |---|---|
-| `config/` | User-editable component and boundary parameters |
-| `data/` | Maps, curves, scenarios and source-derived geometry |
-| `modules/` | Domain workflows and domain-specific exports |
-| `src/calculations/` | Unit-testable equations without vehicle ratings |
-| `src/io/` | Deterministic file import and schema checks |
-| `tests/` | Numerical regressions and forbidden-coupling checks |
+| `config/` | Editable boundaries and explicitly assumed calibration values |
+| `data/` | Original curves, schedules, workbook and derived numerical inputs |
+| `modules/` | Four independent workflows and exports |
+| `src/calculations/` | Reusable equations |
+| `tests/` | Regression, energy-balance and interface checks |
 
-New physics belongs in `src/calculations/`; new study values belong in the
-relevant `config/` or `data/` domain.
-
-The generated-file interface is listed in
-[`RESULT_FILES.md`](RESULT_FILES.md).
+The active model contains no compressor, refrigerant circuit or shared
+battery/cabin capacity allocation.

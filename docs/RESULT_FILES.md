@@ -1,37 +1,20 @@
 # Result-file contract
 
-`run_all.m` writes each subsystem only to its own output folder. Generated
-files are disposable: their authoritative inputs remain under `config/` and
-`data/`.
-
-| Module | Primary result files | Meaning |
+| Module | Primary results | Meaning |
 |---|---|---|
-| Motor heat | `motor_heat_summary.csv`, `*_motor_heat_trace.csv` | Drive-cycle operating points and integrated-drive heat generation |
-| Motor cooling | `motor_cooling_current_result.csv`, `pump_operating_point.csv`, `loop_sensitivity.csv` | Duty, coolant rise, radiator sizing and hydraulic screening |
-| Battery cooling | `battery_cooling_summary.csv`, `*_battery_cooling_trace.csv` | Pack loss, cooling request, temperature extrema, energy and active time |
-| Cabin cooling | `cabin_cooling_summary.csv`, `cabin_load_inputs_used.csv` | Karachi cabin boundary and recovered partial sensible duty |
-| Shared compressor | `shared_cooling_current_result.csv` | Combined demand, capacity, allocation, shortfall and present verdict |
+| Motor heat | `motor_heat_summary.csv`, `*_motor_heat_trace.csv` | Operating points and integrated-drive heat |
+| Motor cooling | `motor_thermal_summary.csv`, `*_motor_thermal_trace.csv` | Two-node thermal response under exposed assumptions |
+| Hydraulics | `loop_sensitivity.csv`, `pump_operating_point.csv` | Known partial-loop loss and documented pump comparison |
+| Battery | `battery_sustained_screen.csv`, `battery_specification_limits.csv` | ACR-based heat floor and allowable coolant temperature |
+| Cabin | `cabin_cooling_summary.csv`, `cabin_load_inputs_used.csv` | Independent recovered partial sensible load |
 
-The shared result contains one row per drive-cycle/compressor combination. It
-copies completed upstream results; it does not recompute motor, battery or cabin
-physics. The three `*ModelBoundary` columns state what remains outside the
-current model, and `OverallScreeningPass` is true only when gross compressor
-capacity and the battery cell-temperature screen both pass.
-
-Plots remain module-specific:
+Generated plots:
 
 - `motor_heat/motor_heat_traces.png`
-- `motor_cooling/motor_cooling_requirements.png`
+- `motor_cooling/motor_thermal_response.png`
 - `motor_cooling/loop_sensitivity.png`
-- `battery_cooling/battery_cooling_traces.png`
+- `battery_cooling/battery_c_rate_sweep.png`
 - `cabin_cooling/cabin_load_breakdown.png`
-- `shared_compressor/shared_compressor_capacity.png`
 
-Reference copies from the verified MATLAB R2024b workflow are committed under
-`docs/images/results/` and displayed with rounded decision tables in the main
-README. Files under `outputs/` remain generated artifacts and are rebuilt by
-`verify_framework`.
-
-The shared-compressor plot combines the fixed recovered cabin subtotal with the
-transient battery plate request only for gross capacity screening. It is not a
-refrigerant-cycle simulation or a validated transient cabin-load result.
+There are no battery drive-cycle temperatures, cooling requests, compressor
+allocations or combined battery/cabin verdicts.

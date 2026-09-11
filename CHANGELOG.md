@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.0.0 — 2026-09-11
+
+- Removed the shared-compressor module, data, plots, tests and verdicts.
+- Replaced the battery drive-cycle temperature artifact with a sustained
+  ACR-based heat floor and allowable-coolant-temperature screen.
+- Added the SVOLT 55 C charge cutoff, 60 C absolute limit and supplier thermal
+  reference cases without inventing a coolant setpoint.
+- Added two-node drive-unit/coolant transients for NYCC, HWFET, sustained grade
+  and low-speed hot-weather cases.
+- Plotted the known partial-loop loss against the documented pump point.
+- Made the recovered cabin Excel workbook an active, checked source.
+
 ## 3.1.0 — 2026-09-11
 
 - Added a combined propulsion-loop decision table covering duty, coolant rise,

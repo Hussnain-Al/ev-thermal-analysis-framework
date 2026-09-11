@@ -1,18 +1,16 @@
-# Drive-Cycle Thermal Method
+# Motor operating-case method
 
-For each configured time-speed trace, the framework:
+For every time-speed case, the framework calculates acceleration, road and
+grade forces, wheel power, motor speed and torque, operating-envelope status,
+integrated efficiency and drive-unit heat.
 
-1. reads time and vehicle speed;
-2. calculates acceleration;
-3. converts vehicle speed to wheel and drive-unit speed;
-4. calculates road-load, inertia, and grade forces;
-5. calculates requested wheel power and drive-unit torque;
-6. checks the torque-speed and power-speed envelopes;
-7. interpolates the integrated efficiency map;
-8. exports DC-link power and drive-unit heat from the motor module;
-9. passes the DC-link trace to the independent battery module;
-10. calculates pack current, resistive heat and the lumped thermal state;
-11. passes battery plate demand and cabin duty to the shared compressor module;
-12. exports separate domain traces and one combined compressor decision file.
+The standard EPA NYCC and HWFET schedules are retained. Two constant-speed
+hot-weather screens are added because regulatory cycles do not represent the
+project's sustained propulsion thermal cases:
 
-Cycle-average heat is useful for energy and sustained thermal duty. Cycle-peak heat is useful for short transient screening. Neither value alone defines a component; duration, thermal mass, control response, and boundary temperatures also matter.
+| Case | Speed | Grade | Duration | Ambient |
+|---|---:|---:|---:|---:|
+| Sustained grade | 40 km/h | 10% | 1200 s | 45 C |
+| Low-speed hot-weather grade | 15 km/h | 5% | 1800 s | 45 C |
+
+Each resulting heat trace feeds the two-node motor/coolant model directly.

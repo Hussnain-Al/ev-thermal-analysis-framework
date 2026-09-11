@@ -8,13 +8,17 @@ B01,Battery,Cell capacity,134,Ah,SVOLT manufacturer specification,Confirm produc
 B02,Battery,Cell nominal voltage,3.2,V,SVOLT manufacturer specification,Confirm production cell revision
 B03,Battery,Series-cell count,108,count,Project pack topology,Confirm production pack topology
 B04,Battery,Resistance proxy,0.40,mOhm,SVOLT manufacturer ACR limit,Not a temperature and SOC dependent DC resistance model
-B05,Battery,Cell specific heat,900,J/(kg K),Engineering assumption,Replace with measurement
-B06,Battery,Initial hot-state temperature,45,degC,Design boundary,Not a measured soak distribution
+B05,Battery,Cell-base thermal resistance,3.10,K/W,Reconstructed thermal network,Validate against cell-to-coolant test
+B06,Battery,Continuous-charge cutoff,55,degC,SVOLT manufacturer specification,Applies to continuous charging table
+B07,Battery,Absolute operating limit,60,degC,SVOLT manufacturer specification,BMS must stop battery operation
 D01,Drive unit,Integrated efficiency surface,50-95.2,percent,Digitized 125 kW supplier chart,Replace with supplier numerical test map
+D02,Drive unit,Assumed thermal capacitance,45000,J/K,Calibration assumption,Identify experimentally
+D03,Drive unit,Assumed motor-to-coolant resistance,0.015,K/W,Calibration assumption,Identify experimentally
 C01,Coolant,Mixture,50/50 water-glycol,-,Project system input,Use selected coolant properties
+C02,Coolant,Assumed loop thermal capacitance,17500,J/K,Calibration assumption,Replace with measured coolant volume and component masses
 H01,Hydraulics,Hose internal diameter,20,mm,Project system input,Confirm production geometry
 H02,Hydraulics,Reference flow,16,L/min,Project component basis,Confirm component test conditions
 H03,Pump,Screening operating point,20 L/min at 60 kPa,-,Manufacturer specification point,Full active Q-H curve required
-R01,Refrigerant,Map voltage,312,V,DM18A1 manufacturer map condition,Maintain consistent refrigerant boundary conditions
-R02,Refrigerant,Map refrigerant,R134a,-,DM18A1 manufacturer map condition,Replace if another refrigerant is used
+R01,Radiator,Assumed UA,665,W/K,Calibration assumption,Replace with radiator and fan performance map
+R02,Radiator,Assumed fan-only UA,300,W/K,Calibration assumption,Replace with fan-only performance test
 A01,Ambient,Hot-weather air inlet,45,degC,Design boundary,Replace with project climate requirement

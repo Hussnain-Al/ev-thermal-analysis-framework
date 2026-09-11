@@ -1,130 +1,70 @@
-function out = run_battery_cooling(cfg,motorHeat)
-%RUN_BATTERY_COOLING Battery heat, temperature and plate-demand module.
-% The module consumes the motor module's DC-link power traces. It does not
-% access cabin or compressor parameters.
+function out = run_battery_cooling(cfg)
+%RUN_BATTERY_COOLING Sustained ACR-based battery thermal screen.
+% No drive-cycle temperature state, fixed coolant temperature, cooling
+% request or compressor capacity is calculated here.
 
 p = cfg.batteryCooling;
 outputDir = fullfile(cfg.project.outputDir,"battery_cooling");
 ensure_output_folder(outputDir);
 
-nCycles = numel(motorHeat.details);
-details = cell(nCycles,1);
-summaries = cell(nCycles,1);
-for i = 1:nCycles
-    details{i} = calculate_battery_thermal_trace(motorHeat.details{i},p);
-    summaries{i} = summarize_battery_cooling(details{i},p);
-    exported = battery_trace_columns(details{i});
-    writetable(exported,fullfile(outputDir, ...
-        cfg.cycles.FileStem(i)+"_battery_cooling_trace.csv"));
-end
-out.details = details;
-out.summary = vertcat(summaries{:});
-
-out.sensitivity = calculate_battery_ohmic_heat( ...
+out.screen = calculate_battery_ohmic_heat( ...
     p.cRates,p.capacity_Ah,p.resistanceProxy_Ohm,p.seriesCells);
-network = calculate_battery_thermal_network(out.sensitivity.CellHeat_W, ...
-    p.baseResistance_KW,p.sideResistance_KW_each);
-out.sensitivity = [out.sensitivity network(:,2:end)];
-out.sensitivity.BasePathSteadyCell_C = ...
-    p.coolantTemperature_C+out.sensitivity.BasePathRequiredRise_C;
-out.sensitivity.SustainedBasePathWithinLimit = ...
-    out.sensitivity.BasePathSteadyCell_C<=p.maximumCell_C;
+out.screen.RequiredCellToCoolantRise_C = ...
+    out.screen.CellHeat_W*p.baseResistance_KW;
+out.screen.MaximumCoolantForRegen_C = ...
+    p.regenChargeCutoff_C-out.screen.RequiredCellToCoolantRise_C;
+out.screen.MaximumCoolantForDischarge_C = ...
+    p.absoluteOperatingLimit_C-out.screen.RequiredCellToCoolantRise_C;
+out.screen.ACRProxyOnly = true(height(out.screen),1);
 
-out.vehicleCases = read_project_csv(p.files.vehicleLoadCases, ...
-    {'LoadCase','Description','WheelPower_W','MotorPower_W','Current_A','Status'}, ...
-    {'WheelPower_W','MotorPower_W','Current_A'});
-out.vehicleCases.C_rate = out.vehicleCases.Current_A/p.capacity_Ah;
-out.vehicleCases.MinimumResistivePackHeat_kW = ...
-    out.vehicleCases.Current_A.^2*p.resistanceProxy_Ohm*p.seriesCells/1000;
-out.heatExchangerGeometry = read_project_csv(p.files.heatExchangerGeometry, ...
-    radiator_geometry_columns(),radiator_geometry_numeric_columns());
+out.specification = table( ...
+    ["Regen charge cutoff";"Absolute operating limit"; ...
+     "Maximum continuous discharge";"Continuous thermal reference"; ...
+     "Pulse thermal reference"], ...
+    [p.regenChargeCutoff_C;p.absoluteOperatingLimit_C; ...
+     p.maximumContinuousDischarge_C;p.referenceContinuousRiseLimit_C; ...
+     p.referencePulseRiseLimit_C], ...
+    ["degC";"degC";"C-rate";"degC rise";"degC rise"], ...
+    ["SVOLT continuous-charge table";"SVOLT absolute protection"; ...
+     "SVOLT at 25 +/- 3 degC";"SVOLT 1C for 600 s"; ...
+     "SVOLT 3C for 30 s"], ...
+    'VariableNames',{'Requirement','Value','Unit','EvidenceCondition'});
 
-writetable(out.summary,fullfile(outputDir,"battery_cooling_summary.csv"));
-writetable(out.sensitivity,fullfile(outputDir, ...
-    "battery_constant_current_sensitivity.csv"));
-writetable(out.vehicleCases,fullfile(outputDir,"battery_reference_cases.csv"));
-writetable(out.heatExchangerGeometry,fullfile(outputDir, ...
-    "battery_heat_exchanger_geometry.csv"));
-plot_battery_results(details,cfg.cycles.Name,p,outputDir);
+writetable(out.screen,fullfile(outputDir,"battery_sustained_screen.csv"));
+writetable(out.specification,fullfile(outputDir,"battery_specification_limits.csv"));
+plot_battery_c_rate_sweep(out.screen,p,outputDir);
 end
 
-function exported = battery_trace_columns(trace)
-names = {'Cycle','Time_s','BatteryPower_kW','PackCurrent_A', ...
-    'BatteryHeat_kW','EstimatedCellTemperature_C', ...
-    'BatteryCoolingActive','BatteryCoolingRequest_kW'};
-exported = trace(:,names);
-end
+function plot_battery_c_rate_sweep(screen,battery,outputDir)
+% Plot the useful sustained screen. This does not claim that ACR is DCIR;
+% the resistance remains a lower-bound proxy pending measured DC data.
+fig = figure('Visible','off','Color','w','Position',[100 100 1250 520]);
+layout = tiledlayout(1,2,'TileSpacing','compact');
 
-function plot_battery_results(details,names,battery,outputDir)
-fig = figure('Visible','off','Color','w','Position',[100 100 1500 850]);
-layout = tiledlayout(numel(details),3,'TileSpacing','compact');
-maximumHeat_kW = max(cellfun(@(x) max(x.BatteryHeat_kW),details));
-maximumRequest_kW = max(cellfun(@(x) max(x.BatteryCoolingRequest_kW),details));
-for i = 1:numel(details)
-    nexttile;
-    plot(details{i}.Time_s,details{i}.BatteryHeat_kW,'LineWidth',1.1);
-    hold on;
-    mark_extrema(details{i}.Time_s,details{i}.BatteryHeat_kW);
-    grid on;
-    ylabel('Heat (kW)');
-    ylim([0 1.08*maximumHeat_kW]);
-    title(names(i)+" battery heat");
+nexttile;
+plot(screen.C_rate,screen.PackHeat_kW,'o-','LineWidth',1.5);
+grid on;
+xlabel('Sustained C-rate');
+ylabel('Minimum ohmic pack heat (kW)');
+title('Heat floor from ACR proxy');
 
-    nexttile;
-    plot(details{i}.Time_s,details{i}.BatteryCoolingRequest_kW, ...
-        'LineWidth',1.1);
-    hold on;
-    mark_extrema(details{i}.Time_s,details{i}.BatteryCoolingRequest_kW);
-    grid on;
-    ylabel('Plate request (kW)');
-    ylim([0 1.08*maximumRequest_kW]);
-    title(names(i)+" cooling request");
+nexttile;
+plot(screen.C_rate,screen.MaximumCoolantForRegen_C, ...
+    'o-','LineWidth',1.5,'DisplayName','55 C regen cutoff');
+hold on;
+plot(screen.C_rate,screen.MaximumCoolantForDischarge_C, ...
+    's-','LineWidth',1.5,'DisplayName','60 C absolute limit');
+yline(0,'k:','LineWidth',1.0,'HandleVisibility','off');
+grid on;
+xlabel('Sustained C-rate');
+ylabel('Maximum allowable coolant temperature (C)');
+title('Coolant requirement from 3.10 K/W base path');
+legend('Location','southwest');
 
-    nexttile;
-    plot(details{i}.Time_s,details{i}.EstimatedCellTemperature_C, ...
-        'LineWidth',1.1);
-    hold on;
-    plot(details{i}.Time_s(1),details{i}.EstimatedCellTemperature_C(1), ...
-        'ko','MarkerFaceColor','k');
-    plot(details{i}.Time_s(end),details{i}.EstimatedCellTemperature_C(end), ...
-        'ks','MarkerFaceColor','w');
-    grid on;
-    ylabel('Cell temperature (C)');
-    margin_C = battery.maximumCell_C- ...
-        max(details{i}.EstimatedCellTemperature_C);
-    title(sprintf('%s cell temperature | %.1f C margin', ...
-        names(i),margin_C));
-end
-xlabel(layout,'Time (s)');
-exportgraphics(fig,fullfile(outputDir,"battery_cooling_traces.png"), ...
+title(layout,'Battery sustained-load lower-bound screen');
+exportgraphics(fig,fullfile(outputDir,"battery_c_rate_sweep.png"), ...
     'Resolution',180);
 close(fig);
-end
-
-function mark_extrema(time_s,signal)
-[maximumValue,maximumIndex] = max(signal);
-[minimumValue,minimumIndex] = min(signal);
-plot(time_s(maximumIndex),maximumValue,'ro','MarkerFaceColor','r');
-plot(time_s(minimumIndex),minimumValue,'bo','MarkerFaceColor','b');
-text(time_s(maximumIndex),maximumValue, ...
-    sprintf(' max %.3f @ %.0f s',maximumValue,time_s(maximumIndex)), ...
-    'VerticalAlignment','bottom');
-text(time_s(minimumIndex),minimumValue, ...
-    sprintf(' min %.3f @ %.0f s',minimumValue,time_s(minimumIndex)), ...
-    'VerticalAlignment','bottom');
-end
-
-function names = radiator_geometry_columns()
-names = {'Radiator','Application','CoreHeight_mm','CoreWidth_mm', ...
-    'FrontalArea_m2','TubeWidth_mm','TubeThickness_mm','TubeQuantity', ...
-    'TubeLength_mm','FinWidth_mm','FinHeight_mm','FinPitch_mm', ...
-    'FinQuantity','FinLength_mm'};
-end
-
-function names = radiator_geometry_numeric_columns()
-names = {'CoreHeight_mm','CoreWidth_mm','FrontalArea_m2','TubeWidth_mm', ...
-    'TubeThickness_mm','TubeQuantity','TubeLength_mm','FinWidth_mm', ...
-    'FinHeight_mm','FinPitch_mm','FinQuantity','FinLength_mm'};
 end
 
 function ensure_output_folder(folder)
