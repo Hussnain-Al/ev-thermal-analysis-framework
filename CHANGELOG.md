@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.0.0-rc1 — 2026-09-11
+
+- Split configuration, data, execution and outputs into motor heat, motor
+  cooling, battery cooling, cabin cooling and shared compressor domains.
+- Removed battery parameters from the motor operating-point calculation;
+  battery analysis now consumes an explicit time-aligned DC-link trace.
+- Added one combined cabin/battery compressor decision file while preserving
+  the independent upstream result files.
+- Retained the original torque/power workbook and active digitized source data.
+- Added an audited source manifest, including exclusions for the mismatched
+  historical ADVISOR model and copyrighted/confidential source documents.
+- Verified the included NYCC and HWFET numerical sequences point-for-point
+  against the official EPA source files.
+- Added a staged Simulink/Simscape extension and experimental-validation plan.
+- Removed the unused v2 monolithic wrappers and duplicate calculation paths.
+
 ## 2.0.5 — 2026-08-25
 
 - Replaced automatic CSV delimiter detection with a single explicit reader

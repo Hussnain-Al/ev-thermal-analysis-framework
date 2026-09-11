@@ -1,34 +1,55 @@
 # Methodology
 
-## Vehicle and integrated drive
+## Motor heat
 
-Vehicle speed is converted to wheel and drive-unit speed. Longitudinal force includes the configured road-load function, translational inertia, and road grade. Requested wheel torque and power are checked against the drive-unit limits.
+The motor module converts a time-speed cycle into wheel force, shaft speed,
+torque and power. The original torque/power workbook defines the operating
+envelope and the digitized integrated map defines efficiency. Energy balance
+gives DC-link power and combined motor/inverter/reducer heat.
 
-The configured efficiency map gives integrated drive efficiency at each speed and torque point. During motoring:
+The same magnitude-based efficiency surface is still used for regeneration.
+A separate measured regeneration map is required for validation.
 
-```text
-electrical input = mechanical output / efficiency
-drive heat = electrical input - mechanical output
-```
+## Motor cooling
 
-During regeneration, the same map is used as a screening approximation. Replace this with a separate regeneration-efficiency map when available.
+The motor-cooling module receives only average and peak motor heat. Bulk coolant
+rise follows `Q = m_dot Cp deltaT`. Radiator `UA` is a requirement calculated
+from LMTD, not a prediction of the archived radiator geometry. Darcy-Weisbach
+and fitting `K` losses define the coolant-loop system curve.
 
-## Battery
+The documented pump point is a screening point. A final operating point needs
+the complete active pump `Q-H` curve at the installed coolant temperature.
 
-The minimum resistive model calculates `I²R` heat at cell level and multiplies by the series-cell count. A lumped thermal state estimates cell temperature and heat removal through the configured base thermal resistance. The result does not represent cell-to-cell temperature distribution.
+## Battery cooling
 
-## Coolant loop
+The battery module converts DC-link power to pack current using the battery's
+own nominal voltage. Minimum resistive heat is `I^2R` per series cell. A lumped
+cell thermal state removes heat through the reconstructed base resistance when
+cooling is active.
 
-Bulk coolant rise follows `Q = m_dot Cp deltaT`. Pipe pressure loss combines Darcy-Weisbach major loss and fitting `K` losses. Coolant properties vary by the configured temperature cases.
+The 0.40 mOhm value is an ACR limit at one temperature and state of charge. It
+is not a complete DC resistance model, and the lumped state cannot predict
+cell-to-cell gradients.
 
-## Radiator
+## Cabin cooling
 
-The code calculates required `UA` and air mass flow from the thermal duty and boundary temperatures. A particular heat exchanger is sufficient only when its performance map or test data meets those requirements.
+The cabin module reproduces the recoverable sensible-load subtotal and records
+the Karachi ambient, hot-soak and humidity boundaries. It does not invent the
+missing solar, latent, ventilation or transient pull-down terms.
 
-## Compressor capacity
+## Shared compressor
 
-The compressor map is interpolated only within its provided axes. Capacity is allocated according to the configured priority. The result is a gross capacity comparison unless condenser, heat-exchanger, piping, and control losses are included in the source map or an explicit derating model.
+Only the shared-compressor module combines battery plate demand and cabin duty.
+It interpolates the manufacturer R134a map inside its original axes, applies a
+declared allocation priority, and reports capacity shortfall. This remains a
+gross capacity balance until the condenser, heat exchangers, pressure losses,
+refrigerant states and controls are modeled.
 
-## Evidence control
+## Validation target
 
-Classify inputs as measured, manufacturer-provided, digitized, reconstructed, or assumed. Report model outputs with the same evidence boundary. Passing a software regression test establishes calculation consistency; it does not validate the physical system.
+The future experiment should record synchronized electrical power, motor loss
+or calorimetric heat, coolant inlet/outlet temperatures, flow, component
+pressure drop, battery temperature, cabin temperature, compressor electrical
+power and ambient conditions. Predictions should be compared with measurement
+error and sensor uncertainty, not described as proven from agreement at one
+point.

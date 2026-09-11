@@ -1,20 +1,20 @@
 ID,Domain,Parameter,Value,Unit,EvidenceClass,Limitation
-V01,Vehicle,Test mass,1950,kg,Sample reconstructed data,Replace with measured test mass
-V02,Vehicle,Wheel rolling diameter,0.724,m,Sample input,Replace with loaded rolling radius
-V03,Vehicle,Reduction ratio,9.11,-,Sample component data,Confirm selected drive unit
+V01,Vehicle,Test mass,1950,kg,Project design input,Replace with measured test mass
+V02,Vehicle,Wheel rolling diameter,0.724,m,Project design input,Replace with loaded rolling radius
+V03,Vehicle,Reduction ratio,9.11,-,Project component input,Confirm selected drive unit
 V04,Vehicle,Road-load constant A,566.4645,N,Reconstructed from two operating points,Replace with coast-down data
 V05,Vehicle,Road-load speed term B,0.4185918,N/(m/s)^2,Reconstructed from two operating points,Replace with coast-down data
-B01,Battery,Cell capacity,134,Ah,Sample component data,Replace with selected cell data
-B02,Battery,Cell nominal voltage,3.2,V,Sample component data,Replace with selected cell data
-B03,Battery,Series-cell count,108,count,Sample system data,Replace with selected pack topology
-B04,Battery,Resistance proxy,0.40,mOhm,Sample component limit,Not a temperature and SOC dependent DC resistance model
+B01,Battery,Cell capacity,134,Ah,SVOLT manufacturer specification,Confirm production cell revision
+B02,Battery,Cell nominal voltage,3.2,V,SVOLT manufacturer specification,Confirm production cell revision
+B03,Battery,Series-cell count,108,count,Project pack topology,Confirm production pack topology
+B04,Battery,Resistance proxy,0.40,mOhm,SVOLT manufacturer ACR limit,Not a temperature and SOC dependent DC resistance model
 B05,Battery,Cell specific heat,900,J/(kg K),Engineering assumption,Replace with measurement
 B06,Battery,Initial hot-state temperature,45,degC,Design boundary,Not a measured soak distribution
-D01,Drive unit,Integrated efficiency surface,50-95.2,percent,Digitized sample data,Replace with numerical test map
-C01,Coolant,Mixture,50/50 water-glycol,-,Sample system input,Use selected coolant properties
-H01,Hydraulics,Hose internal diameter,20,mm,Sample system input,Confirm production geometry
-H02,Hydraulics,Reference flow,16,L/min,Sample component basis,Confirm component test conditions
-H03,Pump,Screening operating point,20 L/min at 60 kPa,-,Sample component point,Full active Q-H curve required
-R01,Refrigerant,Map voltage,312,V,Sample map condition,Maintain consistent refrigerant boundary conditions
-R02,Refrigerant,Map refrigerant,R134a,-,Sample map condition,Replace if another refrigerant is used
+D01,Drive unit,Integrated efficiency surface,50-95.2,percent,Digitized 125 kW supplier chart,Replace with supplier numerical test map
+C01,Coolant,Mixture,50/50 water-glycol,-,Project system input,Use selected coolant properties
+H01,Hydraulics,Hose internal diameter,20,mm,Project system input,Confirm production geometry
+H02,Hydraulics,Reference flow,16,L/min,Project component basis,Confirm component test conditions
+H03,Pump,Screening operating point,20 L/min at 60 kPa,-,Manufacturer specification point,Full active Q-H curve required
+R01,Refrigerant,Map voltage,312,V,DM18A1 manufacturer map condition,Maintain consistent refrigerant boundary conditions
+R02,Refrigerant,Map refrigerant,R134a,-,DM18A1 manufacturer map condition,Replace if another refrigerant is used
 A01,Ambient,Hot-weather air inlet,45,degC,Design boundary,Replace with project climate requirement

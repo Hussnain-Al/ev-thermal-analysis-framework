@@ -1,44 +1,67 @@
-# Software Architecture
+# Architecture
 
-## Execution flow
-
-```mermaid
-flowchart TD
-  A[system_config] --> B[validation]
-  B --> C[explicit data readers]
-  C --> D[scenario and component calculations]
-  D --> E[system checks]
-  E --> F[CSV and figures]
-  F --> G[regression tests]
-```
-
-`verify_framework.m` executes the complete analysis and regression checks.
-`run_all.m` coordinates the engineering workflow but contains no component
-ratings. Domain-level functions in `examples/` assemble reusable calculations
-from `src/calculations/`. Project-controlled CSV inputs pass through
-`src/io/read_project_csv.m`, which fixes the delimiter and validates the schema
-before data reaches a calculation.
-
-## Physical-system boundary
+## Calculation dependencies
 
 ```mermaid
 flowchart TD
-  A[Drive cycle] --> B[Vehicle longitudinal model]
-  B --> C[Integrated drive unit]
-  C --> D[Propulsion coolant loop]
-  D --> E[Radiator and ambient air]
-  B --> F[Battery electrical load]
-  F --> G[Battery thermal model]
-  G --> H[Battery coolant interface]
-  H --> I[Shared refrigerant capacity]
-  J[Cabin sensible load] --> I
+  A["Vehicle configuration"] --> B["Motor heat module"]
+  C["Torque, power and efficiency data"] --> B
+  B --> D["Motor cooling module"]
+  B --> E["Battery cooling module"]
+  F["Cabin configuration and loads"] --> G["Cabin cooling module"]
+  E --> H["Shared compressor module"]
+  G --> H
+  I["Compressor map"] --> H
 ```
 
-The propulsion coolant loop is separate from the battery coolant/refrigerant branch. The model exchanges calculated heat duties between domains; it does not solve a full refrigerant state network.
+There are two intentional cross-module interfaces:
 
-## Extension rule
+| Producer | Consumer | Interface |
+|---|---|---|
+| Motor heat | Motor cooling | Cycle summary containing average and peak integrated-drive heat |
+| Motor heat | Battery cooling | Time-aligned `DCLinkPower_kW` trace |
+| Battery cooling | Shared compressor | Time-aligned plate cooling request and battery summary |
+| Cabin cooling | Shared compressor | Independent cabin-duty summary |
 
-Add new vehicle or component data through the root-level `system_config.m` and
-`data/`. Add new physics through a calculation function with a defined
-input/output interface and a regression test. Do not put component constants
-inside calculation functions.
+No module reads another module's configuration file. `run_all.m` owns the
+dependency order and passes result structs explicitly.
+
+## Physical circuits
+
+```mermaid
+flowchart TD
+  A["Integrated drive unit"] --> B["Coolant pump"]
+  B --> C["Propulsion radiator"]
+  C --> A
+```
+
+```mermaid
+flowchart TD
+  A["Battery cold plate"] --> B["Coolant-to-refrigerant HX"]
+  C["Cabin evaporator"] --> D["Shared compressor"]
+  B --> D
+  D --> E["Condenser and branch control"]
+  E --> B
+  E --> C
+```
+
+The MATLAB release treats the shared refrigerant system as a capacity
+allocation problem. It does not solve pressure, enthalpy, charge inventory or
+branch-valve dynamics.
+
+## Software layers
+
+| Layer | Responsibility |
+|---|---|
+| `config/` | User-editable component and boundary parameters |
+| `data/` | Maps, curves, scenarios and source-derived geometry |
+| `modules/` | Domain workflows and domain-specific exports |
+| `src/calculations/` | Unit-testable equations without vehicle ratings |
+| `src/io/` | Deterministic file import and schema checks |
+| `tests/` | Numerical regressions and forbidden-coupling checks |
+
+New physics belongs in `src/calculations/`; new study values belong in the
+relevant `config/` or `data/` domain.
+
+The generated-file interface is listed in
+[`RESULT_FILES.md`](RESULT_FILES.md).

@@ -1,23 +1,35 @@
 # Simulink and Simscape Extension
 
-The MATLAB framework provides boundary conditions, component data contracts, and regression values for a later physical-system model.
+## Decision
 
-## Recommended plant partitions
+Do not replace the MATLAB framework. Use it to freeze inputs, size components,
+generate regression values and audit energy balances. Add Simulink/Simscape as
+a second layer for coupled transient plant and control behavior.
 
-1. Battery cells, modules, thermal interfaces, and cooling plate.
-2. Integrated drive-unit thermal mass and coolant jacket.
-3. Propulsion coolant network with pump, restrictions, radiator, fan, and reservoir.
-4. Refrigerant loop with compressor, condenser, expansion devices, cabin evaporator, and battery heat exchanger.
-5. Cabin moist-air volume and heat loads.
+## Recommended subsystem models
 
-## Recommended control partitions
+| Stage | Subsystem | Purpose | MATLAB interface |
+|---|---|---|---|
+| 1 | Integrated-drive thermal mass and jacket | Winding/housing temperature response | `motor_heat` trace |
+| 1 | Propulsion coolant loop | Pump, restrictions, radiator and fan dynamics | `motor_cooling` requirements |
+| 1 | Battery module and cold plate | Cell temperature distribution and coolant response | `battery_cooling` trace |
+| 1 | Cabin thermal volume | Solar, occupant, infiltration and pull-down dynamics | `cabin_cooling` inputs |
+| 2 | Shared R134a circuit | Compressor, condenser, two expansion branches and heat exchangers | `shared_compressor` map and load traces |
+| 3 | Supervisory controls | Pump, fan, compressor speed and branch allocation | Module thresholds and limits |
 
-1. Battery cooling request and temperature hysteresis.
-2. Pump and fan speed control.
-3. Compressor speed command.
-4. Refrigerant branch allocation between battery and cabin.
-5. Thermal derating of propulsion or charging power.
+Recommended products are Simulink, Simscape, Simscape Fluids and Simscape
+Battery. The reference partition follows MathWorks' current BEV thermal example,
+which separates the electric powertrain, driveline, refrigerant cycle, coolant
+cycle and passenger cabin.
 
-Keep plant parameters separate from controller settings. Use the MATLAB CSV results as regression checks when each Simulink subsystem is introduced.
+## Validation sequence
 
-The architecture follows the component, circuit, control, and drive-cycle separation described in the MathWorks EV thermal-management overview. It does not reproduce or redistribute a MathWorks example model.
+1. Match every Simulink subsystem to its MATLAB steady or transient regression.
+2. Replace assumed coefficients with bench or vehicle measurements.
+3. Validate components before validating the coupled system.
+4. Add sensor uncertainty and compare error over complete drive cycles.
+5. Freeze the validated parameter set separately from controller calibration.
+
+The archived ADVISOR `.mat` file may be used to study file structure only. It
+must not be used as the vehicle validation target because its motor and battery
+do not match this project.

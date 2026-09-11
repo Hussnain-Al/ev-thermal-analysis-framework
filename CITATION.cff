@@ -5,12 +5,12 @@ type: software
 authors:
   - family-names: Ali
     given-names: Hassnain
-version: 2.0.5
-date-released: 2026-08-25
+version: 3.0.0-rc1
+date-released: 2026-09-11
 license: MIT
 repository-code: https://github.com/Hussnain-Al/ev-thermal-analysis-framework
 url: https://github.com/Hussnain-Al/ev-thermal-analysis-framework
 abstract: >-
-  A reusable MATLAB framework for preliminary battery, integrated-drive,
-  refrigerant-capacity, radiator and coolant-loop assessment in
-  battery-electric vehicles.
+  A modular MATLAB framework for preliminary motor-heat, propulsion-cooling,
+  battery-cooling, cabin-cooling and shared-compressor assessment in
+  battery-electric vehicles under hot-weather conditions.

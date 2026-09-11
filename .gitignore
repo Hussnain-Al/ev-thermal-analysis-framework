@@ -1,5 +1,7 @@
 outputs/*
 !outputs/.gitkeep
+references/private_source_documents/*
+!references/private_source_documents/README.md
 *.asv
 *.m~
 slprj/
