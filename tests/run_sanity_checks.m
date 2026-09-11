@@ -2,7 +2,7 @@
 rootDir = fileparts(fileparts(mfilename('fullpath')));
 addpath(rootDir,'-begin');
 cfg = setup_project();
-assert(strcmp(cfg.project.version,"3.0.0"));
+assert(strcmp(cfg.project.version,"3.1.0"));
 
 % Every active CSV is imported through the deterministic project reader.
 csvChecks = { ...
@@ -114,8 +114,16 @@ assert(isfield(results,'cabinCooling'));
 assert(isfield(results,'sharedCompressor'));
 assert(height(results.motorHeat.summary)==height(cfg.cycles));
 assert(height(results.batteryCooling.summary)==height(cfg.cycles));
+assert(height(results.motorCooling.currentResult)==2*height(cfg.cycles));
 assert(all(results.motorCooling.radiator.RequiredDuty_kW== ...
     results.motorCooling.heat.ThermalDuty_kW));
+assert(all(results.motorCooling.currentResult.PumpPointCoversPartialLoop== ...
+    (results.motorCooling.currentResult.MinimumDocumentedHeadMargin_kPa>=0)));
+assert(all(results.batteryCooling.summary.CoolingActiveTime_pct>=0 & ...
+    results.batteryCooling.summary.CoolingActiveTime_pct<=100));
+assert(all(results.batteryCooling.summary.CellTemperatureMargin_C>0));
+assert(all(results.batteryCooling.summary.FinalCellTemperature_C<= ...
+    results.batteryCooling.summary.InitialCellTemperature_C));
 assert(all(results.sharedCompressor.currentResult.KarachiDesignAmbient_C==45));
 assert(all(strlength(results.sharedCompressor.currentResult.CabinModelBoundary)>0));
 assert(all(strlength(results.sharedCompressor.currentResult.BatteryModelBoundary)>0));

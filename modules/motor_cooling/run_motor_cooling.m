@@ -39,6 +39,8 @@ out.thermalReference = read_project_csv(files.thermalReference, ...
 out.radiatorGeometry = read_project_csv(files.radiatorGeometry, ...
     radiator_geometry_columns(),radiator_geometry_numeric_columns());
 out.hydraulics = evaluate_hydraulics(g,c,pump,files.inactivePumpCurve);
+out.currentResult = build_current_result(out.heat,out.coolant, ...
+    out.radiator,out.hydraulics.pumpCheck);
 
 writetable(out.heat,fullfile(outputDir,"motor_heat_boundary.csv"));
 writetable(out.coolant,fullfile(outputDir,"coolant_transport.csv"));
@@ -53,8 +55,30 @@ writetable(out.hydraulics.pumpCheck, ...
     fullfile(outputDir,"pump_operating_point.csv"));
 writetable(out.hydraulics.inactivePumpCases, ...
     fullfile(outputDir,"inactive_pump_cases.csv"));
+writetable(out.currentResult, ...
+    fullfile(outputDir,"motor_cooling_current_result.csv"));
 
 plot_hydraulic_sensitivity(out.hydraulics.sensitivity,c,outputDir);
+plot_motor_cooling_requirements(out.currentResult,outputDir);
+end
+
+function current = build_current_result(heat,coolant,radiator,pumpCheck)
+n = height(heat);
+current = table(heat.Cycle,heat.LoadMetric,heat.ThermalDuty_kW, ...
+    coolant.CoolantFlow_Lmin,coolant.CoolantMassFlow_kgs, ...
+    coolant.CoolantRise_C,radiator.CoolantIn_C,radiator.CoolantOut_C, ...
+    radiator.AssumedLMTD_K,radiator.RequiredUA_WK, ...
+    radiator.RequiredAirMassFlow_kgs, ...
+    repmat(pumpCheck.SpecifiedMinimumHead_kPa,n,1), ...
+    repmat(pumpCheck.EvidenceBackedPartialLoop_kPa,n,1), ...
+    repmat(pumpCheck.MinimumDocumentedHeadMargin_kPa,n,1), ...
+    repmat(pumpCheck.DocumentedPointCoversPartialLoop,n,1), ...
+    'VariableNames',{'Cycle','LoadMetric','ThermalDuty_kW', ...
+    'CoolantFlow_Lmin','CoolantMassFlow_kgs','CoolantRise_C', ...
+    'RadiatorCoolantIn_C','RadiatorCoolantOut_C','AssumedLMTD_K', ...
+    'RequiredUA_WK','RequiredAirMassFlow_kgs', ...
+    'SpecifiedMinimumPumpHead_kPa','EvidenceBackedPartialLoop_kPa', ...
+    'MinimumDocumentedHeadMargin_kPa','PumpPointCoversPartialLoop'});
 end
 
 function out = evaluate_hydraulics(g,c,pump,inactivePumpCurveFile)
@@ -145,6 +169,41 @@ legend(labels,'Location','northwest');
 exportgraphics(fig,fullfile(outputDir,"loop_sensitivity.png"), ...
     'Resolution',180);
 close(fig);
+end
+
+function plot_motor_cooling_requirements(current,outputDir)
+labels = current.Cycle+" "+current.LoadMetric;
+fig = figure('Visible','off','Color','w','Position',[100 100 1250 800]);
+layout = tiledlayout(2,2,'TileSpacing','compact');
+
+nexttile;
+bar(current.ThermalDuty_kW);
+format_category_axis(labels,'Thermal duty (kW)');
+
+nexttile;
+bar(current.CoolantRise_C);
+format_category_axis(labels,'Coolant rise (C)');
+
+nexttile;
+bar(current.RequiredUA_WK);
+format_category_axis(labels,'Required UA (W/K)');
+
+nexttile;
+bar(current.RequiredAirMassFlow_kgs);
+format_category_axis(labels,'Required air flow (kg/s)');
+
+title(layout,'Propulsion-loop thermal requirements');
+exportgraphics(fig,fullfile(outputDir,"motor_cooling_requirements.png"), ...
+    'Resolution',180);
+close(fig);
+end
+
+function format_category_axis(labels,yAxisLabel)
+grid on;
+xticks(1:numel(labels));
+xticklabels(labels);
+xtickangle(20);
+ylabel(yAxisLabel);
 end
 
 function names = radiator_geometry_columns()

@@ -26,17 +26,34 @@ writetable(out.summary,fullfile(outputDir,"motor_heat_summary.csv"));
 
 fig = figure('Visible','off','Color','w');
 layout = tiledlayout(nCycles,1,'TileSpacing','compact');
+maximumHeat_kW = max(cellfun(@(x) max(x.DriveUnitHeat_kW),details));
 for i = 1:nCycles
     nexttile;
     plot(details{i}.Time_s,details{i}.DriveUnitHeat_kW,'LineWidth',1.1);
+    hold on;
+    mark_extrema(details{i}.Time_s,details{i}.DriveUnitHeat_kW);
     grid on;
     ylabel('Heat (kW)');
+    ylim([0 1.08*maximumHeat_kW]);
     title(cfg.cycles.Name(i));
 end
 xlabel(layout,'Time (s)');
 exportgraphics(fig,fullfile(outputDir,"motor_heat_traces.png"), ...
     'Resolution',180);
 close(fig);
+end
+
+function mark_extrema(time_s,signal)
+[maximumValue,maximumIndex] = max(signal);
+[minimumValue,minimumIndex] = min(signal);
+plot(time_s(maximumIndex),maximumValue,'ro','MarkerFaceColor','r');
+plot(time_s(minimumIndex),minimumValue,'bo','MarkerFaceColor','b');
+text(time_s(maximumIndex),maximumValue, ...
+    sprintf(' max %.3f kW @ %.0f s',maximumValue,time_s(maximumIndex)), ...
+    'VerticalAlignment','bottom');
+text(time_s(minimumIndex),minimumValue, ...
+    sprintf(' min %.3f kW @ %.0f s',minimumValue,time_s(minimumIndex)), ...
+    'VerticalAlignment','bottom');
 end
 
 function ensure_output_folder(folder)

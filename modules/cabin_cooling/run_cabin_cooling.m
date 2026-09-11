@@ -27,6 +27,26 @@ out.summary = table(p.designLocation,p.designAmbient_C,p.initialHotSoak_C, ...
 
 writetable(out.inputs,fullfile(outputDir,"cabin_load_inputs_used.csv"));
 writetable(out.summary,fullfile(outputDir,"cabin_cooling_summary.csv"));
+plot_cabin_load_breakdown(out.inputs,out.summary,outputDir);
+end
+
+function plot_cabin_load_breakdown(inputs,summary,outputDir)
+fig = figure('Visible','off','Color','w','Position',[100 100 1050 650]);
+bar(inputs.Load_kW);
+grid on;
+xticks(1:height(inputs));
+xticklabels(inputs.LoadComponent);
+xtickangle(20);
+ylabel('Recovered load (kW)');
+title(sprintf('Recovered partial sensible cabin load: %.3f kW', ...
+    summary.RecoveredPartialSensibleLoad_kW));
+for i = 1:height(inputs)
+    text(i,inputs.Load_kW(i),sprintf(' %.3f',inputs.Load_kW(i)), ...
+        'HorizontalAlignment','center','VerticalAlignment','bottom');
+end
+exportgraphics(fig,fullfile(outputDir,"cabin_load_breakdown.png"), ...
+    'Resolution',180);
+close(fig);
 end
 
 function ensure_output_folder(folder)

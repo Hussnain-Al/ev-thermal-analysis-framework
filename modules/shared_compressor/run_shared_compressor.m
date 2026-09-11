@@ -41,6 +41,37 @@ writetable(out.comparison,fullfile(outputDir, ...
     "shared_compressor_comparison.csv"));
 writetable(out.currentResult,fullfile(outputDir, ...
     "shared_cooling_current_result.csv"));
+plot_shared_compressor_capacity( ...
+    batteryCooling.details,cabinCooling.summary,out.candidates,outputDir);
+end
+
+function plot_shared_compressor_capacity( ...
+        batteryDetails,cabinSummary,candidates,outputDir)
+fig = figure('Visible','off','Color','w','Position',[100 100 1250 780]);
+layout = tiledlayout(numel(batteryDetails),1,'TileSpacing','compact');
+cabinDuty_kW = cabinSummary.RecoveredPartialSensibleLoad_kW;
+colors = lines(height(candidates));
+for i = 1:numel(batteryDetails)
+    nexttile;
+    combinedDemand_kW = ...
+        batteryDetails{i}.BatteryCoolingRequest_kW+cabinDuty_kW;
+    plot(batteryDetails{i}.Time_s,combinedDemand_kW,'k','LineWidth',1.4, ...
+        'DisplayName','Combined demand');
+    hold on;
+    for j = 1:height(candidates)
+        yline(candidates.CoolingCapacity_kW(j),'--', ...
+            candidates.Model(j),'Color',colors(j,:), ...
+            'LineWidth',1.2,'LabelHorizontalAlignment','left');
+    end
+    grid on;
+    ylabel('Cooling duty (kW)');
+    title(batteryDetails{i}.Cycle(1));
+end
+xlabel(layout,'Time (s)');
+title(layout,'Shared compressor capacity against cabin and battery demand');
+exportgraphics(fig,fullfile(outputDir,"shared_compressor_capacity.png"), ...
+    'Resolution',180);
+close(fig);
 end
 
 function current = build_current_result( ...

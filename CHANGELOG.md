@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.1.0 — 2026-09-11
+
+- Added a combined propulsion-loop decision table covering duty, coolant rise,
+  radiator outlet, required `UA`, air flow and pump-head margin.
+- Expanded the battery summary with heat and cooling energy, cooling-active
+  time, temperature extrema, event times and temperature margin.
+- Added propulsion thermal-requirement, cabin-load and shared-compressor plots.
+- Revised motor and battery transient plots with comparable axes and extrema.
+- Published every MATLAB-generated result plot in the README.
+
 ## 3.0.0 — 2026-09-11
 
 - Split configuration, data, execution and outputs into motor heat, motor

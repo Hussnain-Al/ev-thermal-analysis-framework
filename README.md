@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Modular MATLAB screening model for a compact battery-electric SUV operating
-under Karachi hot-weather conditions. Version `3.0.0` separates heat
+under Karachi hot-weather conditions. Version `3.1.0` separates heat
 generation, cooling hardware, and shared-capacity decisions so every subsystem
 can be tested, replaced, or moved into Simulink without rewriting the others.
 
@@ -129,7 +129,7 @@ hardware-in-the-loop testing. The staged model boundary is defined in
 
 ## Release state
 
-Version `3.0.0` passed `verify_framework` in MATLAB R2024b on GitHub Actions.
+Version `3.1.0` is verified by `verify_framework` in MATLAB R2024b on GitHub Actions.
 That check covers the full calculation run, output completeness, numerical
 regressions, input schemas and module interfaces.
 
