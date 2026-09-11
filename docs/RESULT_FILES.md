@@ -24,5 +24,9 @@ Plots remain module-specific:
 - `motor_cooling/loop_sensitivity.png`
 - `battery_cooling/battery_cooling_traces.png`
 
+Reference copies from the verified MATLAB R2024b workflow are committed under
+`docs/images/results/` and displayed in the main README. Files under `outputs/`
+remain generated artifacts and are rebuilt by `verify_framework`.
+
 No combined plot is generated because the cabin input is presently a fixed,
 partial sensible duty rather than a validated transient cabin-load trace.
