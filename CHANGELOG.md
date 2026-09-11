@@ -8,7 +8,8 @@
   time, temperature extrema, event times and temperature margin.
 - Added propulsion thermal-requirement, cabin-load and shared-compressor plots.
 - Revised motor and battery transient plots with comparable axes and extrema.
-- Published every MATLAB-generated result plot in the README.
+- Published every MATLAB-generated result plot in the README with rounded
+  loop-level decision tables and explicit model-boundary notes.
 
 ## 3.0.0 — 2026-09-11
 

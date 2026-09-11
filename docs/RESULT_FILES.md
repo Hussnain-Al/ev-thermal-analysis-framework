@@ -28,8 +28,10 @@ Plots remain module-specific:
 - `shared_compressor/shared_compressor_capacity.png`
 
 Reference copies from the verified MATLAB R2024b workflow are committed under
-`docs/images/results/` and displayed in the main README. Files under `outputs/`
-remain generated artifacts and are rebuilt by `verify_framework`.
+`docs/images/results/` and displayed with rounded decision tables in the main
+README. Files under `outputs/` remain generated artifacts and are rebuilt by
+`verify_framework`.
 
-No combined plot is generated because the cabin input is presently a fixed,
-partial sensible duty rather than a validated transient cabin-load trace.
+The shared-compressor plot combines the fixed recovered cabin subtotal with the
+transient battery plate request only for gross capacity screening. It is not a
+refrigerant-cycle simulation or a validated transient cabin-load result.
