@@ -12,9 +12,14 @@ out.inputs = read_project_csv(p.files.loadInputs, ...
 surfaceLoads_W = readmatrix(p.files.sourceWorkbook,'Sheet','Sheet1', ...
     'Range','I2:I18');
 workbookBodyAndGlazing_kW = sum(surfaceLoads_W,'omitnan')/1000;
-if abs(workbookBodyAndGlazing_kW-out.inputs.Load_kW(1))>1e-6
+
+% The derived CSV intentionally reports loads to 0.001 kW. Compare the
+% workbook subtotal at that published precision instead of demanding
+% bit-for-bit equality with unrounded workbook cells.
+publishedLoadTolerance_kW = 0.5e-3;
+if abs(workbookBodyAndGlazing_kW-out.inputs.Load_kW(1))>publishedLoadTolerance_kW
     error('EVThermal:CabinWorkbookMismatch', ...
-        'Recovered workbook surface-load total does not match the derived input table.');
+        'Recovered workbook surface-load total does not match the derived input table to 0.001 kW.');
 end
 calculated = calculate_cabin_partial_load(out.inputs);
 if abs(calculated.RecoveredPartialSensibleLoad_kW- ...
