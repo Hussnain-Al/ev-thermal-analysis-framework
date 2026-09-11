@@ -1,2 +1,2 @@
-Radiator,Application,CoreHeight_mm,CoreWidth_mm,FrontalArea_m2,TubeWidth_mm,TubeThickness_mm,TubeQuantity,TubeLength_mm,FinWidth_mm,FinHeight_mm,FinPitch_mm,FinQuantity,FinLength_mm,EvidenceStatus
-Propulsion heat exchanger,Drive-unit coolant loop,270,310,0.0837,26,2,31,275,26,8,2.8,32,260,Geometry transcribed from archived Radiator ppt.pptx; no heat-rejection or pressure-drop curve
+Radiator,Application,CoreHeight_mm,CoreWidth_mm,FrontalArea_m2,TubeWidth_mm,TubeThickness_mm,TubeQuantity,TubeLength_mm,FinWidth_mm,FinHeight_mm,FinPitch_mm,FinQuantity,FinLength_mm
+Propulsion heat exchanger,Drive-unit coolant loop,270,310,0.0837,26,2,31,275,26,8,2.8,32,260
