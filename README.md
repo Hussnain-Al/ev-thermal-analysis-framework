@@ -41,14 +41,13 @@ output contract and the meaning of the merged screening result.
 
 ## Architecture
 
-```mermaid
-flowchart TD
-  A["EPA drive cycles"] --> B["Motor heat"]
-  B --> C["Motor cooling"]
-  B --> D["Battery cooling"]
-  E["Cabin cooling"] --> F["Shared compressor"]
-  D --> F
-```
+### System cooling loops
+
+<img src="docs/images/system_cooling_loops.png" width="900" alt="Battery, cabin-refrigerant and propulsion cooling-loop architecture">
+
+### Propulsion coolant loop
+
+<img src="docs/images/propulsion_cooling_loop.png" width="560" alt="Radiator, pump, power-distribution unit, motor controller and motor coolant loop">
 
 | Module | Own parameters | Main output |
 |---|---|---|
@@ -93,6 +92,10 @@ the active model because it represents a 58 kW motor and a NiMH battery.
 See [`references/SOURCE_PROVENANCE.md`](references/SOURCE_PROVENANCE.md) for
 hashes, evidence roles, limitations, official EPA cycle links, and the
 MathWorks/NREL/SAE references.
+
+Detailed source figures are separated into the
+[`battery thermal model`](docs/BATTERY_THERMAL_MODEL.md) and
+[`cabin cooling model`](docs/CABIN_COOLING_MODEL.md) documentation.
 
 ## Karachi boundary
 

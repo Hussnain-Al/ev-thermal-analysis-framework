@@ -31,11 +31,18 @@ The 0.40 mOhm value is an ACR limit at one temperature and state of charge. It
 is not a complete DC resistance model, and the lumped state cannot predict
 cell-to-cell gradients.
 
+The recovered construction drawings, equivalent circuits and the exact model
+simplification are shown in
+[`BATTERY_THERMAL_MODEL.md`](BATTERY_THERMAL_MODEL.md).
+
 ## Cabin cooling
 
 The cabin module reproduces the recoverable sensible-load subtotal and records
 the Karachi ambient, hot-soak and humidity boundaries. It does not invent the
 missing solar, latent, ventilation or transient pull-down terms.
+
+The full load-path figure and the current model boundary are shown in
+[`CABIN_COOLING_MODEL.md`](CABIN_COOLING_MODEL.md).
 
 ## Shared compressor
 

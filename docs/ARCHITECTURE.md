@@ -28,22 +28,13 @@ dependency order and passes result structs explicitly.
 
 ## Physical circuits
 
-```mermaid
-flowchart TD
-  A["Integrated drive unit"] --> B["Coolant pump"]
-  B --> C["Propulsion radiator"]
-  C --> A
-```
+### System cooling loops
 
-```mermaid
-flowchart TD
-  A["Battery cold plate"] --> B["Coolant-to-refrigerant HX"]
-  C["Cabin evaporator"] --> D["Shared compressor"]
-  B --> D
-  D --> E["Condenser and branch control"]
-  E --> B
-  E --> C
-```
+<img src="images/system_cooling_loops.png" width="900" alt="Battery, cabin-refrigerant and propulsion cooling-loop architecture">
+
+### Propulsion coolant loop
+
+<img src="images/propulsion_cooling_loop.png" width="560" alt="Radiator, pump, power-distribution unit, motor controller and motor coolant loop">
 
 The MATLAB release treats the shared refrigerant system as a capacity
 allocation problem. It does not solve pressure, enthalpy, charge inventory or
