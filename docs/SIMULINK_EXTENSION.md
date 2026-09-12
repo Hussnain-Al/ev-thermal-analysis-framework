@@ -8,8 +8,8 @@ performed loop by loop before any integration.
 | 1 | Battery sustained requirements | Compiled Simulink screen | Current SVOLT evidence is sufficient for a lower-bound screen |
 | 1 | Battery cells and cold plate | Blocked | DC resistance, heat test and cell-to-coolant response |
 | 2 | Drive-unit thermal mass and coolant jacket | Compiled sensitivity model | Heat capacity and motor-to-coolant resistance remain uncalibrated |
-| 2 | Pump and restrictions | Blocked | Active pump curve and component pressure-drop tests |
-| 2 | Radiator and fan | Blocked | Heat-rejection map versus coolant and air flow |
+| 2 | Pump operating point | Blocked | Active pump curve and candidate-radiator pressure drop |
+| 2 | Radiator/fan requirements | MATLAB design screen | Candidate-core test or CFD still required for actual performance |
 | 3 | Cabin thermal volume | Blocked | Complete solar, latent, ventilation and pull-down inputs |
 
 The battery Simulink builder is in

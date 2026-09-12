@@ -3,7 +3,7 @@
 | Folder | Contents |
 |---|---|
 | `common/cycles/` | EPA NYCC and HWFET schedules |
-| `motor_heat/` | Original torque/power workbook and digitized efficiency map |
+| `motor_heat/` | Original torque/power workbook, digitized integrated efficiency map and controller-only loss references |
 | `motor_cooling/` | Pump resistance, radiator geometry and motor references |
 | `cabin_cooling/` | Original recovered cabin workbook and derived load inputs |
 

@@ -24,9 +24,28 @@ C_c\frac{dT_c}{dt}=\frac{T_m-T_c}{R_{mc}}-UA\max(T_c-T_a,0)
 
 `C_m`, `C_c`, `R_mc` and `UA` are exposed calibration assumptions. The model
 reports temperatures and energy balance but issues no component pass/fail.
+The 83.5 kg three-in-one drive-unit mass is known. Its 45 kJ/K thermal
+capacitance corresponds to an assumed effective specific heat of about
+539 J/(kg K); the complete assembly is not treated as solid ADC12.
 
-Darcy-Weisbach and fitting losses define the known partial-loop system curve.
-The 60 kPa documented pump point is plotted against that curve.
+Darcy-Weisbach and fitting losses define the six-hose system curve. Motor,
+controller, PDU and radiator pressure drops are excluded. The 60 kPa documented
+pump point is therefore compared only with the modeled hose requirement.
+
+## Radiator and fan requirements
+
+The retained 270 by 310 mm core is treated as an unbuilt design candidate.
+For the sustained-grade and low-speed hot-weather duties, coolant outlet
+temperature follows the coolant energy balance. Air mass flow follows:
+
+\[
+\dot m_a=\frac{\dot Q}{c_{p,a}(T_{a,out}-T_{a,in})}
+\]
+
+Required `UA` uses an ideal counterflow LMTD. At zero road speed the fan must
+provide the complete required air volume flow. At vehicle speed, `A_core v`
+is reported only as a 100% capture upper bound; grille, duct and core losses
+are not invented.
 
 ## Battery sustained screen
 

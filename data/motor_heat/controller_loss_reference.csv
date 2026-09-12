@@ -1,0 +1,3 @@
+OperatingPoint,OutputPower_kW,TotalControllerLoss_W,IGBTLossPerBridgeArm_W,DiodeLossPerBridgeArm_W,EvidenceStatus
+Rated,60,1580,218,44,Digitized from supplied controller-program figure; operating temperature not stated
+Peak,125,3218,460,74,Digitized from supplied controller-program figure; phase current 440 Arms and DC voltage 450 V shown
