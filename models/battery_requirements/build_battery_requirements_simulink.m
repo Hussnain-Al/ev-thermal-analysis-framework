@@ -1,7 +1,7 @@
-function modelFile = build_battery_loop_simulink(cfg,options)
-%BUILD_BATTERY_LOOP_SIMULINK Build the standalone battery requirements model.
+function modelFile = build_battery_requirements_simulink(cfg,options)
+%BUILD_BATTERY_REQUIREMENTS_SIMULINK Build the battery requirements screen.
 % The generated model implements the same sustained lower-bound equations
-% as calculate_battery_loop_requirements. It contains no transient cell,
+% as calculate_battery_requirements_screen. It contains no transient cell,
 % coolant-flow, radiator, compressor or refrigeration model.
 
 arguments
@@ -11,12 +11,12 @@ end
 
 if isempty(ver('simulink'))
     error('EVThermal:SimulinkRequired', ...
-        'Simulink is required to generate the battery-loop model.');
+        'Simulink is required to generate the battery requirements screen.');
 end
 
 rootDir = cfg.project.rootDir;
-modelDir = fullfile(rootDir,'models','battery_loop');
-modelName = "battery_loop_requirements";
+modelDir = fullfile(rootDir,'models','battery_requirements');
+modelName = "battery_requirements_screen";
 modelFile = fullfile(modelDir,modelName+".slx");
 
 if isfile(modelFile) && ~options.Overwrite

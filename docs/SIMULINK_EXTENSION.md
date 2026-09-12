@@ -5,16 +5,20 @@ performed loop by loop before any integration.
 
 | Stage | Model | Status | Required evidence |
 |---|---|---|---|
-| 1 | Battery sustained requirements | Builder added | Current SVOLT evidence is sufficient for a lower-bound screen |
+| 1 | Battery sustained requirements | Compiled Simulink screen | Current SVOLT evidence is sufficient for a lower-bound screen |
 | 1 | Battery cells and cold plate | Blocked | DC resistance, heat test and cell-to-coolant response |
-| 2 | Drive-unit thermal mass and coolant jacket | Blocked | Heat capacity and motor-to-coolant resistance |
+| 2 | Drive-unit thermal mass and coolant jacket | Compiled sensitivity model | Heat capacity and motor-to-coolant resistance remain uncalibrated |
 | 2 | Pump and restrictions | Blocked | Active pump curve and component pressure-drop tests |
 | 2 | Radiator and fan | Blocked | Heat-rejection map versus coolant and air flow |
 | 3 | Cabin thermal volume | Blocked | Complete solar, latent, ventilation and pull-down inputs |
 
 The battery Simulink builder is in
-`models/battery_loop/build_battery_loop_simulink.m`. It creates an algebraic
-requirements model, not a transient thermal plant.
+`models/battery_requirements/build_battery_requirements_simulink.m`. It creates
+an algebraic requirements screen, not a transient thermal plant. The propulsion
+builder is in `models/propulsion_thermal_sensitivity/` and exposes its radiator
+UA scenario as a model input.
+
+See `MISSING_MODEL_INPUTS.md` before adding any physical components.
 
 The deleted compressor allocation model should not be restored without a full
 refrigerant map and physical feedback into coolant and cabin temperatures.
