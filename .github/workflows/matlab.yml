@@ -15,11 +15,17 @@ jobs:
         uses: matlab-actions/setup-matlab@v3
         with:
           release: R2024b
+          products: Simulink
 
       - name: Run framework and regression checks
         uses: matlab-actions/run-command@v3
         with:
           command: results = verify_framework;
+
+      - name: Generate and compile battery-loop Simulink model
+        uses: matlab-actions/run-command@v3
+        with:
+          command: run_battery_loop_simulink_checks;
 
       - name: Upload generated result plots
         uses: actions/upload-artifact@v4

@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.1.0 — 2026-09-12
+
+- Added a standalone Simulink builder for the battery sustained-load
+  requirements model.
+- Consolidated battery heat and allowable-coolant calculations into one shared
+  function used by MATLAB and represented block-by-block in Simulink.
+- Added a Simulink generation and compile check to public continuous
+  integration.
+- Kept transient cell temperature, coolant hydraulics, radiator, compressor and
+  refrigeration calculations outside the battery model until evidence exists.
+
 ## 4.0.1 — 2026-09-12
 
 - Replaced README previews with the exact MATLAB R2024b workflow artifacts.

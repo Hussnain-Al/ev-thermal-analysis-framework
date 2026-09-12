@@ -2,7 +2,7 @@
 rootDir = fileparts(fileparts(mfilename('fullpath')));
 addpath(rootDir,'-begin');
 cfg = setup_project();
-assert(strcmp(cfg.project.version,"4.0.1"));
+assert(strcmp(cfg.project.version,"4.1.0"));
 assert(~isfield(cfg,'sharedCompressor'));
 
 % Every active CSV is imported through the deterministic project reader.
@@ -38,6 +38,13 @@ assert(abs(screen.PackHeat_kW(2)-3.1027968)<1e-8);
 riseAtOneC = screen.CellHeat_W(1)*battery.baseResistance_KW;
 assert(abs(riseAtOneC-22.26544)<1e-8);
 assert(abs((battery.absoluteOperatingLimit_C-riseAtOneC)-37.73456)<1e-8);
+
+loopRequirements = calculate_battery_loop_requirements([1;2],battery);
+assert(isequal(loopRequirements.PackHeat_kW,screen.PackHeat_kW));
+assert(abs(loopRequirements.RequiredCellToCoolantRise_C(1)-22.26544)<1e-8);
+assert(abs(loopRequirements.MaximumCoolantForRegen_C(1)-32.73456)<1e-8);
+assert(abs(loopRequirements.MaximumCoolantForDischarge_C(1)-37.73456)<1e-8);
+assert(all(loopRequirements.ACRProxyOnly));
 
 % Core coolant transport and hydraulic regressions.
 coolant = cfg.motorCooling.coolant;

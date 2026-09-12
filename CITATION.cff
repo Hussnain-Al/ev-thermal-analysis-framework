@@ -5,12 +5,12 @@ type: software
 authors:
   - family-names: Ali
     given-names: Hassnain
-version: 4.0.1
+version: 4.1.0
 date-released: 2026-09-12
 license: MIT
 repository-code: https://github.com/Hussnain-Al/ev-thermal-analysis-framework
 url: https://github.com/Hussnain-Al/ev-thermal-analysis-framework
 abstract: >-
-  A modular MATLAB framework for motor heat, transient propulsion cooling,
-  sustained battery thermal screening and cabin-load assessment in
+  A modular MATLAB and Simulink framework for motor heat, transient propulsion
+  cooling, sustained battery thermal screening and cabin-load assessment in
   battery-electric vehicles under hot-weather conditions.
