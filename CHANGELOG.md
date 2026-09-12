@@ -1,5 +1,20 @@
 # Changelog
 
+## 4.3.0 — 2026-09-12
+
+- Confirmed all six external hoses use 20 mm internal diameter and removed the
+  unsupported component pressure-drop allowances from the hydraulic result.
+- Replaced the former pump-shortfall verdict with a hose-only pressure
+  requirement and remaining-head budget.
+- Added first-pass radiator and fan requirements for sustained grade and
+  low-speed hot-weather cases using the retained candidate core geometry.
+- Added ideal ram-air upper bounds and zero-road-speed fan-flow requirements
+  without assuming grille or duct efficiency.
+- Added the 83.5 kg three-in-one drive-unit mass and exposed its effective
+  specific heat as an uncalibrated thermal assumption.
+- Added the supplied controller rated and peak loss points as reference data;
+  they are not added to the integrated three-in-one heat map.
+
 ## 4.2.0 — 2026-09-12
 
 - Renamed the battery Simulink artifact as a requirements screen so it is not

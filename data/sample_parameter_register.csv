@@ -12,13 +12,16 @@ B05,Battery,Cell-base thermal resistance,3.10,K/W,Reconstructed thermal network,
 B06,Battery,Continuous-charge cutoff,55,degC,SVOLT manufacturer specification,Applies to continuous charging table
 B07,Battery,Absolute operating limit,60,degC,SVOLT manufacturer specification,BMS must stop battery operation
 D01,Drive unit,Integrated efficiency surface,50-95.2,percent,Digitized 125 kW supplier chart,Replace with supplier numerical test map
-D02,Drive unit,Assumed thermal capacitance,45000,J/K,Calibration assumption,Identify experimentally
-D03,Drive unit,Assumed motor-to-coolant resistance,0.015,K/W,Calibration assumption,Identify experimentally
+D02,Drive unit,Three-in-one assembly mass,83.5,kg,Project component input,Mass confirmed; internal material split unavailable
+D03,Drive unit,Assumed effective specific heat,538.9222,J/(kg K),Calibration assumption,ADC12 applies only to the outer casing
+D04,Drive unit,Assumed thermal capacitance,45000,J/K,Derived sensitivity input,Mass multiplied by assumed effective specific heat
+D05,Drive unit,Assumed motor-to-coolant resistance,0.015,K/W,Calibration assumption,Identify experimentally
 C01,Coolant,Mixture,50/50 water-glycol,-,Project system input,Use selected coolant properties
 C02,Coolant,Assumed loop thermal capacitance,17500,J/K,Calibration assumption,Replace with measured coolant volume and component masses
-H01,Hydraulics,Hose internal diameter,20,mm,Project system input,Confirm production geometry
+H01,Hydraulics,Hose internal diameter,20,mm,Confirmed project geometry,Applies to all six external hoses
 H02,Hydraulics,Reference flow,16,L/min,Project component basis,Confirm component test conditions
 H03,Pump,Screening operating point,20 L/min at 60 kPa,-,Manufacturer specification point,Full active Q-H curve required
-R01,Radiator,Assumed UA,665,W/K,Calibration assumption,Replace with radiator and fan performance map
-R02,Radiator,Assumed fan-only UA,300,W/K,Calibration assumption,Replace with fan-only performance test
+R01,Radiator,Candidate core frontal area,0.0837,m^2,Retained project geometry,Unbuilt design candidate
+R02,Radiator,Assumed transient-model UA,665,W/K,Calibration assumption,Compare with calculated requirement and validate by CFD or test
+R03,Radiator,Assumed fan-only transient UA,300,W/K,Calibration assumption,Replace with fan and core performance test
 A01,Ambient,Hot-weather air inlet,45,degC,Design boundary,Replace with project climate requirement
