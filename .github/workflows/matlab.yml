@@ -25,7 +25,7 @@ jobs:
       - name: Generate and compile battery-loop Simulink model
         uses: matlab-actions/run-command@v3
         with:
-          command: run_battery_loop_simulink_checks;
+          command: setup_project(); run_battery_loop_simulink_checks;
 
       - name: Upload generated result plots
         uses: actions/upload-artifact@v4
