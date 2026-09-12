@@ -114,6 +114,11 @@ candidate. The sustained-grade and low-speed hot-weather cases calculate:
 - complete fan-flow requirement at zero road speed;
 - ideal ram-air upper bound from core area and vehicle speed.
 
+| Design case | Heat duty | Coolant out | Required ideal UA | Fan flow at zero speed | Ideal ram-air bound | Required capture |
+|---|---:|---:|---:|---:|---:|---:|
+| 10% grade at 40 km/h | 2.769 kW | 62.78 C | 204.8 W/K | 0.248 m3/s | 0.930 m3/s | 26.7% |
+| 5% grade at 15 km/h | 1.549 kW | 63.76 C | 111.3 W/K | 0.139 m3/s | 0.349 m3/s | 39.8% |
+
 The ram-air value assumes 100% capture before grille, duct and core losses. It
 is an upper bound, not predicted installed airflow. Actual core performance and
 fan selection require CFD, a validated radiator correlation or a prototype test.
