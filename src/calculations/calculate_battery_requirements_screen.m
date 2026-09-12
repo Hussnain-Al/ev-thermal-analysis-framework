@@ -1,5 +1,5 @@
-function results = calculate_battery_loop_requirements(cRates,battery)
-%CALCULATE_BATTERY_LOOP_REQUIREMENTS Sustained battery-loop requirements.
+function results = calculate_battery_requirements_screen(cRates,battery)
+%CALCULATE_BATTERY_REQUIREMENTS_SCREEN Sustained battery requirements.
 % This is a lower-bound requirements calculation, not a transient model.
 % The SVOLT 1 kHz ACR limit is the only available resistance and is used
 % only to calculate minimum ohmic heat. No coolant temperature is imposed.

@@ -7,7 +7,7 @@ p = cfg.batteryCooling;
 outputDir = fullfile(cfg.project.outputDir,"battery_cooling");
 ensure_output_folder(outputDir);
 
-out.screen = calculate_battery_loop_requirements(p.cRates,p);
+out.screen = calculate_battery_requirements_screen(p.cRates,p);
 
 out.specification = table( ...
     ["Regen charge cutoff";"Absolute operating limit"; ...

@@ -1,7 +1,7 @@
-# Battery loop model
+# Battery requirements screen
 
-This folder contains the first standalone loop model. It deliberately stops at
-the battery-to-coolant requirement boundary.
+This is not a coolant-loop model. It is a standalone requirements calculation
+that stops at the battery-to-coolant boundary.
 
 ## Supported calculation
 
@@ -22,7 +22,7 @@ Simulink is required. From the repository root:
 
 ```matlab
 cfg = setup_project();
-modelFile = build_battery_loop_simulink(cfg);
+modelFile = build_battery_requirements_simulink(cfg);
 open_system(modelFile);
 ```
 
@@ -33,7 +33,7 @@ compressor or refrigeration circuit.
 With Simulink available, compile-check the generated model using:
 
 ```matlab
-run_battery_loop_simulink_checks
+run_battery_requirements_simulink_checks
 ```
 
 ## Simscape boundary

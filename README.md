@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Modular MATLAB screening model for a compact battery-electric SUV under a
-45 C Karachi hot-weather boundary. Version `4.1.0` contains four independent
+45 C Karachi hot-weather boundary. Version `4.2.0` contains four independent
 domains: motor heat, transient propulsion cooling, sustained battery thermal
 screening and the recovered cabin-load calculation.
 
@@ -29,11 +29,19 @@ results.batteryCooling
 results.cabinCooling
 ```
 
-The standalone battery requirements model additionally uses Simulink:
+The standalone battery requirements screen additionally uses Simulink:
 
 ```matlab
 cfg = setup_project();
-modelFile = build_battery_loop_simulink(cfg);
+modelFile = build_battery_requirements_simulink(cfg);
+open_system(modelFile);
+```
+
+The separate propulsion thermal sensitivity model uses the calculated
+drive-unit heat as its input:
+
+```matlab
+modelFile = build_propulsion_thermal_sensitivity_simulink(cfg);
 open_system(modelFile);
 ```
 
@@ -104,10 +112,10 @@ The severe coolant requirement above roughly 1.25C conflicts with the SVOLT
 thermal path as requiring validation; it does not prove that the cell cannot
 operate at 2C.
 
-The Simulink battery-loop model implements this same requirements calculation
+The Simulink battery requirements screen implements this same calculation
 with one sustained C-rate input and six outputs. It does not add a coolant
 temperature, transient battery state or cooling-component model. See
-[`models/battery_loop/README.md`](models/battery_loop/README.md).
+[`models/battery_requirements/README.md`](models/battery_requirements/README.md).
 
 ## Cabin load
 
@@ -127,7 +135,8 @@ data/motor_heat/         original torque workbook and efficiency map
 data/motor_cooling/      pump, radiator and motor reference data
 data/cabin_cooling/      recovered cabin workbook and derived inputs
 modules/                 four domain entry points
-models/battery_loop/     standalone Simulink requirements-model builder
+models/battery_requirements/ standalone Simulink battery screen
+models/propulsion_thermal_sensitivity/ standalone two-node sensitivity model
 src/calculations/        reusable equations
 tests/                   regression, interface and energy-balance checks
 references/              source provenance and retained project figures
@@ -136,7 +145,9 @@ outputs/                 generated results
 
 See [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md),
 [`docs/RESULT_FILES.md`](docs/RESULT_FILES.md) and
-[`references/SOURCE_PROVENANCE.md`](references/SOURCE_PROVENANCE.md).
+[`references/SOURCE_PROVENANCE.md`](references/SOURCE_PROVENANCE.md). The exact
+data still required for physical loop models is listed in
+[`docs/MISSING_MODEL_INPUTS.md`](docs/MISSING_MODEL_INPUTS.md).
 
 ## Citation
 

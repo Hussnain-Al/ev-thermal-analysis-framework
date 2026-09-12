@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.2.0 — 2026-09-12
+
+- Renamed the battery Simulink artifact as a requirements screen so it is not
+  presented as a physical coolant-loop model.
+- Added a separate two-node propulsion thermal sensitivity model driven by
+  motor heat, ambient temperature and a radiator-UA scenario input.
+- Added a model-input register separating searchable supplier data from
+  vehicle-specific measurements.
+- Kept all unsupported Simscape coolant, refrigeration and compressor outputs
+  blocked.
+
 ## 4.1.0 — 2026-09-12
 
 - Added a standalone Simulink builder for the battery sustained-load

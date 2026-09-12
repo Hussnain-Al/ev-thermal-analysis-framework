@@ -17,13 +17,14 @@ heat traces to `motor_cooling`. Battery and cabin results are independent.
 | `config/` | Editable boundaries and explicitly assumed calibration values |
 | `data/` | Original curves, schedules, workbook and derived numerical inputs |
 | `modules/` | Four independent workflows and exports |
-| `models/battery_loop/` | Standalone Simulink battery requirements model |
+| `models/battery_requirements/` | Standalone Simulink battery requirements screen |
+| `models/propulsion_thermal_sensitivity/` | Standalone two-node Simulink sensitivity model |
 | `src/calculations/` | Reusable equations |
 | `tests/` | Regression, energy-balance and interface checks |
 
 The active model contains no compressor, refrigerant circuit or shared
 battery/cabin capacity allocation.
 
-The battery Simulink model is algebraic and remains independent of the other
-domains. Physical loop integration is deferred until every loop is separately
-defined and tested.
+The battery Simulink screen is algebraic. The propulsion Simulink model accepts
+heat, ambient temperature and radiator UA through explicit ports. Physical loop
+integration is deferred until every loop is separately defined and tested.

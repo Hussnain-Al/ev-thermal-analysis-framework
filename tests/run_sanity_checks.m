@@ -2,7 +2,7 @@
 rootDir = fileparts(fileparts(mfilename('fullpath')));
 addpath(rootDir,'-begin');
 cfg = setup_project();
-assert(strcmp(cfg.project.version,"4.1.0"));
+assert(strcmp(cfg.project.version,"4.2.0"));
 assert(~isfield(cfg,'sharedCompressor'));
 
 % Every active CSV is imported through the deterministic project reader.
@@ -39,12 +39,12 @@ riseAtOneC = screen.CellHeat_W(1)*battery.baseResistance_KW;
 assert(abs(riseAtOneC-22.26544)<1e-8);
 assert(abs((battery.absoluteOperatingLimit_C-riseAtOneC)-37.73456)<1e-8);
 
-loopRequirements = calculate_battery_loop_requirements([1;2],battery);
-assert(isequal(loopRequirements.PackHeat_kW,screen.PackHeat_kW));
-assert(abs(loopRequirements.RequiredCellToCoolantRise_C(1)-22.26544)<1e-8);
-assert(abs(loopRequirements.MaximumCoolantForRegen_C(1)-32.73456)<1e-8);
-assert(abs(loopRequirements.MaximumCoolantForDischarge_C(1)-37.73456)<1e-8);
-assert(all(loopRequirements.ACRProxyOnly));
+batteryRequirements = calculate_battery_requirements_screen([1;2],battery);
+assert(isequal(batteryRequirements.PackHeat_kW,screen.PackHeat_kW));
+assert(abs(batteryRequirements.RequiredCellToCoolantRise_C(1)-22.26544)<1e-8);
+assert(abs(batteryRequirements.MaximumCoolantForRegen_C(1)-32.73456)<1e-8);
+assert(abs(batteryRequirements.MaximumCoolantForDischarge_C(1)-37.73456)<1e-8);
+assert(all(batteryRequirements.ACRProxyOnly));
 
 % Core coolant transport and hydraulic regressions.
 coolant = cfg.motorCooling.coolant;
