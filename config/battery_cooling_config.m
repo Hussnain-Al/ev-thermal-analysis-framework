@@ -5,9 +5,9 @@ arguments
     rootDir (1,1) string
 end
 
-battery.files.cellSpecification = fullfile(rootDir,"references", ...
-    "private_source_documents", ...
-    "SVOLT 134Ah LFP Cell Specification (3).zh-CN.en (1).pdf");
+battery.sourceSpecification = ...
+    "SVOLT 134Ah LFP Cell Specification (3).zh-CN.en (1).pdf";
+battery.sourceManifest = fullfile(rootDir,"references","SOURCE_PROVENANCE.md");
 
 battery.capacity_Ah = 134;
 battery.nominalVoltage_V = 3.2;

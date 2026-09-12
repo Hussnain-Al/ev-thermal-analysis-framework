@@ -1,7 +1,7 @@
-# Local source documents
+# Private source documents
 
-This folder retains the archived project documents for traceability. The
-repository owner explicitly authorized their publication. Their presence does
-not grant reuse or redistribution rights beyond the rights held by the owner.
-
-The source manifest records file hashes, model roles and evidence status.
+No private or third-party source documents are committed in this public
+folder. The repository owner's archive is indexed by filename and SHA-256 in
+[`../SOURCE_PROVENANCE.md`](../SOURCE_PROVENANCE.md). Only derived numerical
+inputs and project-owned figures required by the active calculations are
+published.

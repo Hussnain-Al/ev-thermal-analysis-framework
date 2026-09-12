@@ -2,7 +2,7 @@
 rootDir = fileparts(fileparts(mfilename('fullpath')));
 addpath(rootDir,'-begin');
 cfg = setup_project();
-assert(strcmp(cfg.project.version,"4.0.0"));
+assert(strcmp(cfg.project.version,"4.0.1"));
 assert(~isfield(cfg,'sharedCompressor'));
 
 % Every active CSV is imported through the deterministic project reader.
@@ -83,6 +83,7 @@ assert(~ismember('BatteryCoolingRequest_kW', ...
     results.batteryCooling.screen.Properties.VariableNames));
 assert(all(abs(results.motorCooling.summary.EnergyBalanceResidual_kWh)<2e-3));
 assert(~results.motorCooling.hydraulics.pumpCheck.DocumentedPointCoversPartialLoop);
+assert(contains(results.motorCooling.hydraulics.pumpCheck.Conclusion,"fails"));
 assert(abs(results.cabinCooling.summary.WorkbookBodyAndGlazingLoad_kW- ...
     3.33594)<1e-8);
 

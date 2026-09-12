@@ -4,12 +4,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Modular MATLAB screening model for a compact battery-electric SUV under a
-45 C Karachi hot-weather boundary. Version `4.0.0` contains four independent
+45 C Karachi hot-weather boundary. Version `4.0.1` contains four independent
 domains: motor heat, transient propulsion cooling, sustained battery thermal
 screening and the recovered cabin-load calculation.
 
 This is not a validated vehicle model. Unmeasured thermal parameters remain
 explicit assumptions for future experimental calibration.
+
+The result figures below are the exact artifacts produced by the public
+MATLAB R2024b verification workflow.
 
 ## Run
 
@@ -113,7 +116,7 @@ data/cabin_cooling/      recovered cabin workbook and derived inputs
 modules/                 four domain entry points
 src/calculations/        reusable equations
 tests/                   regression, interface and energy-balance checks
-references/              source provenance and archived evidence
+references/              source provenance and retained project figures
 outputs/                 generated results
 ```
 

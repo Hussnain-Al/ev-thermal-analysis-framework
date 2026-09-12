@@ -3,8 +3,9 @@
 See [`SOURCE_PROVENANCE.md`](SOURCE_PROVENANCE.md) for the audited mapping from
 the archived project files to each active MATLAB module.
 
-Original component drawings and third-party documents are retained for source
-traceability. Their presence does not grant third-party reuse rights.
+Original component drawings and third-party documents remain in the owner's
+source archive. They are identified by filename and hash for traceability but
+are not redistributed by this public repository.
 
 For a new study, record the following beside each imported component file:
 

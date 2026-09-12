@@ -73,6 +73,14 @@ end
 function mark_extrema(time_s,signal)
 [maximumValue,maximumIndex] = max(signal);
 [minimumValue,minimumIndex] = min(signal);
+if abs(maximumValue-minimumValue) <= ...
+        max(1e-12,eps(max(abs(signal))))
+    plot(time_s(1),maximumValue,'ko','MarkerFaceColor','k');
+    text(time_s(1),maximumValue, ...
+        sprintf(' constant %.3f kW',maximumValue), ...
+        'VerticalAlignment','bottom');
+    return;
+end
 plot(time_s(maximumIndex),maximumValue,'ro','MarkerFaceColor','r');
 plot(time_s(minimumIndex),minimumValue,'bo','MarkerFaceColor','b');
 text(time_s(maximumIndex),maximumValue, ...

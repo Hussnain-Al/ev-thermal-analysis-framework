@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.1 — 2026-09-12
+
+- Replaced README previews with the exact MATLAB R2024b workflow artifacts.
+- Removed the nonexistent private-PDF path from battery configuration.
+- Corrected source-archive and battery-screen provenance statements.
+- Made the pump conclusion follow the calculated coverage result.
+
 ## 4.0.0 — 2026-09-11
 
 - Removed the shared-compressor module, data, plots, tests and verdicts.

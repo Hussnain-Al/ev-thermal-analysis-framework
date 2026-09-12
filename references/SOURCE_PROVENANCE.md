@@ -1,10 +1,9 @@
 # Source Provenance
 
 The calculation repository keeps reusable numerical inputs under `data/`.
-Original project documents are retained under
-`references/private_source_documents/` for traceability. Their publication
-was explicitly authorized by the repository owner; third-party reuse rights
-are not asserted.
+Third-party source documents are not redistributed in the public repository.
+This manifest records their original filenames, hashes, model roles and
+limitations so the derivation can be audited against the owner's source archive.
 
 ## Active project evidence
 
@@ -25,7 +24,7 @@ are not asserted.
 |---|---|
 | `Motor Heat Generation NYCC.mat` | ADVISOR case for a 58 kW permanent-magnet motor and a 60 Ah NiMH battery, not the 125 kW LFP SUV. Its validation flags are zero. |
 | `Heat generation estimation.pdf` | Earlier constant-efficiency Carsim estimates. Retained only as a historical baseline. |
-| `cell load.xlsx` | Earlier constant C-rate calculation. Duty-cycle results are used for design screening. |
+| `cell load.xlsx` | Earlier constant C-rate workbook. It is excluded; the active battery module calculates a fresh sustained ACR-based screen from documented configuration values. |
 | `power demand1.xlsx` | Historical workbook with legacy assumptions and inconsistent load cases. |
 | `TEMPERATUREsGFL 100Ah...xlsx` | Manufacturer discharge data for a 100 Ah cell, not the selected 134 Ah cell. |
 | `WRDT18101-DM18A1 technical specification.pdf` | Compressor model removed from the active framework; retained only as archived evidence. |
