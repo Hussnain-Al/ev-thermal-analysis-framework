@@ -16,8 +16,8 @@ end
 
 rootDir = cfg.project.rootDir;
 modelDir = fullfile(rootDir,'models','battery_loop');
-modelName = 'battery_loop_requirements';
-modelFile = fullfile(modelDir,[modelName '.slx']);
+modelName = "battery_loop_requirements";
+modelFile = fullfile(modelDir,modelName+".slx");
 
 if isfile(modelFile) && ~options.Overwrite
     error('EVThermal:ModelExists', ...
@@ -125,7 +125,7 @@ close_system(modelName,0);
 end
 
 function add_outport(modelName,name,position,portNumber)
-add_block('simulink/Ports & Subsystems/Out1',[modelName '/' name], ...
+add_block('simulink/Ports & Subsystems/Out1',modelName+"/"+string(name), ...
     'Port',num2str(portNumber),'Position',position);
 end
 
