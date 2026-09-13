@@ -34,7 +34,11 @@ pump point is therefore compared only with the modeled hose requirement.
 
 ## Radiator and fan requirements
 
-The retained 270 by 310 mm core is treated as an unbuilt design candidate.
+The retained 270 by 310 by approximately 26 mm core is treated as an unbuilt
+design candidate. Its flat tubes have a 26 by 2 mm external cross-section; the
+2 mm value is not interpreted as wall thickness. Literature values of 0.2 mm
+tube wall and 0.1 mm fin thickness are stored as screening assumptions but are
+not used to predict achieved `UA`.
 For the sustained-grade and low-speed hot-weather duties, coolant outlet
 temperature follows the coolant energy balance. Air mass flow follows:
 
@@ -44,8 +48,8 @@ temperature follows the coolant energy balance. Air mass flow follows:
 
 Required `UA` uses an ideal counterflow LMTD. At zero road speed the fan must
 provide the complete required air volume flow. At vehicle speed, `A_core v`
-is reported only as a 100% capture upper bound; grille, duct and core losses
-are not invented.
+is reported only as an ideal geometric face-flow bound. No installation-loss
+or fan operating-point model is included.
 
 ## Battery sustained screen
 
