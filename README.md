@@ -63,7 +63,7 @@ dominated by its imposed initial temperature and fixed coolant boundary.
 
 ## Motor heat
 
-<img src="docs/images/results/motor_heat_traces.png" width="820" alt="Drive-unit instantaneous heat, trailing 60-second heat, accumulated heat energy and sustained design cases">
+<img src="docs/images/results/motor_heat_traces.jpg" width="820" alt="Drive-unit instantaneous heat, trailing 60-second heat, accumulated heat energy and sustained design cases">
 
 The figure answers four different questions without treating them as the same
 quantity:
@@ -93,7 +93,7 @@ vehicle prediction or used for a pass/fail conclusion.
 
 ## Propulsion-loop hydraulics
 
-<img src="docs/images/results/loop_sensitivity.png" width="820" alt="Modeled external hose system curve and separate stopped-pump passive resistance evidence">
+<img src="docs/images/results/loop_sensitivity.jpg" width="820" alt="Modeled external hose system curve and separate stopped-pump passive resistance evidence">
 
 | Flow | Documented pump head | Hose/fitting loss at 60 C | Head left for unmodeled items |
 |---:|---:|---:|---:|
@@ -108,7 +108,7 @@ intersection or complete pump verdict is claimed.
 
 ## Radiator air-side requirements
 
-<img src="docs/images/results/radiator_design_requirements.svg" width="820" alt="Required radiator face velocity and ideal UA sensitivity to assumed air temperature rise">
+<img src="docs/images/results/radiator_design_requirements.jpg" width="820" alt="Required radiator face velocity and ideal UA sensitivity to assumed air temperature rise">
 
 The retained core is an unbuilt 270 by 310 by approximately 26 mm design
 candidate with a 0.0837 m2 frontal area. The source drawing describes 31 flat
