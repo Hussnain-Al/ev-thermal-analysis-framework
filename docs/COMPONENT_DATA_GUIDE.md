@@ -21,7 +21,7 @@ the four domain configurations with the vehicle and drive-cycle inputs.
 | Motor heat | `drive_unit_efficiency_map.csv` | `Speed_rpm,Torque_Nm,IntegratedEfficiency_pct` |
 | Motor heat | `controller_loss_reference.csv` | Rated and peak controller-only loss points from the supplied figure |
 | Motor cooling | `inactive_pump_resistance_curve.csv` | Flow, passive pressure loss, digitization uncertainty |
-| Motor cooling | `propulsion_radiator_geometry.csv` | Unbuilt candidate core, tube and fin geometry |
+| Motor cooling | `propulsion_radiator_geometry.csv` | Unbuilt candidate core envelope and flat-tube/fin geometry; literature-only wall and fin thickness are identified by name |
 | Cabin cooling | `Cabin_Cooling_Load_AutoRecovered.xlsx` | Original recovered surface-load calculation |
 | Cabin cooling | `cabin_load_inputs.csv` | Derived surface, occupant and infiltration totals |
 
@@ -32,8 +32,9 @@ missing, extra, ambiguous or nonnumeric fields before calculations start.
 
 Use one of these labels for every input: measured, manufacturer, digitized,
 reconstructed, assumed, or historical. A component geometry file is not a
-performance map. A software regression establishes numerical consistency, not
-physical validation.
+performance map. In particular, 20 mm is the external hose internal diameter;
+the radiator drawing instead shows 26 by 2 mm flat-tube outer dimensions. A
+software regression establishes numerical consistency, not physical validation.
 
 The full audited mapping is in
 [`../references/SOURCE_PROVENANCE.md`](../references/SOURCE_PROVENANCE.md).
