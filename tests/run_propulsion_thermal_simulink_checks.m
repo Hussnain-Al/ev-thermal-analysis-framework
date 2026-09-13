@@ -32,8 +32,18 @@ assert(abs(str2double(get_param(modelName+"/Inverse coolant capacity", ...
 assert(abs(str2double(get_param(modelName+"/Motor-to-coolant conductance", ...
     'Gain'))-1/p.motorToCoolantResistance_KW)<1e-12);
 
+diagramDir = fullfile(rootDir,'outputs','simulink');
+if ~isfolder(diagramDir)
+    mkdir(diagramDir);
+end
+diagramFile = fullfile(diagramDir, ...
+    'propulsion_thermal_sensitivity.png');
+print(['-s' char(modelName)],'-dpng','-r180',diagramFile);
+assert(isfile(diagramFile));
+
 close_system(modelName,0);
-fprintf('Propulsion thermal Simulink model generated and compiled successfully.\n');
+fprintf(['Propulsion thermal Simulink model generated, compiled and ' ...
+    'exported successfully.\n']);
 end
 
 function remove_generated_model(modelFile)

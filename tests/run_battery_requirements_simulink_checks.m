@@ -25,8 +25,17 @@ assert(~isempty(find_system(modelName,'SearchDepth',1, ...
 assert(~isempty(find_system(modelName,'SearchDepth',1, ...
     'Name','Cell-to-coolant rise requirement')));
 
+diagramDir = fullfile(rootDir,'outputs','simulink');
+if ~isfolder(diagramDir)
+    mkdir(diagramDir);
+end
+diagramFile = fullfile(diagramDir,'battery_requirements_screen.png');
+print(['-s' char(modelName)],'-dpng','-r180',diagramFile);
+assert(isfile(diagramFile));
+
 close_system(modelName,0);
-fprintf('Battery requirements Simulink model generated and compiled successfully.\n');
+fprintf(['Battery requirements Simulink model generated, compiled and ' ...
+    'exported successfully.\n']);
 end
 
 function remove_generated_model(modelFile)

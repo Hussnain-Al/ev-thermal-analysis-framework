@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Modular MATLAB screening model for a compact battery-electric SUV under a
-45 C Karachi hot-weather boundary. Version `4.4.0` contains four independent
+45 C Karachi hot-weather boundary. Version `4.4.1` contains four independent
 domains: motor heat, transient propulsion cooling, sustained battery thermal
 screening and the recovered cabin-load calculation.
 
@@ -45,6 +45,25 @@ drive-unit heat as its input:
 modelFile = build_propulsion_thermal_sensitivity_simulink(cfg);
 open_system(modelFile);
 ```
+
+## Simulink block diagrams
+
+### Battery sustained-load requirements screen
+
+<img src="docs/images/simulink/battery_requirements_screen.jpg" width="820" alt="Simulink battery sustained-load requirements screen">
+
+This algebraic model converts one sustained C-rate into current, the ACR-based
+pack heat floor, and the cell-to-coolant temperature-rise requirement. It has
+no battery thermal state, coolant circuit or cooling component.
+
+### Propulsion thermal sensitivity model
+
+<img src="docs/images/simulink/propulsion_thermal_sensitivity.jpg" width="820" alt="Simulink two-node propulsion thermal sensitivity model">
+
+This model connects drive-unit heat to motor and coolant energy balances and
+an ideal `UA`-based radiator rejection term. Its thermal capacitances and
+motor-to-coolant resistance are uncalibrated assumptions, so the model is for
+parameter sensitivity only and does not predict vehicle temperatures.
 
 ## Propulsion coolant loop
 
@@ -182,6 +201,7 @@ src/calculations/        reusable equations
 tests/                   regression, interface and energy-balance checks
 references/              source provenance and retained project figures
 outputs/                 generated results
+docs/images/simulink/    workflow-exported Simulink model diagrams
 ```
 
 See [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md),

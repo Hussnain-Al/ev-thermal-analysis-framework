@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.4.1 — 2026-09-13
+
+- Exported both supported Simulink block diagrams during the public MATLAB
+  workflow and published the exact generated diagrams in the README.
+- Added explicit diagram captions separating the algebraic battery requirements
+  screen from the uncalibrated propulsion thermal sensitivity model.
+
 ## 4.4.0 — 2026-09-13
 
 - Replaced raw-peak-only drive-cycle plots with one-second heat, a trailing
