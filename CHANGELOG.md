@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.3.1 — 2026-09-13
+
+- Interpreted the supplied radiator geometry as a 270 by 310 by approximately
+  26 mm core with 26 by 2 mm external flat-tube dimensions.
+- Kept the confirmed 20 mm internal diameter exclusively on the six external
+  hoses; it is not assigned to individual radiator tubes.
+- Added 0.2 mm tube-wall and 0.1 mm fin-thickness literature screening values
+  from a tested automotive radiator, without using them to predict achieved UA.
+- Removed unsupported installation-loss geometry and fan-curve requests.
+- Renamed the zero-speed result as a required air-volume flow so it cannot be
+  mistaken for a selected fan operating point.
+- Retained the documented pump point and inactive resistance curve as the only
+  available pump evidence without inventing a complete active Q-H curve.
+
 ## 4.3.0 — 2026-09-12
 
 - Confirmed all six external hoses use 20 mm internal diameter and removed the
@@ -8,8 +22,8 @@
   requirement and remaining-head budget.
 - Added first-pass radiator and fan requirements for sustained grade and
   low-speed hot-weather cases using the retained candidate core geometry.
-- Added ideal ram-air upper bounds and zero-road-speed fan-flow requirements
-  without assuming grille or duct efficiency.
+- Added ideal face-flow upper bounds and zero-road-speed airflow requirements
+  without assuming installation efficiency.
 - Added the 83.5 kg three-in-one drive-unit mass and exposed its effective
   specific heat as an uncalibrated thermal assumption.
 - Added the supplied controller rated and peak loss points as reference data;
