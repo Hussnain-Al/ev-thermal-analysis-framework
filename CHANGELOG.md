@@ -4,6 +4,8 @@
 
 - Exported both supported Simulink block diagrams during the public MATLAB
   workflow and published the exact generated diagrams in the README.
+- Ran the diagram-export stage through a virtual display because Simulink's
+  diagram printer is unavailable in MATLAB's `-nodisplay` mode.
 - Added explicit diagram captions separating the algebraic battery requirements
   screen from the uncalibrated propulsion thermal sensitivity model.
 
