@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="760" viewBox="0 0 1500 760">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#315b7d"/>
+    </marker>
+    <style>
+      .title{font:700 30px Arial,sans-serif;fill:#172b3a}.sub{font:18px Arial,sans-serif;fill:#536878}
+      .block{fill:#f7fbfe;stroke:#315b7d;stroke-width:2}.limit{fill:#fff8e8;stroke:#b27600;stroke-width:2}
+      .out{fill:#edf7ed;stroke:#347a3c;stroke-width:2}.txt{font:17px Arial,sans-serif;fill:#172b3a;text-anchor:middle}
+      .small{font:15px Arial,sans-serif;fill:#405665;text-anchor:middle}.line{fill:none;stroke:#315b7d;stroke-width:2.4;marker-end:url(#arrow)}
+      .note{font:16px Arial,sans-serif;fill:#7a2f20}.tag{font:700 15px Arial,sans-serif;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1500" height="760" fill="#fff"/>
+  <text x="45" y="52" class="title">Battery sustained-load requirements screen</text>
+  <text x="45" y="82" class="sub">Documentation view of battery_requirements_screen.slx — algebraic lower-bound calculation</text>
+
+  <rect x="45" y="165" width="150" height="72" rx="8" class="block"/><text x="120" y="194" class="txt">Sustained</text><text x="120" y="218" class="txt">C-rate</text>
+  <rect x="245" y="165" width="160" height="72" rx="8" class="block"/><text x="325" y="194" class="txt">× 134 Ah</text><text x="325" y="218" class="small">pack current, I</text>
+  <rect x="455" y="165" width="150" height="72" rx="8" class="block"/><text x="530" y="194" class="txt">I × I</text><text x="530" y="218" class="small">current squared</text>
+  <rect x="655" y="165" width="190" height="72" rx="8" class="block"/><text x="750" y="194" class="txt">× 0.40 mΩ</text><text x="750" y="218" class="small">ACR heat floor</text>
+  <rect x="900" y="165" width="170" height="72" rx="8" class="out"/><text x="985" y="194" class="txt">Cell heat floor</text><text x="985" y="218" class="small">qcell [W]</text>
+
+  <path d="M195 201 H245" class="line"/><path d="M405 201 H455" class="line"/><path d="M605 201 H655" class="line"/><path d="M845 201 H900" class="line"/>
+
+  <rect x="900" y="300" width="170" height="72" rx="8" class="block"/><text x="985" y="329" class="txt">× 108 / 1000</text><text x="985" y="353" class="small">series cells; W→kW</text>
+  <rect x="1130" y="300" width="240" height="72" rx="8" class="out"/><text x="1250" y="329" class="txt">Pack heat floor</text><text x="1250" y="353" class="small">Qpack [kW]</text>
+  <path d="M845 201 H870 V336 H900" class="line"/><path d="M1070 336 H1130" class="line"/>
+
+  <rect x="900" y="435" width="170" height="72" rx="8" class="block"/><text x="985" y="464" class="txt">× 3.10 K/W</text><text x="985" y="488" class="small">reconstructed Rbase</text>
+  <rect x="1130" y="435" width="240" height="72" rx="8" class="out"/><text x="1250" y="464" class="txt">Required cell-to-coolant</text><text x="1250" y="488" class="small">temperature rise, ΔT [°C]</text>
+  <path d="M845 201 H865 V471 H900" class="line"/><path d="M1070 471 H1130" class="line"/>
+
+  <rect x="700" y="565" width="170" height="64" rx="8" class="limit"/><text x="785" y="592" class="txt">55°C − ΔT</text><text x="785" y="615" class="small">charge boundary</text>
+  <rect x="930" y="565" width="170" height="64" rx="8" class="limit"/><text x="1015" y="592" class="txt">60°C − ΔT</text><text x="1015" y="615" class="small">absolute boundary</text>
+  <rect x="1160" y="550" width="280" height="94" rx="8" class="out"/><text x="1300" y="580" class="txt">Maximum allowable coolant</text><text x="1300" y="604" class="small">for charge and discharge</text><text x="1300" y="627" class="small">[°C]</text>
+  <path d="M1250 507 V535 H785 V565" class="line"/><path d="M1250 507 V535 H1015 V565" class="line"/><path d="M870 597 H1160" class="line"/><path d="M1100 597 H1160" class="line"/>
+
+  <rect x="45" y="660" width="1395" height="58" rx="8" fill="#fff1ee" stroke="#b44a36" stroke-width="2"/>
+  <text x="65" y="687" class="note">Scope limit: 0.40 mΩ is a 1 kHz ACR value and 3.10 K/W is reconstructed. No transient cell state, coolant circuit or cooling capacity is modelled.</text>
+  <rect x="45" y="112" width="180" height="30" rx="15" fill="#315b7d"/><text x="135" y="133" class="tag" text-anchor="middle">SIMULINK TOPOLOGY</text>
+</svg>

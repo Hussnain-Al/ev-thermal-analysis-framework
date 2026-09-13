@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.4.1 — 2026-09-13
+
+- Published clean vector documentation views of both supported Simulink block
+  topologies in the README, traced directly to the model-builder connections.
+- Kept the public MATLAB workflow focused on generating, compiling and checking
+  the actual `.slx` models; the diagrams do not substitute for that check.
+- Added explicit diagram captions separating the algebraic battery requirements
+  screen from the uncalibrated propulsion thermal sensitivity model.
+
 ## 4.4.0 — 2026-09-13
 
 - Replaced raw-peak-only drive-cycle plots with one-second heat, a trailing

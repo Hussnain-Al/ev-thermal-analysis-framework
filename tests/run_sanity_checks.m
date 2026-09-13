@@ -2,7 +2,7 @@
 rootDir = fileparts(fileparts(mfilename('fullpath')));
 addpath(rootDir,'-begin');
 cfg = setup_project();
-assert(strcmp(cfg.project.version,"4.4.0"));
+assert(strcmp(cfg.project.version,"4.4.1"));
 assert(~isfield(cfg,'sharedCompressor'));
 
 % Every active CSV is imported through the deterministic project reader.
