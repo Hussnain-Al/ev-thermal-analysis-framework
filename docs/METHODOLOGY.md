@@ -8,7 +8,10 @@ operating envelope. A digitized integrated motor/inverter/reducer map gives
 efficiency and drive-unit heat by energy balance.
 
 NYCC and HWFET are supplemented by a 20-minute 10% grade at 40 km/h and a
-30-minute 5% grade at 15 km/h, both at 45 C ambient.
+30-minute 5% grade at 15 km/h, both at 45 C ambient. Drive schedules are
+reported as one-second heat, trailing 60-second mean heat and cumulative heat
+energy. The sustained cases are reported as constant design points rather than
+as artificial flat transient traces.
 
 ## Motor and coolant transient
 
@@ -30,7 +33,10 @@ capacitance corresponds to an assumed effective specific heat of about
 
 Darcy-Weisbach and fitting losses define the six-hose system curve. Motor,
 controller, PDU and radiator pressure drops are excluded. The 60 kPa documented
-pump point is therefore compared only with the modeled hose requirement.
+pump reference is therefore compared only with the modeled hose requirement.
+The supplied stopped-pump resistance curve is plotted separately as passive
+loss evidence; it is not an active pump curve and cannot define an operating
+point.
 
 ## Radiator and fan requirements
 
@@ -46,10 +52,11 @@ temperature follows the coolant energy balance. Air mass flow follows:
 \dot m_a=\frac{\dot Q}{c_{p,a}(T_{a,out}-T_{a,in})}
 \]
 
-Required `UA` uses an ideal counterflow LMTD. At zero road speed the fan must
-provide the complete required air volume flow. At vehicle speed, `A_core v`
-is reported only as an ideal geometric face-flow bound. No installation-loss
-or fan operating-point model is included.
+Required `UA` uses an ideal counterflow LMTD. Required air volume flow is divided
+by candidate frontal area to obtain required core-face velocity. Both quantities
+are requirements, not delivered performance. Air-temperature-rise sensitivity
+from 5 to 15 C exposes the boundary-condition dependence. Vehicle speed is not
+converted to core airflow because no installation or fan model is available.
 
 ## Battery sustained screen
 

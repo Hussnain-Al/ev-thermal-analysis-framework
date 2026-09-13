@@ -2,7 +2,7 @@
 rootDir = fileparts(fileparts(mfilename('fullpath')));
 addpath(rootDir,'-begin');
 cfg = setup_project();
-assert(strcmp(cfg.project.version,"4.3.1"));
+assert(strcmp(cfg.project.version,"4.4.0"));
 assert(~isfield(cfg,'sharedCompressor'));
 
 % Every active CSV is imported through the deterministic project reader.
@@ -98,15 +98,37 @@ assert(results.motorCooling.hydraulics.pumpCheck.DocumentedPointCoversModeledHos
 assert(contains(results.motorCooling.hydraulics.pumpCheck.Conclusion, ...
     "radiator and component losses are excluded"));
 assert(height(results.motorCooling.radiatorDesign)==2);
-assert(all(results.motorCooling.radiatorDesign.RequiredAirVolumeFlowAtZeroSpeed_m3s>0));
+assert(all(results.motorCooling.radiatorDesign.RequiredAirVolumeFlow_m3s>0));
+assert(all(results.motorCooling.radiatorDesign.RequiredCoreFaceVelocity_ms>0));
 assert(all(results.motorCooling.radiatorDesign.RequiredIdealUA_WK>0));
 assert(all(results.motorCooling.radiatorDesign.TemperatureBoundaryFeasible));
+assert(~ismember('IdealRamAirUpperBound_m3s', ...
+    results.motorCooling.radiatorDesign.Properties.VariableNames));
+assert(height(results.motorCooling.radiatorAirsideSensitivity)== ...
+    2*numel(cfg.motorCooling.thermal.airTemperatureRiseSensitivity_C));
+assert(all(results.motorCooling.radiatorAirsideSensitivity. ...
+    RequiredCoreFaceVelocity_ms>0));
+assert(all(results.motorCooling.radiatorAirsideSensitivity. ...
+    TemperatureBoundaryFeasible));
+baselineSensitivity = results.motorCooling.radiatorAirsideSensitivity( ...
+    results.motorCooling.radiatorAirsideSensitivity.AirTemperatureRise_C==10,:);
+assert(height(baselineSensitivity)==height(results.motorCooling.radiatorDesign));
+for i = 1:height(results.motorCooling.radiatorDesign)
+    row = baselineSensitivity.Case==results.motorCooling.radiatorDesign.Case(i);
+    assert(sum(row)==1);
+    assert(abs(baselineSensitivity.RequiredIdealUA_WK(row)- ...
+        results.motorCooling.radiatorDesign.RequiredIdealUA_WK(i))<1e-10);
+    assert(abs(baselineSensitivity.RequiredCoreFaceVelocity_ms(row)- ...
+        results.motorCooling.radiatorDesign.RequiredCoreFaceVelocity_ms(i))<1e-10);
+end
 assert(results.motorCooling.radiatorCandidate.CoreDepth_mm==26);
 assert(results.motorCooling.radiatorCandidate.FlatTubeExternalDepth_mm==2);
 assert(results.motorCooling.radiatorCandidate.AssumedTubeWallThickness_mm==0.2);
 assert(results.motorCooling.radiatorCandidate.AssumedFinThickness_mm==0.1);
 assert(results.motorHeat.controllerLossReference.TotalControllerLoss_W(1)==1580);
 assert(results.motorHeat.controllerLossReference.TotalControllerLoss_W(2)==3218);
+assert(all(results.motorHeat.summary.MaximumTrailing60sHeat_kW<= ...
+    results.motorHeat.summary.PeakOneSecondDriveUnitHeat_kW+1e-12));
 assert(abs(results.cabinCooling.summary.WorkbookBodyAndGlazingLoad_kW- ...
     3.33594)<1e-8);
 

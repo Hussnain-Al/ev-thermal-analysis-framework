@@ -24,6 +24,7 @@ thermal.propertyTemperature_C = 60;
 thermal.radiatorCoolantIn_C = 65;
 thermal.airIn_C = 45;
 thermal.airOut_C = 55;
+thermal.airTemperatureRiseSensitivity_C = (5:1:15)';
 thermal.airCp_JkgK = 1005;
 thermal.ambientPressure_Pa = 101325;
 thermal.airGasConstant_JkgK = 287.05;

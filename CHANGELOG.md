@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.4.0 — 2026-09-13
+
+- Replaced raw-peak-only drive-cycle plots with one-second heat, a trailing
+  60-second mean and cumulative heat energy.
+- Replaced constant-case time traces with explicit sustained design-point bars.
+- Removed the ideal `A_core v` ram-air comparison and every derived capture
+  claim because neither represents installed core airflow.
+- Added radiator face-velocity and ideal-UA sensitivity over a 5–15 C assumed
+  air-temperature rise.
+- Separated the calculated external-hose system curve from the supplied
+  stopped-pump passive resistance evidence.
+- Removed uncalibrated motor temperatures and the recovered cabin subtotal from
+  the README's headline result figures.
+- Renamed outputs so instantaneous peaks, requirements, assumptions and supplied
+  evidence cannot be mistaken for validated component performance.
+
 ## 4.3.1 — 2026-09-13
 
 - Interpreted the supplied radiator geometry as a 270 by 310 by approximately

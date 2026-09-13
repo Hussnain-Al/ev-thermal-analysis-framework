@@ -8,7 +8,7 @@ arguments
 end
 
 cfg.project.name = "EV Thermal Analysis Framework";
-cfg.project.version = "4.3.1";
+cfg.project.version = "4.4.0";
 cfg.project.rootDir = rootDir;
 cfg.project.outputDir = fullfile(rootDir,"outputs");
 cfg.project.parameterRegister = fullfile(rootDir,"data", ...

@@ -44,8 +44,14 @@ coolantRow = c(c.Temperature_C==cfg.motorCooling.thermal.propertyTemperature_C,:
 out.radiatorDesign = calculate_radiator_design_requirements( ...
     motorHeat.summary.Cycle(designRows), ...
     motorHeat.summary.AverageDriveUnitHeat_kW(designRows), ...
-    cfg.motorHeat.operatingCases.Speed_kmh,cfg.motorCooling.thermal, ...
+    cfg.motorCooling.thermal, ...
     coolantRow,out.radiatorCandidate.FrontalArea_m2(1));
+out.radiatorAirsideSensitivity = calculate_radiator_airside_sensitivity( ...
+    motorHeat.summary.Cycle(designRows), ...
+    motorHeat.summary.AverageDriveUnitHeat_kW(designRows), ...
+    cfg.motorCooling.thermal.airTemperatureRiseSensitivity_C, ...
+    cfg.motorCooling.thermal,coolantRow, ...
+    out.radiatorCandidate.FrontalArea_m2(1));
 
 writetable(out.summary,fullfile(outputDir,"motor_thermal_summary.csv"));
 writetable(out.hydraulics.nominalSegments, ...
@@ -58,10 +64,13 @@ writetable(out.radiatorCandidate, ...
     fullfile(outputDir,"radiator_candidate_geometry.csv"));
 writetable(out.radiatorDesign, ...
     fullfile(outputDir,"radiator_design_requirements.csv"));
+writetable(out.radiatorAirsideSensitivity, ...
+    fullfile(outputDir,"radiator_airside_sensitivity.csv"));
 
 plot_motor_thermal_response(out.details,p,outputDir);
-plot_hydraulic_sensitivity(out.hydraulics.sensitivity,c,pump,outputDir);
-plot_radiator_design_requirements(out.radiatorDesign,outputDir);
+plot_hydraulic_sensitivity(out.hydraulics,c,pump,outputDir);
+plot_radiator_design_requirements( ...
+    out.radiatorAirsideSensitivity,cfg.motorCooling.thermal,outputDir);
 end
 
 function summary = summarize_thermal_case(trace,p)
@@ -156,7 +165,8 @@ for i = 1:numel(details)
     legend('Location','best');
 end
 xlabel(layout,'Time (s)');
-title(layout,sprintf(['Transient two-node screen: normal/fan-only UA ' ...
+title(layout,sprintf(['Uncalibrated parameter sensitivity only: ' ...
+    'normal/fan-only UA ' ...
     '%.0f/%.0f W/K, R %.3f K/W'],p.radiatorUA_WK, ...
     p.fanOnlyRadiatorUA_WK,p.motorToCoolantResistance_KW));
 exportgraphics(fig,fullfile(outputDir,"motor_thermal_response.png"), ...
@@ -164,8 +174,13 @@ exportgraphics(fig,fullfile(outputDir,"motor_thermal_response.png"), ...
 close(fig);
 end
 
-function plot_hydraulic_sensitivity(sensitivity,c,pump,outputDir)
-fig = figure('Visible','off','Color','w');
+function plot_hydraulic_sensitivity(hydraulics,c,pump,outputDir)
+sensitivity = hydraulics.sensitivity;
+passiveCurve = hydraulics.inactivePumpCurve;
+fig = figure('Visible','off','Color','w','Position',[100 100 1200 500]);
+layout = tiledlayout(1,2,'TileSpacing','compact');
+
+nexttile;
 hold on;
 labels = strings(height(c),1);
 for j = 1:height(c)
@@ -177,38 +192,73 @@ for j = 1:height(c)
 end
 plot(pump.referenceFlow_Lmin,pump.minimumHead_kPa,'rp', ...
     'MarkerSize',13,'MarkerFaceColor','r');
-labels(end+1) = "Documented pump point";
+labels(end+1) = "Documented 20 L/min, 60 kPa reference";
 grid on;
 xlabel('Coolant flow (L/min)');
 ylabel('Modeled hose and fitting pressure loss (kPa)');
+xlim([min(sensitivity.Flow_Lmin) pump.referenceFlow_Lmin+1]);
+ylim([0 1.08*pump.minimumHead_kPa]);
 legend(labels,'Location','northwest');
+title('Known external hoses and fittings only');
+
+nexttile;
+errorbar(passiveCurve.Flow_Lmin, ...
+    passiveCurve.InactivePumpResistance_kPa, ...
+    passiveCurve.DigitizationUncertainty_kPa,'o-', ...
+    'LineWidth',1.5,'MarkerFaceColor',[0.8500 0.3250 0.0980]);
+grid on;
+xlabel('Coolant flow (L/min)');
+ylabel('Passive pressure loss (kPa)');
+xlim([0 max(passiveCurve.Flow_Lmin)]);
+ylim([0 1.08*max(passiveCurve.InactivePumpResistance_kPa)]);
+title('Supplied stopped-pump resistance evidence');
+
+title(layout,['Available hydraulic evidence; an active pump curve and ' ...
+    'complete component losses are not available']);
 exportgraphics(fig,fullfile(outputDir,"loop_sensitivity.png"), ...
     'Resolution',180);
 close(fig);
 end
 
-function plot_radiator_design_requirements(requirements,outputDir)
+function plot_radiator_design_requirements(sensitivity,thermal,outputDir)
 fig = figure('Visible','off','Color','w','Position',[100 100 1150 480]);
 layout = tiledlayout(1,2,'TileSpacing','compact');
-labels = categorical(requirements.Case);
+caseNames = unique(sensitivity.Case,'stable');
 
 nexttile;
-bar(labels,[requirements.RequiredAirVolumeFlowAtZeroSpeed_m3s, ...
-    requirements.IdealRamAirUpperBound_m3s]);
+hold on;
+for i = 1:numel(caseNames)
+    rows = sensitivity.Case==caseNames(i);
+    plot(sensitivity.AirTemperatureRise_C(rows), ...
+        sensitivity.RequiredCoreFaceVelocity_ms(rows),'o-', ...
+        'LineWidth',1.6,'DisplayName',caseNames(i));
+end
+xline(thermal.airOut_C-thermal.airIn_C,':','10 C baseline', ...
+    'HandleVisibility','off');
 grid on;
-ylabel('Air volume flow (m^3/s)');
-legend('Required air flow at zero road speed', ...
-    'Ideal ram-air upper bound','Location','best');
-title('Air-side requirement');
+ylabel('Required core-face velocity (m/s)');
+xlabel('Assumed air temperature rise (C)');
+legend('Location','northeast');
+title('Air-side flow requirement');
 
 nexttile;
-bar(labels,requirements.RequiredIdealUA_WK);
+hold on;
+for i = 1:numel(caseNames)
+    rows = sensitivity.Case==caseNames(i);
+    plot(sensitivity.AirTemperatureRise_C(rows), ...
+        sensitivity.RequiredIdealUA_WK(rows),'o-', ...
+        'LineWidth',1.6,'DisplayName',caseNames(i));
+end
+xline(thermal.airOut_C-thermal.airIn_C,':','10 C baseline', ...
+    'HandleVisibility','off');
 grid on;
 ylabel('Required ideal UA (W/K)');
-title('Candidate-core thermal requirement');
+xlabel('Assumed air temperature rise (C)');
+legend('Location','northwest');
+title('Ideal heat-transfer requirement');
 
-title(layout,['Radiator design requirements; A_{core}v is an ideal ' ...
-    'geometric face-flow bound']);
+title(layout,['Requirement sensitivity only; achieved core and fan ' ...
+    'performance are not predicted']);
 exportgraphics(fig,fullfile(outputDir,"radiator_design_requirements.png"), ...
     'Resolution',180);
 close(fig);

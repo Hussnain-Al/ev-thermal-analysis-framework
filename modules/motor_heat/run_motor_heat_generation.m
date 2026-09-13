@@ -53,18 +53,56 @@ out.fanOnly = [false(nCycles,1);p.operatingCases.FanOnly];
 
 fig = figure('Visible','off','Color','w','Position',[100 100 1250 820]);
 layout = tiledlayout(2,2,'TileSpacing','compact');
-maximumHeat_kW = max(cellfun(@(x) max(x.DriveUnitHeat_kW),details));
-for i = 1:numel(details)
+
+% Drive schedules: retain the raw one-second calculation, but add a
+% thermally more useful trailing 60-second average.
+for i = 1:nCycles
     nexttile;
-    plot(details{i}.Time_s,details{i}.DriveUnitHeat_kW,'LineWidth',1.1);
+    plot(details{i}.Time_s,details{i}.DriveUnitHeat_kW, ...
+        'Color',[0.72 0.80 0.88],'LineWidth',0.8, ...
+        'DisplayName','One-second heat');
     hold on;
-    mark_extrema(details{i}.Time_s,details{i}.DriveUnitHeat_kW);
+    trailing60s_kW = movmean(details{i}.DriveUnitHeat_kW,[59 0]);
+    plot(details{i}.Time_s,trailing60s_kW,'Color',[0 0.447 0.741], ...
+        'LineWidth',1.8,'DisplayName','Trailing 60-second mean');
     grid on;
-    ylabel('Heat (kW)');
-    ylim([0 1.08*maximumHeat_kW]);
+    xlabel('Time (s)');
+    ylabel('Heat generation (kW)');
     title(details{i}.Cycle(1));
+    legend('Location','northwest');
 end
-xlabel(layout,'Time (s)');
+
+% Accumulated energy shows the thermal burden over each drive schedule.
+nexttile;
+hold on;
+for i = 1:nCycles
+    cumulativeHeat_kWh = cumtrapz(details{i}.Time_s, ...
+        details{i}.DriveUnitHeat_kW)/3600;
+    plot(details{i}.Time_s,cumulativeHeat_kWh,'LineWidth',1.8, ...
+        'DisplayName',details{i}.Cycle(1));
+end
+grid on;
+xlabel('Time (s)');
+ylabel('Cumulative generated heat (kWh)');
+title('Drive-schedule thermal energy');
+legend('Location','northwest');
+
+% Constant operating cases are design points, not transient traces.
+nexttile;
+designNames = out.summary.Cycle(nCycles+(1:nCases));
+designHeat_kW = out.summary.AverageDriveUnitHeat_kW(nCycles+(1:nCases));
+bars = bar(categorical(designNames),designHeat_kW);
+bars.FaceColor = [0.8500 0.3250 0.0980];
+grid on;
+ylabel('Sustained heat generation (kW)');
+title('Hot-weather design cases');
+ylim([0 1.15*max(designHeat_kW)]);
+text(bars.XEndPoints,bars.YEndPoints, ...
+    compose('%.3f kW',designHeat_kW), ...
+    'HorizontalAlignment','center','VerticalAlignment','bottom');
+
+title(layout,['Drive-unit thermal demand: instantaneous heat, ' ...
+    '60-second load and accumulated energy']);
 exportgraphics(fig,fullfile(outputDir,"motor_heat_traces.png"), ...
     'Resolution',180);
 close(fig);
@@ -76,27 +114,6 @@ speed_mph = repmat(caseInput.Speed_kmh/1.609344,numel(time_s),1);
 cycle = table(repmat(caseInput.Name,numel(time_s),1),time_s,speed_mph, ...
     speed_mph*0.44704, ...
     'VariableNames',{'Cycle','Time_s','Speed_mph','Speed_ms'});
-end
-
-function mark_extrema(time_s,signal)
-[maximumValue,maximumIndex] = max(signal);
-[minimumValue,minimumIndex] = min(signal);
-if abs(maximumValue-minimumValue) <= ...
-        max(1e-12,eps(max(abs(signal))))
-    plot(time_s(1),maximumValue,'ko','MarkerFaceColor','k');
-    text(time_s(1),maximumValue, ...
-        sprintf(' constant %.3f kW',maximumValue), ...
-        'VerticalAlignment','bottom');
-    return;
-end
-plot(time_s(maximumIndex),maximumValue,'ro','MarkerFaceColor','r');
-plot(time_s(minimumIndex),minimumValue,'bo','MarkerFaceColor','b');
-text(time_s(maximumIndex),maximumValue, ...
-    sprintf(' max %.3f kW @ %.0f s',maximumValue,time_s(maximumIndex)), ...
-    'VerticalAlignment','bottom');
-text(time_s(minimumIndex),minimumValue, ...
-    sprintf(' min %.3f kW @ %.0f s',minimumValue,time_s(minimumIndex)), ...
-    'VerticalAlignment','bottom');
 end
 
 function ensure_output_folder(folder)
