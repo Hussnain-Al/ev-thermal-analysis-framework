@@ -15,8 +15,8 @@ limitations so the derivation can be audited against the owner's source archive.
 | `HEAT TRANSFER PHENOMENA INSIDE A MODULE.pdf` | `8da01bd498a4a349a41f3aa4f97cbac9c9646a98c3692cb014e7eb792442e0cc` | Battery cooling | 3.10 K/W base path. | Active reconstructed path; lateral paths are not used as external sinks |
 | `Thermal_pad_data_sheet.pdf` | `3e10908a31f85319ffd3a217c4f4a2f9637e4e5e1d30dd24e6576f878f77c19d` | Battery cooling | Thermal-pad material reference, including 12.5 W/(m K) nominal conductivity. | Supporting manufacturer evidence |
 | `Cabin Cooling Load(AutoRecovered).xlsx` | `7970276d972ee6856224057f24cff67981bda1ae5e0c0aa369c8759a282a2688` | Cabin cooling | Recovered body/glazing, occupant and infiltration sensible-load terms. | Active partial source; not a complete Karachi pull-down load |
-| `TKU_PCE_L-English.pdf` | `6b7f3d1a0d2e11837f93eba07044e9797ed42d70daf27a8a3f9e26ca87d9b7f5` | Motor cooling | 20 L/min at 60 kPa screening point and inactive-pump resistance curve at 23 +/- 5 C. | Active manufacturer evidence; full active Q-H curve is missing |
-| `Radiator ppt.pptx` | `e1e3ee3ff3884ae3f2c11b142480fdbb812551fb1e952347c490f1930f00b962` | Motor cooling | Original propulsion heat-exchanger geometry. | Unbuilt radiator design candidate; no performance map |
+| `TKU_PCE_L-English.pdf` | `6b7f3d1a0d2e11837f93eba07044e9797ed42d70daf27a8a3f9e26ca87d9b7f5` | Motor cooling | 20 L/min at 60 kPa screening point and inactive-pump resistance curve at 23 +/- 5 C. | Only available pump evidence; the passive curve is not re-labelled as active pump head |
+| `Radiator ppt.pptx` | `e1e3ee3ff3884ae3f2c11b142480fdbb812551fb1e952347c490f1930f00b962` | Motor cooling | 270 by 310 mm face, approximately 26 mm package depth, 31 flat tubes with 26 by 2 mm external cross-section and 2.8 mm fin pitch. | Unbuilt radiator candidate; the drawing does not specify tube-wall or fin-stock thickness and provides no performance map |
 
 ## Preserved but not used as current-vehicle input
 
@@ -38,6 +38,7 @@ limitations so the derivation can be audited against the owner's source archive.
 | [EPA HWFET source file](https://www.epa.gov/sites/default/files/2015-10/hwycol.txt) | Highway time-speed trace. |
 | [EPA NYCC source file](https://www.epa.gov/system/files/other-files/2025-03/epa-new-york-city-cycle.txt) | Stop-start urban time-speed trace. |
 | [SAE 2000-01-0579](https://doi.org/10.4271/2000-01-0579) | Radiator specific-dissipation sensitivity to inlet temperatures and controlled coolant flow. |
+| [Gundem et al. 2021](https://doi.org/10.30939/ijastech..914901) | Experimental flat-tube automobile-radiator geometry: 2 by 26 mm tube outside dimensions, 0.2 mm tube wall and 0.1 mm fin thickness. The last two values are used only as screening assumptions for the unbuilt candidate. |
 | [NREL Battery Pack Thermal Design](https://www.osti.gov/biblio/1304580) | Basis for combining thermal characterization, modeling and experimental validation. |
 | [NASA POWER Data Access Viewer](https://power.larc.nasa.gov/docs/tutorials/data-access-viewer/quick-start/) | Future source for dated Karachi weather scenarios rather than treating one design ambient as a full climate record. |
 | [MathWorks BEV thermal-management example overview](https://www.mathworks.com/videos/optimizing-a-battery-electric-vehicle-thermal-management-system-1743087942599.html) | Reference architecture for separating the electric powertrain, cabin, refrigerant circuit and coolant circuit before system-level coupling. |
