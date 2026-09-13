@@ -11,15 +11,14 @@ vehicle-specific measurements.
 | Battery | DC internal resistance | Ohm versus SOC, cell temperature and current direction | Exact SVOLT 134 Ah cell datasheet or test report |
 | Battery | Cell heat capacity | J/K, or cell mass and specific heat versus temperature | Exact-cell supplier thermal report |
 | Battery plate | Thermal and hydraulic map | Heat transfer and pressure drop versus coolant flow and inlet temperatures | Exact cold-plate supplier test report |
-| Pump | Active operating curve | Pressure rise in kPa versus L/min at several speeds and coolant temperatures | Exact pump manufacturer curve |
-| Radiator | Validation map | Heat rejection or UA versus coolant flow, air flow and inlet temperatures | Prototype test, validated correlation or CFD |
+| Radiator | Validation map | Heat rejection or UA versus coolant flow, air flow and inlet temperatures | Selected-core supplier map or prototype test |
 | Radiator | Hydraulic map | Coolant pressure drop in kPa versus L/min and temperature | Prototype test or validated core model |
 | Coolant | Thermophysical properties | Density, viscosity, specific heat and conductivity versus temperature | Selected coolant manufacturer datasheet |
 | Drive unit | Loss map | Motor/inverter/reducer loss or efficiency versus torque, speed and temperature | Exact drive-unit supplier numerical map |
 
 Useful search strings must include the exact manufacturer and part number, for
-example `TKU PCE L pump Q-H curve`, `SVOLT 134Ah LFP DCIR SOC temperature`, and
-the exact radiator or cold-plate part number followed by `performance map`.
+example `SVOLT 134Ah LFP DCIR SOC temperature` and the exact radiator or
+cold-plate part number followed by `performance map`.
 
 ## Vehicle-specific information that requires design records or testing
 
@@ -38,7 +37,7 @@ the exact radiator or cold-plate part number followed by `performance map`.
 |---|---|
 | Battery transient temperature | DCIR, cell heat capacity and measured cell-to-plate response |
 | Battery coolant flow and temperature | Cold-plate map, pump curve, radiator/chiller map and coolant inventory |
-| Propulsion operating flow | Full active pump curve and candidate-radiator pressure-drop curve; motor/PDU drops are excluded by current scope |
+| Propulsion operating flow | Not solved. The only pump evidence is retained as a documented point plus an inactive-pump resistance curve; no additional pump curve is requested or fabricated. |
 | Validated motor/coolant temperatures | Identified thermal capacitances, motor-to-coolant resistance and radiator map |
 | Cabin pull-down and compressor demand | Complete solar, latent, ventilation, thermal-mass and refrigerant-component data |
 
