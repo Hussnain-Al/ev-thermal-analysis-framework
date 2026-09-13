@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Modular MATLAB screening model for a compact battery-electric SUV under a
-45 C Karachi hot-weather boundary. Version `4.3.0` contains four independent
+45 C Karachi hot-weather boundary. Version `4.3.1` contains four independent
 domains: motor heat, transient propulsion cooling, sustained battery thermal
 screening and the recovered cabin-load calculation.
 
@@ -103,25 +103,36 @@ misused as active pump head.
 
 ## Radiator and fan design requirements
 
-<img src="docs/images/results/radiator_design_requirements.png" width="820" alt="Required radiator UA, zero-speed fan flow and ideal ram-air upper bound">
+<img src="docs/images/results/radiator_design_requirements.svg" width="820" alt="Required radiator UA, zero-speed air flow and ideal ram-air upper bound">
 
-The retained 270 by 310 mm, 0.0837 m2 core geometry is an unbuilt design
-candidate. The sustained-grade and low-speed hot-weather cases calculate:
+The retained core is an unbuilt 270 by 310 by approximately 26 mm design
+candidate with a 0.0837 m2 frontal area. The source drawing describes 31 flat
+tubes with a 26 by 2 mm external cross-section. The 20 mm internal diameter
+belongs to the six external coolant hoses; it is not the bore of each radiator
+tube. A [comparable tested automotive radiator](https://doi.org/10.30939/ijastech..914901)
+reports a 0.2 mm tube wall and 0.1 mm fin thickness, so those two values are
+retained only as literature screening assumptions and do not determine
+achieved `UA` in this model.
+
+The sustained-grade and low-speed hot-weather cases calculate:
 
 - required heat rejection;
 - coolant outlet temperature at 20 L/min;
 - ideal counterflow `UA` requirement;
-- complete fan-flow requirement at zero road speed;
+- complete air-volume-flow requirement at zero road speed;
 - ideal ram-air upper bound from core area and vehicle speed.
 
-| Design case | Heat duty | Coolant out | Required ideal UA | Fan flow at zero speed | Ideal ram-air bound | Required capture |
+| Design case | Heat duty | Coolant out | Required ideal UA | Air flow at zero speed | Ideal ram-air bound | Required capture |
 |---|---:|---:|---:|---:|---:|---:|
 | 10% grade at 40 km/h | 2.769 kW | 62.78 C | 204.8 W/K | 0.248 m3/s | 0.930 m3/s | 26.7% |
 | 5% grade at 15 km/h | 1.549 kW | 63.76 C | 111.3 W/K | 0.139 m3/s | 0.349 m3/s | 39.8% |
 
-The ram-air value assumes 100% capture before grille, duct and core losses. It
-is an upper bound, not predicted installed airflow. Actual core performance and
-fan selection require CFD, a validated radiator correlation or a prototype test.
+The `A_core v` value is only an ideal geometric face-flow bound, not predicted
+installed airflow. No installation-loss geometry or fan pressure-flow curve is
+requested or invented: the code reports the required zero-speed air volume
+flow but does not claim that a particular fan supplies it.
+Achieved radiator performance remains unverified until a selected core has a
+supplier map or a prototype heat-rejection test.
 
 ## Sustained battery thermal screen
 
