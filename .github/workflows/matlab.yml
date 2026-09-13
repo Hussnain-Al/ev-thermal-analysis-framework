@@ -24,10 +24,9 @@ jobs:
           command: results = verify_framework;
 
       - name: Generate and compile supported Simulink models
-        run: >-
-          xvfb-run -a matlab -batch
-          "setup_project(); run_battery_requirements_simulink_checks;
-          run_propulsion_thermal_simulink_checks;"
+        uses: matlab-actions/run-command@v3
+        with:
+          command: setup_project(); run_battery_requirements_simulink_checks; run_propulsion_thermal_simulink_checks;
 
       - name: Upload generated result plots
         uses: actions/upload-artifact@v4

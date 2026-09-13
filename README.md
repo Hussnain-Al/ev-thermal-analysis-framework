@@ -50,7 +50,7 @@ open_system(modelFile);
 
 ### Battery sustained-load requirements screen
 
-<img src="docs/images/simulink/battery_requirements_screen.jpg" width="820" alt="Simulink battery sustained-load requirements screen">
+<img src="docs/images/simulink/battery_requirements_screen.svg" width="920" alt="Simulink battery sustained-load requirements screen">
 
 This algebraic model converts one sustained C-rate into current, the ACR-based
 pack heat floor, and the cell-to-coolant temperature-rise requirement. It has
@@ -58,7 +58,7 @@ no battery thermal state, coolant circuit or cooling component.
 
 ### Propulsion thermal sensitivity model
 
-<img src="docs/images/simulink/propulsion_thermal_sensitivity.jpg" width="820" alt="Simulink two-node propulsion thermal sensitivity model">
+<img src="docs/images/simulink/propulsion_thermal_sensitivity.svg" width="920" alt="Simulink two-node propulsion thermal sensitivity model">
 
 This model connects drive-unit heat to motor and coolant energy balances and
 an ideal `UA`-based radiator rejection term. Its thermal capacitances and

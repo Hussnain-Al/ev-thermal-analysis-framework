@@ -17,12 +17,6 @@ Generated plots:
 - `motor_cooling/radiator_design_requirements.png`
 - `battery_cooling/battery_c_rate_sweep.png`
 - `cabin_cooling/cabin_load_breakdown.png`
-- `simulink/battery_requirements_screen.png`
-- `simulink/propulsion_thermal_sensitivity.png`
-
-The two files under `simulink/` are exported from the generated `.slx` models
-during continuous integration. They document the implemented block topology;
-they are not additional numerical results.
 
 There are no battery drive-cycle temperatures, cooling requests, compressor
 allocations or combined battery/cabin verdicts.

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="940" viewBox="0 0 1600 940">
+  <defs>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#315b7d"/></marker>
+    <style>
+      .title{font:700 30px Arial,sans-serif;fill:#172b3a}.sub{font:18px Arial,sans-serif;fill:#536878}
+      .block{fill:#f7fbfe;stroke:#315b7d;stroke-width:2}.state{fill:#edf7ed;stroke:#347a3c;stroke-width:2}
+      .assume{fill:#fff8e8;stroke:#b27600;stroke-width:2;stroke-dasharray:8 5}.sum{fill:#fff;stroke:#315b7d;stroke-width:2}
+      .txt{font:17px Arial,sans-serif;fill:#172b3a;text-anchor:middle}.small{font:15px Arial,sans-serif;fill:#405665;text-anchor:middle}
+      .line{fill:none;stroke:#315b7d;stroke-width:2.4;marker-end:url(#arrow2)}.feedback{fill:none;stroke:#7c4b94;stroke-width:2.4;marker-end:url(#arrow2)}
+      .note{font:16px Arial,sans-serif;fill:#7a2f20}.tag{font:700 15px Arial,sans-serif;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1600" height="940" fill="#fff"/>
+  <text x="45" y="52" class="title">Propulsion two-node thermal sensitivity model</text>
+  <text x="45" y="82" class="sub">Documentation view of propulsion_thermal_sensitivity.slx — coupled motor and coolant energy balances</text>
+  <rect x="45" y="108" width="180" height="30" rx="15" fill="#315b7d"/><text x="135" y="129" class="tag" text-anchor="middle">SIMULINK TOPOLOGY</text>
+
+  <rect x="45" y="190" width="165" height="70" rx="8" class="block"/><text x="127" y="219" class="txt">Drive-unit heat</text><text x="127" y="243" class="small">Q̇drive [kW]</text>
+  <rect x="260" y="190" width="135" height="70" rx="8" class="block"/><text x="327" y="219" class="txt">× 1000</text><text x="327" y="243" class="small">kW→W</text>
+  <circle cx="455" cy="225" r="35" class="sum"/><text x="455" y="219" class="txt">Σ</text><text x="455" y="243" class="small">+ −</text>
+  <rect x="540" y="190" width="170" height="70" rx="8" class="assume"/><text x="625" y="219" class="txt">× 1 / Cm</text><text x="625" y="243" class="small">assumed capacity</text>
+  <rect x="765" y="190" width="170" height="70" rx="8" class="state"/><text x="850" y="219" class="txt">∫ dTm/dt</text><text x="850" y="243" class="small">motor temperature</text>
+  <path d="M210 225 H260" class="line"/><path d="M395 225 H420" class="line"/><path d="M490 225 H540" class="line"/><path d="M710 225 H765" class="line"/>
+
+  <rect x="1030" y="190" width="180" height="70" rx="8" class="block"/><text x="1120" y="219" class="txt">Tm − Tc</text><text x="1120" y="243" class="small">temperature difference</text>
+  <rect x="1260" y="190" width="185" height="70" rx="8" class="assume"/><text x="1352" y="219" class="txt">× 1 / Rmc</text><text x="1352" y="243" class="small">assumed conductance</text>
+  <rect x="1260" y="310" width="185" height="70" rx="8" class="state"/><text x="1352" y="339" class="txt">Q̇motor→coolant</text><text x="1352" y="363" class="small">[W]</text>
+  <path d="M935 225 H1030" class="line"/><path d="M1210 225 H1260" class="line"/><path d="M1352 260 V310" class="line"/>
+
+  <circle cx="455" cy="500" r="35" class="sum"/><text x="455" y="494" class="txt">Σ</text><text x="455" y="518" class="small">+ −</text>
+  <rect x="540" y="465" width="170" height="70" rx="8" class="assume"/><text x="625" y="494" class="txt">× 1 / Cc</text><text x="625" y="518" class="small">assumed capacity</text>
+  <rect x="765" y="465" width="170" height="70" rx="8" class="state"/><text x="850" y="494" class="txt">∫ dTc/dt</text><text x="850" y="518" class="small">coolant temperature</text>
+  <path d="M490 500 H540" class="line"/><path d="M710 500 H765" class="line"/>
+
+  <rect x="45" y="680" width="165" height="70" rx="8" class="block"/><text x="127" y="709" class="txt">Ambient</text><text x="127" y="733" class="small">Ta [°C]</text>
+  <rect x="275" y="680" width="180" height="70" rx="8" class="block"/><text x="365" y="709" class="txt">Tc − Ta</text><text x="365" y="733" class="small">air-side driving ΔT</text>
+  <rect x="505" y="790" width="180" height="70" rx="8" class="assume"/><text x="595" y="819" class="txt">Radiator UA</text><text x="595" y="843" class="small">external scenario input</text>
+  <rect x="505" y="680" width="180" height="70" rx="8" class="block"/><text x="595" y="709" class="txt">× UA</text><text x="595" y="733" class="small">ideal heat transfer</text>
+  <rect x="735" y="680" width="210" height="70" rx="8" class="block"/><text x="840" y="709" class="txt">max(0, Q̇rad)</text><text x="840" y="733" class="small">nonnegative rejection</text>
+  <rect x="1000" y="680" width="210" height="70" rx="8" class="state"/><text x="1105" y="709" class="txt">Radiator rejection</text><text x="1105" y="733" class="small">Q̇rad [W]</text>
+  <path d="M210 715 H275" class="line"/><path d="M455 715 H505" class="line"/><path d="M595 790 V750" class="line"/><path d="M685 715 H735" class="line"/><path d="M945 715 H1000" class="line"/>
+
+  <path d="M850 535 V620 H365 V680" class="feedback"/>
+  <path d="M850 535 V585 H980 V285 H1120 V260" class="feedback"/>
+  <path d="M1352 380 V430 H455 V465" class="feedback"/>
+  <path d="M1352 310 V150 H455 V190" class="feedback"/>
+  <path d="M1105 680 V605 H455 V535" class="feedback"/>
+
+  <text x="1045" y="173" class="small">motor and coolant states</text>
+  <text x="1105" y="645" class="small">radiator rejection feeds back to coolant balance</text>
+  <rect x="45" y="885" width="1510" height="42" rx="8" fill="#fff1ee" stroke="#b44a36" stroke-width="2"/>
+  <text x="65" y="912" class="note">Scope limit: Cm, Cc and Rmc are uncalibrated assumptions; UA is a scenario input. This is sensitivity analysis, not a validated vehicle-temperature prediction.</text>
+</svg>

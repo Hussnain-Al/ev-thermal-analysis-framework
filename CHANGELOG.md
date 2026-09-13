@@ -2,10 +2,10 @@
 
 ## 4.4.1 — 2026-09-13
 
-- Exported both supported Simulink block diagrams during the public MATLAB
-  workflow and published the exact generated diagrams in the README.
-- Ran the diagram-export stage through a virtual display because Simulink's
-  diagram printer is unavailable in MATLAB's `-nodisplay` mode.
+- Published clean vector documentation views of both supported Simulink block
+  topologies in the README, traced directly to the model-builder connections.
+- Kept the public MATLAB workflow focused on generating, compiling and checking
+  the actual `.slx` models; the diagrams do not substitute for that check.
 - Added explicit diagram captions separating the algebraic battery requirements
   screen from the uncalibrated propulsion thermal sensitivity model.
 
