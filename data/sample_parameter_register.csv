@@ -29,4 +29,5 @@ R04,Radiator,Fin pitch,2.8,mm,Retained project geometry,Fin-stock thickness is n
 R05,Radiator,Assumed fin thickness,0.1,mm,Comparable tested automotive radiator,Screening geometry only; not measured for this candidate
 R06,Radiator,Assumed transient-model UA,665,W/K,Calibration assumption,Compare with calculated requirement and selected-core map or test
 R07,Radiator,Assumed fan-only transient UA,300,W/K,Calibration assumption,Not a fan selection or measured core result
+R08,Radiator,Air temperature rise sensitivity,5-15,degC,Declared analysis range,Boundary-condition sweep only; not measured air-side performance
 A01,Ambient,Hot-weather air inlet,45,degC,Design boundary,Replace with project climate requirement
