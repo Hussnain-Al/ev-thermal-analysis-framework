@@ -1,2 +1,2 @@
-Radiator,Application,CoreHeight_mm,CoreWidth_mm,FrontalArea_m2,TubeWidth_mm,TubeThickness_mm,TubeQuantity,TubeLength_mm,FinWidth_mm,FinHeight_mm,FinPitch_mm,FinQuantity,FinLength_mm
-Propulsion heat exchanger,Drive-unit coolant loop,270,310,0.0837,26,2,31,275,26,8,2.8,32,260
+Radiator,Application,CoreHeight_mm,CoreWidth_mm,CoreDepth_mm,FrontalArea_m2,FlatTubeExternalWidth_mm,FlatTubeExternalDepth_mm,AssumedTubeWallThickness_mm,TubeQuantity,TubeLength_mm,FinWidth_mm,FinHeight_mm,FinPitch_mm,AssumedFinThickness_mm,FinQuantity,FinLength_mm,GeometryUse
+Propulsion heat exchanger,Drive-unit coolant loop,270,310,26,0.0837,26,2,0.2,31,275,26,8,2.8,0.1,32,260,Unbuilt candidate; wall and fin thicknesses are literature screening assumptions and are not used to predict achieved UA
