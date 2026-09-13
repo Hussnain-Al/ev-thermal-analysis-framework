@@ -196,6 +196,8 @@ labels(end+1) = "Documented 20 L/min, 60 kPa reference";
 grid on;
 xlabel('Coolant flow (L/min)');
 ylabel('Modeled hose and fitting pressure loss (kPa)');
+xlim([min(sensitivity.Flow_Lmin) pump.referenceFlow_Lmin+1]);
+ylim([0 1.08*pump.minimumHead_kPa]);
 legend(labels,'Location','northwest');
 title('Known external hoses and fittings only');
 
@@ -207,6 +209,8 @@ errorbar(passiveCurve.Flow_Lmin, ...
 grid on;
 xlabel('Coolant flow (L/min)');
 ylabel('Passive pressure loss (kPa)');
+xlim([0 max(passiveCurve.Flow_Lmin)]);
+ylim([0 1.08*max(passiveCurve.InactivePumpResistance_kPa)]);
 title('Supplied stopped-pump resistance evidence');
 
 title(layout,['Available hydraulic evidence; an active pump curve and ' ...
