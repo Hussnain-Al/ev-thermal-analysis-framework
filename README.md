@@ -70,9 +70,6 @@ This is the actual generated model opened in MATLAB Online. Version `4.4.2`
 renames the blocks as explicit actions—such as `Convert C-rate to pack current`
 and `Calculate cell ACR heat floor`—without changing the connections or gains.
 
-Readable calculation topology:
-
-<img src="docs/images/simulink/battery_requirements_screen.svg" width="920" alt="Simulink battery sustained-load requirements screen">
 
 | Block group | Function |
 |---|---|
@@ -92,9 +89,6 @@ This is the actual generated two-node model opened in MATLAB Online. Version
 `4.4.2` replaces short labels such as `Inverse motor capacity` with physical
 actions such as `Divide by motor thermal capacity`.
 
-Readable energy-flow topology:
-
-<img src="docs/images/simulink/propulsion_thermal_sensitivity.svg" width="920" alt="Simulink two-node propulsion thermal sensitivity model">
 
 | Block group | Function |
 |---|---|
