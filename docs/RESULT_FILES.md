@@ -18,5 +18,10 @@ Generated plots:
 - `battery_cooling/battery_c_rate_sweep.png`
 - `cabin_cooling/cabin_load_breakdown.png`
 
+All six plot types are displayed in the README. The files under
+`docs/images/results/` are publication copies of the passing MATLAB workflow
+artifacts. The files under `docs/images/simulink/` contain user-captured MATLAB
+Online model screenshots and readable vector views of the same topologies.
+
 There are no battery drive-cycle temperatures, cooling requests, compressor
 allocations or combined battery/cabin verdicts.

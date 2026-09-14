@@ -4,16 +4,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Modular MATLAB screening model for a compact battery-electric SUV under a
-45 C Karachi hot-weather boundary. Version `4.4.1` contains four independent
+45 C Karachi hot-weather boundary. Version `4.4.2` contains four independent
 domains: motor heat, transient propulsion cooling, sustained battery thermal
 screening and the recovered cabin-load calculation.
 
 This is not a validated vehicle model. Unmeasured thermal parameters remain
 explicit assumptions for future experimental calibration.
 
-Only decision-relevant loop figures are shown below. Each plot states whether
-it is a calculated requirement, a measured/digitized input or an uncalibrated
-sensitivity. The public MATLAB R2024b workflow reproduces every result file.
+All generated plots are shown below, grouped by evidence strength. Calculated
+requirements are kept separate from uncalibrated sensitivities and recovered
+workbook results. The public MATLAB R2024b workflow reproduces every result
+file.
 
 ## Run
 
@@ -34,7 +35,7 @@ The standalone battery requirements screen additionally uses Simulink:
 
 ```matlab
 cfg = setup_project();
-modelFile = build_battery_requirements_simulink(cfg);
+modelFile = build_battery_requirements_simulink(cfg,Overwrite=true);
 open_system(modelFile);
 ```
 
@@ -42,28 +43,70 @@ The separate propulsion thermal sensitivity model uses the calculated
 drive-unit heat as its input:
 
 ```matlab
-modelFile = build_propulsion_thermal_sensitivity_simulink(cfg);
+modelFile = build_propulsion_thermal_sensitivity_simulink( ...
+    cfg,Overwrite=true);
 open_system(modelFile);
 ```
+
+## Output map
+
+| Output | What it answers | Evidence status |
+|---|---|---|
+| Drive-unit heat | How much heat is generated over each schedule and sustained case? | Calculated from the supplied efficiency surface |
+| Hose hydraulics | How much of the documented pump head is consumed by known hoses and fittings? | Calculated partial loop only |
+| Radiator requirements | What ideal `UA` and face velocity would the unbuilt core require? | Design requirement, not achieved performance |
+| Battery sustained screen | What minimum heat and coolant-temperature boundary follow from the available ACR and thermal path? | Lower-bound requirements screen |
+| Motor/coolant temperatures | How do assumed thermal parameters affect two-node temperatures? | Uncalibrated sensitivity only |
+| Cabin-load breakdown | What does the recovered Excel workbook currently sum? | Partial sensible-load reconstruction |
+| Simulink models | How are the battery and propulsion equations connected? | Generated models compile-checked in MATLAB R2024b |
 
 ## Simulink block diagrams
 
 ### Battery sustained-load requirements screen
 
+<img src="docs/images/simulink/battery_requirements_screen_actual.png" width="920" alt="Actual MATLAB Online screenshot of the battery requirements Simulink model">
+
+This is the actual generated model opened in MATLAB Online. Version `4.4.2`
+renames the blocks as explicit actions—such as `Convert C-rate to pack current`
+and `Calculate cell ACR heat floor`—without changing the connections or gains.
+
+Readable calculation topology:
+
 <img src="docs/images/simulink/battery_requirements_screen.svg" width="920" alt="Simulink battery sustained-load requirements screen">
 
-This algebraic model converts one sustained C-rate into current, the ACR-based
-pack heat floor, and the cell-to-coolant temperature-rise requirement. It has
-no battery thermal state, coolant circuit or cooling component.
+| Block group | Function |
+|---|---|
+| C-rate → current | Multiplies sustained C-rate by the 134 Ah capacity |
+| Current → cell heat | Squares current and multiplies by the 0.40 mOhm ACR proxy |
+| Cell heat → pack heat | Multiplies by 108 series cells and converts W to kW |
+| Cell heat → required temperature difference | Multiplies by the reconstructed 3.10 K/W base path |
+| Temperature limits → coolant boundary | Subtracts the required temperature difference from the 55 C charge and 60 C absolute limits |
+
+The model has no transient battery state, coolant circuit or cooling component.
 
 ### Propulsion thermal sensitivity model
 
+<img src="docs/images/simulink/propulsion_thermal_sensitivity_actual.png" width="920" alt="Actual MATLAB Online screenshot of the propulsion thermal sensitivity Simulink model">
+
+This is the actual generated two-node model opened in MATLAB Online. Version
+`4.4.2` replaces short labels such as `Inverse motor capacity` with physical
+actions such as `Divide by motor thermal capacity`.
+
+Readable energy-flow topology:
+
 <img src="docs/images/simulink/propulsion_thermal_sensitivity.svg" width="920" alt="Simulink two-node propulsion thermal sensitivity model">
 
-This model connects drive-unit heat to motor and coolant energy balances and
-an ideal `UA`-based radiator rejection term. Its thermal capacitances and
-motor-to-coolant resistance are uncalibrated assumptions, so the model is for
-parameter sensitivity only and does not predict vehicle temperatures.
+| Block group | Function |
+|---|---|
+| Motor heat balance | Drive-unit heat minus heat transferred to coolant |
+| Motor temperature state | Divides net motor heat by assumed motor thermal capacity and integrates it |
+| Motor-to-coolant transfer | Uses the motor/coolant temperature difference and assumed thermal resistance |
+| Coolant heat balance | Motor-to-coolant heat minus ideal radiator rejection |
+| Radiator rejection | Multiplies coolant-to-ambient difference by the scenario `UA` and prevents negative rejection |
+
+The thermal capacitances and motor-to-coolant resistance are uncalibrated
+assumptions. The model is for parameter sensitivity only and does not predict
+validated vehicle temperatures.
 
 ## Propulsion coolant loop
 
@@ -105,10 +148,16 @@ map. NYCC and HWFET are supplemented by:
 | Sustained grade | 40 km/h | 10% | 20 min | 45 C |
 | Low-speed hot-weather grade | 15 km/h | 5% | 30 min | 45 C |
 
-The two-node motor/coolant model is retained in the code only as an uncalibrated
-parameter sensitivity. Its capacitances, motor-to-coolant resistance and
-radiator `UA` are not measured, so its temperature trace is not displayed as a
-vehicle prediction or used for a pass/fail conclusion.
+### Motor/coolant parameter sensitivity
+
+<img src="docs/images/results/motor_thermal_response.png" width="820" alt="Uncalibrated motor and coolant temperature sensitivity for four operating schedules">
+
+The four panels show what the assumed two-node model produces for NYCC, HWFET,
+the sustained 10% grade and the low-speed hot-weather grade. The curves are
+useful for locating sensitivity to sustained heat duration. They are not used
+for a temperature-limit verdict because motor thermal capacity,
+motor-to-coolant resistance, coolant thermal capacity and achieved radiator
+`UA` have not been measured.
 
 ## Propulsion-loop hydraulics
 
@@ -182,9 +231,15 @@ with one sustained C-rate input and six outputs. It does not add a coolant
 temperature, transient battery state or cooling-component model. See
 [`models/battery_requirements/README.md`](models/battery_requirements/README.md).
 
-The cabin workbook remains preserved as an independent recovered subtotal, but
-it is not shown here because it is not a modeled cooling loop. It excludes a
-complete solar, latent, ventilation and transient pull-down model.
+## Recovered cabin-load subtotal
+
+<img src="docs/images/results/cabin_load_breakdown.png" width="820" alt="Recovered partial sensible cabin-load breakdown from the supplied Excel workbook">
+
+This plot reproduces the current Excel subtotal: body/glazing sensible load,
+occupant metabolic sensible load and infiltration sensible load. The 4.156 kW
+sum is not a complete air-conditioning requirement because the workbook does
+not close the full solar, latent, ventilation or transient pull-down load. No
+compressor is selected or evaluated.
 
 ## Repository layout
 
@@ -201,7 +256,7 @@ src/calculations/        reusable equations
 tests/                   regression, interface and energy-balance checks
 references/              source provenance and retained project figures
 outputs/                 generated results
-docs/images/simulink/    workflow-exported Simulink model diagrams
+docs/images/simulink/    model screenshots and readable topology diagrams
 ```
 
 See [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md),

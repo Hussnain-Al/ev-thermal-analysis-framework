@@ -26,7 +26,8 @@ not temperature-limit predictions.
 
 ```matlab
 cfg = setup_project();
-modelFile = build_propulsion_thermal_sensitivity_simulink(cfg);
+modelFile = build_propulsion_thermal_sensitivity_simulink( ...
+    cfg,Overwrite=true);
 open_system(modelFile);
 run_propulsion_thermal_simulink_checks;
 ```

@@ -22,7 +22,7 @@ Simulink is required. From the repository root:
 
 ```matlab
 cfg = setup_project();
-modelFile = build_battery_requirements_simulink(cfg);
+modelFile = build_battery_requirements_simulink(cfg,Overwrite=true);
 open_system(modelFile);
 ```
 

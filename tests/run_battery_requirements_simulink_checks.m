@@ -21,9 +21,9 @@ set_param(modelName,'SimulationCommand','update');
 outports = find_system(modelName,'SearchDepth',1,'BlockType','Outport');
 assert(numel(outports)==6);
 assert(~isempty(find_system(modelName,'SearchDepth',1, ...
-    'Name','ACR heat floor per cell')));
+    'Name','Calculate cell ACR heat floor')));
 assert(~isempty(find_system(modelName,'SearchDepth',1, ...
-    'Name','Cell-to-coolant rise requirement')));
+    'Name','Calculate required temperature difference')));
 
 close_system(modelName,0);
 fprintf('Battery requirements Simulink model generated and compiled successfully.\n');

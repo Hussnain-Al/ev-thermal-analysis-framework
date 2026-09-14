@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.4.2 — 2026-09-13
+
+- Published all six generated plot types in the README, grouped as calculated
+  requirements, lower-bound screens, uncalibrated sensitivity and recovered
+  workbook output.
+- Added the real MATLAB Online screenshots of both generated Simulink models
+  beside the readable vector topology diagrams.
+- Renamed Simulink blocks as explicit physical actions and quantities without
+  changing equations, gains, connections or model scope.
+
 ## 4.4.1 — 2026-09-13
 
 - Published clean vector documentation views of both supported Simulink block
