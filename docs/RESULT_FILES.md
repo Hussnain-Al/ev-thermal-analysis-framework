@@ -31,6 +31,9 @@ changes a figure, copy it from the artifact into the docs path:
 | `cabin_cooling/cabin_load_breakdown.png` | `docs/images/results/cabin_load_breakdown.png` |
 | `literature_gap_fill/gap_*.png` (7 files) | `docs/images/gap_fill/` (same names) |
 
+The `Publish MATLAB figures` workflow (`.github/workflows/publish-figures.yml`,
+run manually from the Actions tab) regenerates them and commits these copies.
+
 Version `4.5.0` changes all ten of these figures. The previous copies were
 removed instead of left showing superseded results. The files under `docs/images/simulink/` contain user-captured MATLAB
 Online model screenshots and readable vector views of the same topologies.

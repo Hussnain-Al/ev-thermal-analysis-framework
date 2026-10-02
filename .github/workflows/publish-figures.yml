@@ -1,0 +1,46 @@
+# Regenerates the MATLAB figures and commits the docs copies listed in
+# docs/RESULT_FILES.md. Run manually after a change that alters a figure.
+name: Publish MATLAB figures
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+
+      - name: Generate results
+        uses: matlab-actions/run-command@v3
+        with:
+          command: results = run_all;
+
+      - name: Copy figures into docs
+        run: |
+          mkdir -p docs/images/results docs/images/gap_fill
+          cp outputs/motor_cooling/motor_thermal_response.png docs/images/results/
+          cp outputs/battery_cooling/battery_c_rate_sweep.png docs/images/results/
+          cp outputs/cabin_cooling/cabin_load_breakdown.png docs/images/results/
+          cp outputs/literature_gap_fill/gap_*.png docs/images/gap_fill/
+
+      - name: Commit changed figures
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/images/results docs/images/gap_fill
+          if git diff --cached --quiet; then
+            echo "Figures unchanged."
+          else
+            git commit -m "Publish MATLAB figures from run ${GITHUB_RUN_ID} [skip ci]"
+            git push
+          fi
