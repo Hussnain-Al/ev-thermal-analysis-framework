@@ -616,7 +616,7 @@ for i = 1:numel(scenarios)
     data(i,:) = balance.Load_kW(balance.Scenario==scenarios(i))';
 end
 recovered = cfg.cabinCooling.recoveredCabinDuty_kW;
-groups = [scenarios;"Recovered workbook subtotal"];
+groups = [scenarios;"Workbook (recorded)"];
 bars = bar(categorical(groups,groups), ...
     [data zeros(numel(scenarios),1); zeros(1,numel(components)) recovered], ...
     'stacked');
