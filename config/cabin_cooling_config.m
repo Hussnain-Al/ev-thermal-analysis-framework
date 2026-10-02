@@ -18,6 +18,9 @@ cabin.superseded.ambientRelativeHumidity_pct = 70;
 cabin.cabinSetpoint_C = 25;
 cabin.cabinRelativeHumidity_pct = 50;
 cabin.recoveredCabinDuty_kW = 4.156;
+% Archived compressor evidence (WRDT18101-DM18A1 specification, R134a,
+% 6000 rpm, 4 C evaporating, 312 V). Used only as a capacity reference.
+cabin.archivedCompressorCapacity_kW = 3.63;
 cabin.modelBoundary = ...
     "Heat-balance rebuild with literature solar, latent and fresh-air terms; recovered workbook retained as audited source";
 end

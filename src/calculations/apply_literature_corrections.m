@@ -22,6 +22,9 @@ ratio = register(register.ID=="B01",:);
 battery.dcResistance25Range_Ohm = battery.resistanceProxy_Ohm./[ratio.High ratio.Low];
 battery.entropicPeak_VK = d.batteryTerms.peakDischargeEntropic_VK;
 battery.entropicReferenceTemperature_C = 25;
+voltage = register(register.ID=="B24",:);
+battery.cycleVoltage_V = a.B24;
+battery.cycleVoltageMinimum_V = voltage.Low;
 battery.entropicSOC_pct = cfg.literatureGapFill.battery.entropicSOC_pct;
 battery.entropic_mVK = cfg.literatureGapFill.battery.entropic_mVK;
 battery.cellToCoolantResistance_KW = d.cellToCoolantResistance_KW;
@@ -29,15 +32,13 @@ pathFn = @(x) derive_path(cfg,x);
 [~,pathRange] = evaluate_assumption_sensitivity(pathFn,a,register, ...
     battery_path_ids());
 battery.cellToCoolantResistanceRange_KW = [pathRange.Minimum pathRange.Maximum];
-% Joint samples of DC resistance and path for the 5-95% band. Orientation
-% is a drawing question, not a statistical one, so it stays at the listed
-% orientation here and appears only in the worst-case range above.
+% Joint samples of DC resistance and path for the 5-95% band.
 nSamples = cfg.literatureGapFill.uncertaintySamples;
 [~,samples] = sample_assumption_distribution(@(x) 0,a,register, ...
-    ["B01";"B13";"B14";"B15";"B16";"B17";"B18";"B19";"B22";"B23"],nSamples);
+    ["B01";"B13";"B14";"B15";"B18";"B22";"B23";"P01";"P02";"P04";"P06"],nSamples);
 battery.uncertainty.dcResistance25_Ohm = battery.resistanceProxy_Ohm./samples(:,1);
 battery.uncertainty.cellToCoolantResistance_KW = zeros(nSamples,1);
-ids = ["B13";"B14";"B15";"B16";"B17";"B18";"B19";"B22";"B23"];
+ids = ["B13";"B14";"B15";"B18";"B22";"B23";"P01";"P02";"P04";"P06"];
 for i = 1:nSamples
     x = a;
     for j = 1:numel(ids)
@@ -92,7 +93,7 @@ value = s.(name);
 end
 
 function ids = battery_path_ids()
-ids = ["ORIENTATION";"B13";"B14";"B15";"B16";"B17";"B18";"B19";"B22";"B23"];
+ids = ["B13";"B14";"B15";"B18";"B22";"B23";"P01";"P02";"P03";"P04";"P05";"P06"];
 end
 
 function ids = radiator_ids(velocityId)

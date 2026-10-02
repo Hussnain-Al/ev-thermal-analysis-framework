@@ -17,6 +17,8 @@ out.motorCalibration = calibration_sweep(cfg,p,motorHeat.curves,a);
     estimate_battery(cfg,p,a);
 [out.cabinAudit,out.cabinHeatBalance,out.cabinPullDown] = estimate_cabin(cfg,p,a);
 [out.robustness,out.tornado] = evaluate_robustness(cfg,motorHeat,motorCooling,a,out.register);
+out.referenceChecks = reference_checks(cfg,motorHeat,a,out.batteryTerms, ...
+    out.cabinHeatBalance);
 
 writetable(out.register,fullfile(outputDir,"literature_assumptions_used.csv"));
 writetable(out.operatingPoints,fullfile(outputDir,"drive_operating_point_heat.csv"));
@@ -30,10 +32,12 @@ writetable(out.cabinAudit,fullfile(outputDir,"cabin_workbook_audit.csv"));
 writetable(out.cabinHeatBalance,fullfile(outputDir,"cabin_heat_balance.csv"));
 writetable(out.cabinPullDown,fullfile(outputDir,"cabin_pull_down_capacity.csv"));
 writetable(out.robustness,fullfile(outputDir,"correction_robustness.csv"));
+writetable(out.referenceChecks,fullfile(outputDir,"reference_checks.csv"));
 writetable(out.tornado,fullfile(outputDir,"correction_sensitivity.csv"));
 
 plot_operating_points(motorHeat,outputDir);
-plot_motor_calibration(out.motorCalibration,motorHeat,p,outputDir);
+plot_motor_calibration(out.motorCalibration,motorHeat,p,outputDir, ...
+    height(cfg.motorHeat.operatingCases));
 plot_radiator(out.radiatorMap,out.radiatorDesignCheck,motorCooling,cfg,outputDir);
 plot_battery_heat_and_path(cfg.batteryCooling,p,out.batteryTerms,out.batteryEnvelope,outputDir);
 plot_battery_transient(out.batteryTransient,cfg.batteryCooling,p,out.batteryTerms,outputDir);
@@ -208,7 +212,7 @@ battery = cfg.batteryCooling;
 
 pathFn = @(x) path_of(cfg,x);
 [pathT,pathC] = evaluate_assumption_sensitivity(pathFn,a,register, ...
-    ["ORIENTATION";"B13";"B14";"B15";"B16";"B17";"B18";"B19";"B22";"B23"]);
+    ["B13";"B14";"B15";"B18";"B22";"B23";"P01";"P02";"P03";"P04";"P05";"P06"]);
 uaFn = @(x) normal_ua(cfg,x,curves,geometry);
 [uaT,uaC] = evaluate_assumption_sensitivity(uaFn,a,register, ...
     ["R09";"R01";"R02";"R03";"R04";"R05";"R06";"R11"]);
@@ -239,7 +243,7 @@ motorC = struct('Central',centralR, ...
 % are deterministic unknowns and appear only in the worst-case range).
 nSamples = g.uncertaintySamples;
 pathValues = sample_assumption_distribution(pathFn,a,register, ...
-    ["B13";"B14";"B15";"B16";"B17";"B18";"B19";"B22";"B23"],nSamples);
+    ["B13";"B14";"B15";"B18";"B22";"B23";"P01";"P02";"P04";"P06"],nSamples);
 uaValues = sample_assumption_distribution(uaFn,a,register, ...
     ["R09";"R01";"R02";"R03";"R04";"R05";"R06";"R11"],nSamples);
 cabinValues = sample_assumption_distribution(cabinFn,a,register, ...
@@ -283,6 +287,59 @@ cabinT.Correction = repmat(names(4),height(cabinT),1);
 tornado = [pathT;uaT;motorT;cabinT];
 tornado = tornado(:,{'Correction','Assumption','Parameter','Central', ...
     'OutputAtLow','OutputAtHigh'});
+end
+
+function checks = reference_checks(cfg,motorHeat,a,batteryTerms,cabinBalance)
+% Compare stated model assumptions with the project's supplier references.
+transient = cfg.motorCooling.transient;
+curves = motorHeat.curves;
+
+% 1. Supplier peak point: 103 C winding after 30 s at 125 kW, 60 C coolant.
+peakPower_kW = 125;
+peakControllerLoss_kW = 3.218;
+speed = transient.ratedSpeedBasis_rpm;
+torque = peakPower_kW*1000/(speed*2*pi/60);
+eta = estimate_integrated_drive_efficiency(speed,torque,curves);
+peakMotorLoss_kW = peakPower_kW/eta-peakPower_kW-peakControllerLoss_kW;
+time_s = (0:30)';
+peakTrace = table(repmat("Supplier peak",numel(time_s),1),time_s, ...
+    repmat(peakMotorLoss_kW,numel(time_s),1), ...
+    'VariableNames',{'Cycle','Time_s','DriveUnitHeat_kW'});
+peakParameters = transient;
+peakParameters.initialMotorTemperature_C = 60;
+peakParameters.initialCoolantTemperature_C = 60;
+peakResult = simulate_motor_coolant_thermal(peakTrace,60,peakParameters);
+impliedWindingCapacity_kJK = peakMotorLoss_kW*30/(103-60);
+
+% 2. SVOLT thermal references, adiabatic lumped cell from full charge.
+oneC = simulate_battery_cell_discharge(1,25,Inf,cfg.batteryCooling.capacity_Ah, ...
+    batteryTerms,1);
+threeC = simulate_battery_cell_discharge(3,25,Inf,cfg.batteryCooling.capacity_Ah, ...
+    batteryTerms,1);
+rise1C = oneC.CellTemperature_C(oneC.Time_s==600)-25;
+rise3C = threeC.CellTemperature_C(threeC.Time_s==30)-25;
+
+% 3. Archived compressor against the humid-heat cabin load.
+humid = cabinBalance.Scenario==cfg.literatureGapFill.cabin.scenarioNames(end);
+cabinLoad_kW = sum(cabinBalance.Load_kW(humid));
+
+check = ["Drive unit after 30 s at 125 kW peak";"Winding thermal capacitance"; ...
+    "Cell rise, 1C for 600 s";"Cell rise, 3C for 30 s"; ...
+    "Cabin load against archived compressor"];
+reference = ["Supplier 103 C winding";"Implied by supplier peak point"; ...
+    "SVOLT limit 15 C";"SVOLT limit 10 C";"DM18A1 3.63 kW at 4 C evaporating"];
+referenceValue = [103;impliedWindingCapacity_kJK;15;10; ...
+    cfg.cabinCooling.archivedCompressorCapacity_kW];
+modelValue = [peakResult.MotorTemperature_C(end); ...
+    transient.motorThermalCapacity_JK/1000;rise1C;rise3C;cabinLoad_kW];
+unit = ["degC";"kJ/K";"K";"K";"kW"];
+finding = ["Two-node model is too slow for 30 s peaks; use it for minutes-long duties only"; ...
+    "Lumped 45 kJ/K is the whole unit; the winding behaves like about a fifth of it"; ...
+    "Consistent; the limit would need about 3.7 mOhm, so it does not test the resistance"; ...
+    "Consistent; not a discriminating test"; ...
+    "Compressor is below the cabin load before any battery chiller duty"];
+checks = table(check,reference,referenceValue,modelValue,unit,finding, ...
+    'VariableNames',{'Check','Reference','ReferenceValue','ModelValue','Unit','Finding'});
 end
 
 function value = path_of(cfg,a)
@@ -416,7 +473,7 @@ exportgraphics(fig,fullfile(outputDir,"gap_drive_operating_points.png"),'Resolut
 close(fig);
 end
 
-function plot_motor_calibration(cal,motorHeat,p,outputDir)
+function plot_motor_calibration(cal,motorHeat,p,outputDir,nCases)
 fig = figure('Visible','off','Color','w','Position',[100 100 1300 480]);
 layout = tiledlayout(1,2,'TileSpacing','compact');
 nexttile;
@@ -437,9 +494,9 @@ nexttile;
 hold on;
 rMid = cal.CalibratedAtBaseSpeed_KW(1);
 coolant = linspace(45,75,31)';
-nCycles = numel(motorHeat.details)-2;
-colors = lines(2);
-for i = 1:2
+nCycles = numel(motorHeat.details)-nCases;
+colors = lines(nCases);
+for i = 1:nCases
     row = nCycles+i;
     q = motorHeat.summary.AverageDriveUnitHeat_kW(row)*1000;
     name = motorHeat.summary.Cycle(row);
@@ -472,8 +529,14 @@ for i = 1:numel(flows)
         'LineWidth',2,'DisplayName',sprintf('%g L/min coolant',flows(i)));
 end
 for i = 1:height(check)
-    yline(check.SustainedHeatDuty_kW(i),'--',sprintf('%s: needs %.1f m/s', ...
-        check.Case(i),check.EstimatedFaceVelocityForDuty_ms(i)), ...
+    if isnan(check.EstimatedFaceVelocityForDuty_ms(i))
+        label = sprintf('%s: exceeds the core at %.0f m/s',check.Case(i), ...
+            max(map.FaceVelocity_ms));
+    else
+        label = sprintf('%s: needs %.1f m/s',check.Case(i), ...
+            check.EstimatedFaceVelocityForDuty_ms(i));
+    end
+    yline(check.SustainedHeatDuty_kW(i),'--',label, ...
         'HandleVisibility','off','LabelHorizontalAlignment','left');
 end
 grid on;
@@ -486,7 +549,7 @@ rows = map.CoolantFlow_Lmin==cfg.motorCooling.thermal.designFlow_Lmin;
 plot(map.FaceVelocity_ms(rows),map.EstimatedUA_WK(rows),'LineWidth',2, ...
     'DisplayName','Estimated achieved UA (20 L/min)');
 hold on;
-requirementColors = [0.85 0.15 0.15;0.55 0.25 0.75];
+requirementColors = [0.85 0.15 0.15;0.55 0.25 0.75;0.10 0.55 0.35];
 for i = 1:height(motorCooling.radiatorDesign)
     yline(motorCooling.radiatorDesign.RequiredIdealUA_WK(i),'--', ...
         'Color',requirementColors(i,:),'LineWidth',1.4, ...

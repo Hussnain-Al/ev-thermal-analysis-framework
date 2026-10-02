@@ -67,6 +67,7 @@ out.summary = table(p.designLocation,p.designAmbient_C,p.initialHotSoak_C, ...
     'HeatBalanceHumidHeat_kW'});
 
 writetable(out.inputs,fullfile(outputDir,"cabin_load_inputs_used.csv"));
+out.archivedCompressorCapacity_kW = p.archivedCompressorCapacity_kW;
 writetable(out.summary,fullfile(outputDir,"cabin_cooling_summary.csv"));
 writetable(out.workbookAudit,fullfile(outputDir,"cabin_workbook_audit.csv"));
 writetable(out.heatBalance,fullfile(outputDir,"cabin_heat_balance.csv"));
@@ -98,6 +99,10 @@ bars(end).FaceColor = [0.35 0.35 0.35];
 totals = sum(data,2);
 text(1:numel(groups),totals,compose(' %.2f kW',totals), ...
     'HorizontalAlignment','center','VerticalAlignment','bottom');
+yline(out.archivedCompressorCapacity_kW,'r--', ...
+    sprintf('Archived DM18A1 compressor: %.2f kW (4 C evaporating)', ...
+    out.archivedCompressorCapacity_kW),'LineWidth',1.4, ...
+    'HandleVisibility','off','LabelHorizontalAlignment','right');
 grid on;
 ylim([0 1.6*max(totals)]);
 ylabel('Cabin cooling load (kW)');

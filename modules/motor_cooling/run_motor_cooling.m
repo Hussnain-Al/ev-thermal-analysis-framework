@@ -138,9 +138,10 @@ out.inactivePumpCurve = read_project_csv(inactivePumpCurveFile, ...
 end
 
 function plot_motor_thermal_response(details,p,outputDir)
-fig = figure('Visible','off','Color','w','Position',[100 100 1250 820]);
-layout = tiledlayout(2,2,'TileSpacing','compact');
-for i = 1:numel(details)
+nTiles = numel(details);
+fig = figure('Visible','off','Color','w','Position',[100 100 1250 410*ceil(nTiles/2)]);
+layout = tiledlayout(ceil(nTiles/2),2,'TileSpacing','compact');
+for i = 1:nTiles
     nexttile;
     plot(details{i}.Time_s,details{i}.MotorTemperature_C, ...
         'LineWidth',1.4,'DisplayName','Drive unit (winding upper bound)');

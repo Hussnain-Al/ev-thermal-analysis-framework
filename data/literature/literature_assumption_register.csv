@@ -14,20 +14,24 @@ R10,Radiator,Core-face velocity with fan only,2.0,1.5,3.0,m/s,Screening assumpti
 R11,Radiator,Chang-Wang correlation scatter on air-side coefficient,1.0,0.85,1.15,-,Correlation accuracy,Chang and Wang 1997 report 89.3% of their database within +/-15%,Correlation uncertainty
 B01,Battery,ACR to DCIR ratio,0.70,0.50,0.90,-,Literature rule of thumb,batterydesign.net DCIR of a cell (ACIR ~70% of 10 s DCIR),1 kHz ACR used as DC heat resistance
 B02,Battery,DCIR Arrhenius activation energy,20,15,35,kJ/mol,Screening assumption,Value giving roughly 2x DCIR from 25 C to 0 C as commonly reported for LFP,Temperature-independent resistance
-B10,Battery,Cell footprint length on cold plate,220,112,220,mm,Supplier listing,SVOLT 134Ah listing 220 x 44.6 x 112 mm and 2.42 kg; 112 mm if the cell stands on its narrow face (paired with B12),Cell geometry absent from model
-B11,Battery,Cell thickness,44.6,44.6,44.6,mm,Supplier listing,SVOLT 134Ah listing,Cell geometry absent from model
-B12,Battery,Cell height (base to terminals),112,112,220,mm,Supplier listing,Orientation assumed; 220 mm if the cell stands on its narrow face (paired with B10),Cell geometry absent from model
+B10,Battery,Cell length on cold plate,200,200,220,mm,Project evidence,Project battery network areas: base 8.4e-3 m2 and side 0.0224 m2 imply 200 x 42 x 112 mm; 220 mm is the seller listing,Cell geometry absent from model
+B11,Battery,Cell thickness,42,42,44.6,mm,Project evidence,Project battery network base area 8.4e-3 m2 / 200 mm; 44.6 mm is the seller listing,Cell geometry absent from model
+B12,Battery,Cell height (base to terminals),112,112,200,mm,Project evidence,Project network side area 0.0224 m2 / 200 mm; 200 mm if the cell stands on its narrow face (paired with B10),Cell geometry absent from model
 B13,Battery,In-plane jelly-roll conductivity,25,15,30,W/(m K),Literature range,Typical in-plane conductivity of LFP/graphite wound or stacked electrodes,Internal conduction path
 B14,Battery,Cell insulation film thickness,0.15,0.10,0.25,mm,Literature typical value,PET/PI wrap on prismatic cans,Cell-to-pad interface
 B15,Battery,Insulation film conductivity,0.20,0.15,0.30,W/(m K),Material property,PET film,Cell-to-pad interface
-B16,Battery,Thermal pad compressed thickness,1.0,0.5,2.0,mm,Screening assumption,Compressed thickness not given in project pad datasheet,Cell-to-plate interface
-B17,Battery,Thermal pad conductivity,12.5,3,12.5,W/(m K),Project evidence,Thermal_pad_data_sheet.pdf nominal value (low value is a generic gap filler),Cell-to-plate interface
-B18,Battery,Cold-plate channel heat-transfer coefficient,1500,800,3000,W/(m2 K),Literature range,Laminar to transitional water-glycol minichannel cold plates,Coolant-side film
-B19,Battery,Cold-plate area spreading factor,1.0,1.0,1.5,-,Screening assumption,Plate wetted area relative to cell footprint,Coolant-side film
+B18,Battery,Cooling-channel heat-transfer coefficient,400,300,800,W/(m2 K),Project evidence,Project battery network R6 uses 400 W/(m2 K); 300-800 spans laminar Nu 4-8 in a 4-6 mm channel with 50/50 glycol,Coolant-side film
 B22,Battery,Jelly-roll to can-base insulator thickness,0.3,0.1,0.5,mm,Literature typical value,Polymer bottom insulator sheet inside prismatic cans (PP or PET; 0.1-0.5 mm),Internal base interface missing from the first build-up
 B23,Battery,Jelly-roll to can-base effective conductivity,0.2,0.1,0.3,W/(m K),Material property,Polypropylene 0.2 W/(m K); 0.1 allows for a partial gas gap,Internal base interface missing from the first build-up
+P01,Battery,Cell aluminium casing thickness,0.8,0.6,1.0,mm,Project evidence,Project battery network R1 (0.8 mm; k 155 W/(m K)),Network R1 entered as 1.69 K/W
+P02,Battery,Thermal pad 1 resistance per cell,0.0224,0.0112,0.0448,K/W,Project evidence,Project battery network R2 as written; derivation not shown so +/-50% to x2,Cell-to-plate interface
+P03,Battery,Module base plate thickness,3.0,2.0,4.0,mm,Project evidence,Project battery network R3 (3 mm aluminium; k 154 W/(m K)),Plate conduction
+P04,Battery,Thermal pad 2 resistance per cell,0.33,0.20,0.50,K/W,Project evidence,Project battery network R4 as written; range for pad compression and tolerance,Plate-to-channel interface
+P05,Battery,Cooling-channel wall thickness,0.6,0.4,0.8,mm,Project evidence,Project battery network R5 (0.6 mm aluminium),Channel wall conduction
+P06,Battery,Cooling-channel contact area per cell,4.8,4.0,8.4,1e-3 m2,Project evidence,Project battery network R6 area 4.8e-3 m2; upper value is the full cell base,Coolant-side film
+B24,Battery,Pack voltage under load,321,314,345.6,V,Project evidence,Archived project load cases L1-L7: motor power / current = 314-336 V; 345.6 V is 108 x 3.2 V nominal,Drive-cycle pack current
 B20,Battery,Cell mass,2.42,2.3,2.5,kg,Supplier listing,SVOLT 134Ah listing,Cell thermal capacitance
-B21,Battery,Cell specific heat,1100,1000,1200,J/(kg K),Literature range,Typical calorimetric values for LFP prismatic cells,Cell thermal capacitance
+B21,Battery,Cell specific heat,1100,900,1200,J/(kg K),Literature range,Typical calorimetric values for LFP prismatic cells; low value is the archived project assumption (900 J/(kg K)),Cell thermal capacitance
 C10,Cabin,Clear-sky haze multiplier for Karachi,0.85,0.75,1.0,-,Screening assumption,Reduces ASHRAE clear-sky direct normal for coastal dust and aerosol,Solar irradiance not in workbook
 C11,Cabin,Exterior film coefficient (parked or slow),15,10,25,W/(m2 K),Literature range,ASHRAE outside film coefficients; Fayazbakhsh and Bahrami SAE 2013-01-1507,Sol-air temperature
 C12,Cabin,Body paint solar absorptivity,0.60,0.30,0.90,-,Literature range,White 0.3 to dark 0.9 automotive paint,Sol-air temperature

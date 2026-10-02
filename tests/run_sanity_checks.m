@@ -45,7 +45,7 @@ assert(abs((battery.absoluteOperatingLimit_C-riseAtOneC)-37.73456)<1e-8);
 
 % Corrected parameters derived from the literature register.
 assert(abs(battery.dcResistance25_Ohm-0.40e-3/0.7)<1e-15);
-assert(abs(battery.cellToCoolantResistance_KW-0.457603)<1e-5);
+assert(abs(battery.cellToCoolantResistance_KW-1.322266)<1e-5);
 assert(battery.cellToCoolantResistanceRange_KW(2)<battery.superseded.baseResistance_KW);
 assert(abs(battery.entropicPeak_VK-0.37e-3)<1e-15);
 transientCfg = cfg.motorCooling.transient;
@@ -63,7 +63,7 @@ assert(abs(batteryRequirements.JouleHeat_W(1)-134^2*0.40e-3/0.7)<1e-10);
 assert(abs(batteryRequirements.EntropicHeat_W(1)-134*298.15*0.37e-3)<1e-10);
 assert(abs(batteryRequirements.RequiredCellToCoolantRise_C(1)- ...
     batteryRequirements.CellHeat_W(1)*battery.cellToCoolantResistance_KW)<1e-12);
-assert(abs(batteryRequirements.MaximumCoolantForDischarge_C(1)-48.54032)<1e-4);
+assert(abs(batteryRequirements.MaximumCoolantForDischarge_C(1)-26.88670)<1e-4);
 assert(all(batteryRequirements.MaximumCoolantForDischargeP05_C< ...
     batteryRequirements.MaximumCoolantForDischargeP95_C));
 assert(numel(battery.uncertainty.cellToCoolantResistance_KW)== ...
@@ -117,7 +117,7 @@ assert(all(abs(results.motorCooling.summary.EnergyBalanceResidual_kWh)<2e-3));
 assert(results.motorCooling.hydraulics.pumpCheck.DocumentedPointCoversModeledHoses);
 assert(contains(results.motorCooling.hydraulics.pumpCheck.Conclusion, ...
     "radiator and component losses are excluded"));
-assert(height(results.motorCooling.radiatorDesign)==2);
+assert(height(results.motorCooling.radiatorDesign)==3);
 assert(all(results.motorCooling.radiatorDesign.RequiredAirVolumeFlow_m3s>0));
 assert(all(results.motorCooling.radiatorDesign.RequiredCoreFaceVelocity_ms>0));
 assert(all(results.motorCooling.radiatorDesign.RequiredIdealUA_WK>0));
@@ -125,7 +125,7 @@ assert(all(results.motorCooling.radiatorDesign.TemperatureBoundaryFeasible));
 assert(~ismember('IdealRamAirUpperBound_m3s', ...
     results.motorCooling.radiatorDesign.Properties.VariableNames));
 assert(height(results.motorCooling.radiatorAirsideSensitivity)== ...
-    2*numel(cfg.motorCooling.thermal.airTemperatureRiseSensitivity_C));
+    3*numel(cfg.motorCooling.thermal.airTemperatureRiseSensitivity_C));
 assert(all(results.motorCooling.radiatorAirsideSensitivity. ...
     RequiredCoreFaceVelocity_ms>0));
 assert(all(results.motorCooling.radiatorAirsideSensitivity. ...
@@ -160,35 +160,36 @@ assert(all(strlength(register.Source)>0));
 gap = results.literatureGapFill;
 terms = gap.batteryTerms;
 assert(abs(terms.dcir25_Ohm-0.40e-3/lit.B01)<1e-12);
-assert(abs(terms.pathResistance_KW-0.4576)<1e-3);
+assert(abs(terms.pathResistance_KW-1.3223)<1e-3);
 assert(terms.pathResistance_KW<cfg.batteryCooling.superseded.baseResistance_KW);
 designCheck = gap.radiatorDesignCheck;
 gradeRow = contains(designCheck.Case,"10%");
 assert(abs(designCheck.EstimatedFaceVelocityForDuty_ms(gradeRow)-6.2)<0.15);
-assert(all(designCheck.EstimatedUAAtRequiredVelocity_WK< ...
-    designCheck.SupersededTwoNodeUA_WK));
+withinMap = ~isnan(designCheck.EstimatedUAAtRequiredVelocity_WK);
+assert(all(designCheck.EstimatedUAAtRequiredVelocity_WK(withinMap)< ...
+    designCheck.SupersededTwoNodeUA_WK(withinMap)));
 assert(abs(designCheck.EstimatedCoolantPressureDrop_kPa(1)-0.583)<0.01);
 assert(all(gap.motorCalibration.ImpliedWindingToCoolant_KW> ...
     cfg.motorCooling.transient.superseded.motorToCoolantResistance_KW));
 assert(isequal(gap.robustness.ClaimHoldsAcrossRange,[true;true;true;false]));
 assert(isequal(gap.robustness.ClaimHoldsWithin5to95,[true;true;true;true]));
-assert(abs(gap.robustness.CombinedMaximum(1)-2.69703)<1e-4);
+assert(abs(gap.robustness.CombinedMaximum(1)-2.472559)<1e-5);
 assert(abs(gap.robustness.CombinedMaximum(2)-200.590)<0.01);
 assert(abs(gap.robustness.CombinedMinimum(4)-3.21884)<1e-4);
 % Deterministic Halton 5-95% bands.
-assert(abs(gap.robustness.P05(1)-0.373398)<1e-5);
-assert(abs(gap.robustness.P95(1)-0.589031)<1e-5);
+assert(abs(gap.robustness.P05(1)-0.990046)<1e-5);
+assert(abs(gap.robustness.P95(1)-1.463604)<1e-5);
 assert(abs(gap.robustness.P05(2)-125.0465)<1e-3);
 assert(abs(gap.robustness.P95(2)-160.5949)<1e-3);
 assert(abs(gap.robustness.P05(4)-4.58164)<1e-4);
 assert(gap.robustness.P05(4)>cfg.cabinCooling.recoveredCabinDuty_kW);
 screen2C = results.batteryCooling.screen(results.batteryCooling.screen.C_rate==2,:);
-assert(abs(screen2C.MaximumCoolantForDischarge_C-27.69010)<1e-4);
-assert(abs(screen2C.MaximumCoolantForDischargeP05_C-17.24508)<1e-4);
-assert(abs(screen2C.MaximumCoolantForDischargeP95_C-34.11492)<1e-4);
+assert(abs(screen2C.MaximumCoolantForDischarge_C+33.36100)<1e-4);
+assert(abs(screen2C.MaximumCoolantForDischargeP05_C+47.33693)<1e-4);
+assert(abs(screen2C.MaximumCoolantForDischargeP95_C+9.11397)<1e-4);
 screen1C = results.batteryCooling.screen(results.batteryCooling.screen.C_rate==1,:);
-assert(abs(screen1C.MaximumCoolantForDischargeP05_C-44.97323)<1e-4);
-assert(abs(screen1C.MaximumCoolantForDischargeP95_C-50.74599)<1e-4);
+assert(abs(screen1C.MaximumCoolantForDischargeP05_C-22.48917)<1e-4);
+assert(abs(screen1C.MaximumCoolantForDischargeP95_C-35.11125)<1e-4);
 
 % Two-node peaks quoted in README and CORRECTIONS.md, with the corrected and
 % the superseded parameters.
@@ -220,22 +221,34 @@ assert(abs(sum(gap.cabinHeatBalance.Load_kW(humid))-5.193)<0.01);
 discharge = gap.batteryTransientSummary;
 row = discharge.C_rate==2 & discharge.Coolant_C==25 & ...
     abs(discharge.PathResistance_KW-terms.pathResistance_KW)<1e-12;
-assert(abs(discharge.PeakCellTemperature_C(row)-39.395)<0.01);
+assert(abs(discharge.PeakCellTemperature_C(row)-44.8217)<0.01);
 
 % Drive-cycle battery heat: expected and highest-possible values, and the
 % cycle selection interface.
 cycleHeat = results.batteryCooling.cycleHeat.summary;
 assert(height(cycleHeat)==numel(results.motorHeat.fileStems));
 gradeHeat = cycleHeat(cycleHeat.FileStem=="sustained_grade",:);
-assert(abs(gradeHeat.MeanBatteryHeat_kW-0.561627)<1e-5);
-assert(abs(gradeHeat.MeanBatteryHeatUpperBound_kW-1.746951)<1e-5);
-assert(abs(gradeHeat.FinalSOC_pct-67.84043)<1e-4);
-assert(abs(gradeHeat.MeanCombinedHeat_kW-3.330411)<1e-5);
+assert(abs(gradeHeat.MeanBatteryHeat_kW-0.641290)<1e-5);
+assert(abs(gradeHeat.MeanBatteryHeatUpperBound_kW-1.998702)<1e-5);
+assert(abs(gradeHeat.FinalSOC_pct-66.14223)<1e-4);
+assert(abs(gradeHeat.MeanCombinedHeat_kW-3.410075)<1e-5);
 highwayHeat = cycleHeat(cycleHeat.FileStem=="highway_cycle",:);
-assert(abs(highwayHeat.MeanBatteryHeat_kW-0.240561)<1e-5);
-assert(abs(highwayHeat.MaxTrailing60sBatteryHeat_kW-0.425973)<1e-5);
+assert(abs(highwayHeat.MeanBatteryHeat_kW-0.279660)<1e-5);
+assert(abs(highwayHeat.MaxTrailing60sBatteryHeat_kW-0.494936)<1e-5);
 urbanHeat = cycleHeat(cycleHeat.FileStem=="urban_cycle",:);
-assert(abs(urbanHeat.MeanCombinedHeat_kW-0.870244)<1e-5);
+assert(abs(urbanHeat.MeanCombinedHeat_kW-0.875871)<1e-5);
+l6Heat = cycleHeat(cycleHeat.FileStem=="project_l6_continuous_grade",:);
+assert(abs(l6Heat.MeanDriveUnitHeat_kW-3.767311)<1e-5);
+assert(abs(l6Heat.MeanBatteryHeat_kW-2.451311)<1e-5);
+assert(abs(l6Heat.MeanBatteryHeatUpperBound_kW-6.212374)<1e-5);
+
+% Supplier and specification reference checks.
+checks = gap.referenceChecks;
+assert(abs(checks.ModelValue(1)-69.2326)<1e-3);
+assert(abs(checks.ReferenceValue(2)-9.7550)<1e-3);
+assert(abs(checks.ModelValue(3)-2.1418)<1e-3);
+assert(abs(checks.ModelValue(4)-0.9868)<1e-3);
+assert(checks.ModelValue(5)>checks.ReferenceValue(5));
 assert(all(cycleHeat.MeanBatteryHeatUpperBound_kW>=cycleHeat.MeanBatteryHeat_kW));
 for k = 1:numel(results.batteryCooling.cycleHeat.traces)
     trace = results.batteryCooling.cycleHeat.traces{k};

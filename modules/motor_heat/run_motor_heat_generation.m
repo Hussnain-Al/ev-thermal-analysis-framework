@@ -36,6 +36,7 @@ for j = 1:nCases
     cycle = make_constant_speed_case(caseInput);
     caseVehicle = cfg.vehicle;
     caseVehicle.grade_pct = caseInput.Grade_pct;
+    caseVehicle.mass_kg = caseVehicle.mass_kg+caseInput.ExtraMass_kg;
     details{i} = calculate_motor_operating_trace(cycle,caseVehicle,out.curves);
     summaries{i} = summarize_motor_heat(details{i});
     writetable(details{i},fullfile(outputDir, ...
