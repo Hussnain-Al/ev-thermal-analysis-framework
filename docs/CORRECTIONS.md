@@ -48,10 +48,13 @@ survives only the 5-95% band is reported as such.
 than the reconstruction.
 
 **Why 3.10 K/W fails.** With 3.10 K/W, a sustained 2C discharge would need
-coolant at -29 C to keep the cell under 60 C. That is incompatible with the
-SVOLT 2C continuous rating, which assumes ordinary liquid cooling. The
-3.10 K/W value came from a module heat-transfer reconstruction that is not
-in the repository; no element-by-element derivation supports it.
+coolant at -29 C to keep the cell under 60 C. SVOLT rates the cell for 2C
+continuous discharge at 25 C, so a pack built from it should not need coolant
+below freezing. The value comes from the private source
+`HEAT TRANSFER PHENOMENA INSIDE A MODULE.pdf` (see
+[`SOURCE_PROVENANCE.md`](../references/SOURCE_PROVENANCE.md)). The repository
+records the result but no element-by-element derivation that could be
+checked.
 
 **Derivation.** Series resistances for a cell cooled through its base:
 
