@@ -156,7 +156,7 @@ yline(out.capacity_kW(2),'k--',sprintf('Recommended capacity %.1f kW',out.capaci
 yline(out.capacity_kW(1),'--','Color',orange,'HandleVisibility','off');
 text(1,out.capacity_kW(1)+0.3,sprintf('DM18A1 %.1f kW',out.capacity_kW(1)),'Color',orange);
 grid on; xlabel('Time (min)'); ylabel('Refrigeration duty (kW)');
-legend({'Cabin evaporator','Battery chiller'},'Location','northeast');
+legend({'Cabin evaporator','Battery chiller'},'Location','east');
 title('L6: how the recommended compressor splits its capacity');
 
 nexttile;
