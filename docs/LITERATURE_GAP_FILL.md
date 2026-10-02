@@ -1,32 +1,29 @@
 # Literature gap fill
 
-Version `4.5.0` adds a separate estimate layer for the outputs that
-[`MISSING_MODEL_INPUTS.md`](MISSING_MODEL_INPUTS.md) blocks. Every number it
-adds lives in
+This page shows the estimate figures behind the corrections, each drawn in
+the form the related studies use. The argument for each correction (what
+was wrong, how the new value is derived, whether it survives its assumption
+ranges) is in [`CORRECTIONS.md`](CORRECTIONS.md).
+
+Every literature number lives in
 [`data/literature/literature_assumption_register.csv`](../data/literature/literature_assumption_register.csv)
 with a central value, a low/high range, a source and the project input it
-stands in for. The evidence-based results are unchanged; the gap-fill results
-are written to `outputs/literature_gap_fill/` and labelled as estimates.
+stands in for. `src/calculations/apply_literature_corrections.m` feeds the
+central values into the model; `modules/literature_gap_fill` writes the
+estimate tables and figures to `outputs/literature_gap_fill/`. All figures
+are MATLAB outputs from the CI workflow.
 
-The MATLAB module is `modules/literature_gap_fill/run_literature_gap_fill.m`.
-[`tools/gap_fill_reference.py`](../tools/gap_fill_reference.py) is an
-independent Python implementation of the same equations; the preview figures
-under `docs/images/gap_fill/` were rendered by it and the MATLAB regression
-checks assert the same values.
-
-## What the gap fill changes in the conclusions
-
-| Gap | Literature estimate | What it contradicts in the current model |
+| Gap | Estimate | Effect on the model |
 |---|---|---|
-| Battery cell-to-coolant path | 0.30 K/W for a bottom-cooled prismatic cell | The reconstructed 3.10 K/W is about 10 times higher. That single value creates the "2C needs sub-zero coolant" result. |
-| Battery heat | DCIR = ACR/0.7 plus entropic heat | Entropic heat at low SOC (about 15 W per cell at 1C) exceeds the ACR Joule floor (7 W). The ACR result is not a floor at low SOC. |
-| Battery transient | Lumped cell, 2.66 kJ/K | With 25 C chiller coolant even the reconstructed path stays below 48 C during a full 2C discharge. The steady-state screen ignores the 2.3 h thermal time constant. |
-| Radiator achieved performance | Chang-Wang louver j-factor, e-NTU | Estimated UA is 110 to 185 W/K between 1.5 and 8 m/s. The two-node model assumes 665 W/K, about four times more. The 10% grade duty needs about 6.2 m/s face velocity, not the 2.97 m/s from the ideal-UA calculation. |
-| Radiator pressure drop | Laminar flat-tube friction | About 0.6 kPa at 20 L/min, a small share of the 38 kPa head left after the hoses. |
-| Winding resistance | Back-calculated from the supplier 143 C rated reference | 0.017 to 0.043 K/W depending on the unknown rated speed. The configured 0.015 K/W is below the whole range. |
-| Cabin workbook | Row-by-row recomputation | The body/glazing rows are overstated by about 1.46 kW (see audit below). |
-| Cabin load | Heat-balance rebuild | 4.3 kW (dry heat) to 5.2 kW (humid heat) steady, plus 0.6 to 2.4 kW extra for a 30-minute pull-down. |
-| Climate | 45 C with 25% or 44% RH | 45 C at 70% RH has a 38 C dew point, above any dew point ever recorded. |
+| Battery cell-to-coolant path | 0.305 K/W bottom-cooling build-up | Replaces the 3.10 K/W reconstruction |
+| Battery heat | DC resistance = ACR/0.7 plus low-SOC entropic heat | Replaces the 1 kHz ACR heat floor |
+| Battery transient | Lumped cell, 2.66 kJ/K | New: cell temperature during full discharges |
+| Radiator performance | Chang-Wang louver j-factor, e-NTU | Two-node UA 140/122 W/K replaces 665/300 W/K; the 10% grade needs about 6.2 m/s face velocity |
+| Radiator pressure drop | Laminar flat-tube friction | About 0.6 kPa at 20 L/min |
+| Winding resistance | Back-calculated from the supplier 143 C rated point | 0.0331 K/W replaces 0.015 K/W |
+| Cabin workbook | Row-by-row recomputation | Body and glazing 1.87 kW, not 3.34 kW |
+| Cabin load | Heat-balance rebuild | 4.31 kW (dry heat) to 5.19 kW (humid heat), plus 0.6-2.4 kW for a 30-minute pull-down |
+| Climate | 45 C with 25% or 44% RH | Replaces 45 C / 70% RH, which has an impossible 38 C dew point |
 
 ## Gap fill 1: drive-unit operating points
 

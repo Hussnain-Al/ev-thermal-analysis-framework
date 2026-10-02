@@ -18,9 +18,11 @@ integrates a two-node drive-unit/coolant energy balance.
 - motor-to-coolant heat transfer;
 - radiator heat rejection.
 
-The configured drive-unit thermal capacity, coolant-loop thermal capacity and
-motor-to-coolant resistance are assumptions. Outputs are sensitivity results,
-not temperature-limit predictions.
+The motor-to-coolant resistance (0.0331 K/W) is calibrated on the supplier
+143 C rated point. The drive-unit and coolant-loop thermal capacities remain
+assumptions. The radiator UA input defaults to the candidate-core estimate
+(139.7 W/K normal, 122.3 W/K fan-only). Outputs are screening results;
+the drive-unit node is an upper bound on winding temperature.
 
 ## Generate and check
 

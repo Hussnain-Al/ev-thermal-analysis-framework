@@ -8,13 +8,16 @@ that stops at the battery-to-coolant boundary.
 | Input | Output |
 |---|---|
 | Sustained C-rate | Current |
-| Current and 0.40 mOhm ACR limit | Minimum cell and pack heat |
-| Cell heat and reconstructed 3.10 K/W base path | Required cell-to-coolant temperature difference |
+| Current, 0.571 mOhm DC resistance and peak entropic coefficient | Cell and pack heat |
+| Cell heat and 0.305 K/W cell-to-coolant path | Required cell-to-coolant temperature difference |
 | Required temperature difference and SVOLT limits | Maximum allowable coolant temperature |
 
-The ACR value is measured at 1 kHz, 25 C and 60% SOC. It is a lower-bound
-resistance proxy, not DCIR. The base-path resistance is reconstructed and is
-not experimentally validated.
+The DC resistance is the 1 kHz ACR divided by 0.7. The entropic heat uses the
+low-SOC peak. The path is a bottom-cooling build-up from the literature
+register. All three come from `apply_literature_corrections`, and their
+ranges are in [`docs/CORRECTIONS.md`](../../docs/CORRECTIONS.md). The model
+computes the central estimate; the 5-95% band is computed in MATLAB by
+`calculate_battery_requirements_screen`.
 
 ## Generate the Simulink model
 

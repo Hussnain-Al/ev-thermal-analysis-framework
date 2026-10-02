@@ -186,6 +186,30 @@ screen2C = results.batteryCooling.screen(results.batteryCooling.screen.C_rate==2
 assert(abs(screen2C.MaximumCoolantForDischarge_C-38.48406)<1e-4);
 assert(abs(screen2C.MaximumCoolantForDischargeP05_C-32.27118)<1e-4);
 assert(abs(screen2C.MaximumCoolantForDischargeP95_C-41.94481)<1e-4);
+screen1C = results.batteryCooling.screen(results.batteryCooling.screen.C_rate==1,:);
+assert(abs(screen1C.MaximumCoolantForDischargeP05_C-50.36281)<1e-4);
+assert(abs(screen1C.MaximumCoolantForDischargeP95_C-53.52428)<1e-4);
+
+% Two-node peaks quoted in README and CORRECTIONS.md, with the corrected and
+% the superseded parameters.
+thermal = results.motorCooling.summary;
+gradeRow = thermal.Case=="Sustained 10% grade";
+lowRow = thermal.Case=="Low-speed hot-weather grade";
+assert(abs(thermal.PeakMotorTemperature_C(gradeRow)-98.550)<0.01);
+assert(abs(thermal.PeakCoolantTemperature_C(gradeRow)-53.914)<0.01);
+assert(abs(thermal.PeakMotorTemperature_C(lowRow)-84.324)<0.01);
+supersededParameters = cfg.motorCooling.transient;
+supersededParameters.motorToCoolantResistance_KW = ...
+    supersededParameters.superseded.motorToCoolantResistance_KW;
+supersededParameters.radiatorUA_WK = supersededParameters.superseded.radiatorUA_WK;
+oldGrade = simulate_motor_coolant_thermal(results.motorHeat.details{3},45, ...
+    supersededParameters);
+assert(abs(max(oldGrade.MotorTemperature_C)-81.576)<0.01);
+assert(abs(max(oldGrade.CoolantTemperature_C)-48.305)<0.01);
+supersededParameters.radiatorUA_WK = supersededParameters.superseded.fanOnlyRadiatorUA_WK;
+oldLow = simulate_motor_coolant_thermal(results.motorHeat.details{4},45, ...
+    supersededParameters);
+assert(abs(max(oldLow.MotorTemperature_C)-70.106)<0.01);
 assert(abs(results.cabinCooling.summary.CorrectedWorkbookSubtotal_kW- ...
     (1.871665+0.594+0.226))<1e-4);
 assert(abs(results.cabinCooling.summary.HeatBalanceHumidHeat_kW-5.19253)<1e-4);

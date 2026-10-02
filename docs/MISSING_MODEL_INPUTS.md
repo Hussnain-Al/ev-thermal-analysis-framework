@@ -41,7 +41,8 @@ cold-plate part number followed by `performance map`.
 | Validated motor/coolant temperatures | Identified thermal capacitances, motor-to-coolant resistance and radiator map |
 | Cabin pull-down and compressor demand | Complete solar, latent, ventilation, thermal-mass and refrigerant-component data |
 
-Until the listed evidence exists, the blocked outputs are not calculated in
-the evidence layer. [`LITERATURE_GAP_FILL.md`](LITERATURE_GAP_FILL.md)
-estimates them separately from sourced literature values and lists which
-measurement retires each assumption.
+Version `4.5.0` estimates these inputs from sourced literature values and
+carries the estimates into the model with explicit ranges; see
+[`CORRECTIONS.md`](CORRECTIONS.md). The measurements above are still what
+retire each estimate. Until they exist, every affected result is a
+literature-based screen, not a vehicle prediction.

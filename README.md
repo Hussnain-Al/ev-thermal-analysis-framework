@@ -8,13 +8,15 @@ Modular MATLAB screening model for a compact battery-electric SUV under a
 domains: motor heat, transient propulsion cooling, sustained battery thermal
 screening and the recovered cabin-load calculation.
 
-This is not a validated vehicle model. Unmeasured thermal parameters remain
-explicit assumptions for future experimental calibration.
+This is not a validated vehicle model. Version `4.5.0` corrects six inputs
+that did not hold up: the battery cell-to-coolant path, battery heat, radiator
+UA, winding resistance, the cabin workbook and the design humidity. Each
+replacement is derived from project evidence plus a sourced literature
+register. Each is tested against its assumption ranges, and its superseded
+value is kept for comparison. The argument for every correction is in
+[`docs/CORRECTIONS.md`](docs/CORRECTIONS.md).
 
-All generated plots are shown below, grouped by evidence strength. Calculated
-requirements are kept separate from uncalibrated sensitivities and recovered
-workbook results. The public MATLAB R2024b workflow reproduces every result
-file.
+All plots below are MATLAB R2024b outputs from the public workflow.
 
 ## Run
 
@@ -55,9 +57,10 @@ open_system(modelFile);
 | Drive-unit heat | How much heat is generated over each schedule and sustained case? | Calculated from the supplied efficiency surface |
 | Hose hydraulics | How much of the documented pump head is consumed by known hoses and fittings? | Calculated partial loop only |
 | Radiator requirements | What ideal `UA` and face velocity would the unbuilt core require? | Design requirement, not achieved performance |
-| Battery sustained screen | What minimum heat and coolant-temperature boundary follow from the available ACR and thermal path? | Lower-bound requirements screen |
-| Motor/coolant temperatures | How do assumed thermal parameters affect two-node temperatures? | Uncalibrated sensitivity only |
-| Cabin-load breakdown | What does the recovered Excel workbook currently sum? | Partial sensible-load reconstruction |
+| Battery sustained screen | What coolant temperature keeps the cell under 55 C and 60 C at a sustained C-rate? | Corrected screen with 5-95% band; literature-derived path and heat |
+| Motor/coolant temperatures | How hot do the drive unit and coolant get on each schedule? | Calibrated winding resistance and estimated core UA; capacitances assumed |
+| Cabin load | What does the cabin need at 45 C, and what did the workbook get wrong? | Workbook audit plus heat-balance rebuild |
+| Correction robustness | Does each correction survive its assumption ranges? | One-at-a-time, combined worst case and 5-95% band |
 | Simulink models | How are the battery and propulsion equations connected? | Generated models compile-checked in MATLAB R2024b |
 
 ## Simulink block diagrams
@@ -66,17 +69,20 @@ open_system(modelFile);
 
 <img src="docs/images/simulink/battery_requirements_screen_actual.png" width="920" alt="Actual MATLAB Online screenshot of the battery requirements Simulink model">
 
-This is the actual generated model opened in MATLAB Online. Version `4.4.2`
-renames the blocks as explicit actions—such as `Convert C-rate to pack current`
-and `Calculate cell ACR heat floor`—without changing the connections or gains.
-
+The screenshot shows the `4.4.2` model. Version `4.5.0` changes it in two
+places. `Calculate cell ACR heat floor` becomes `Calculate cell DC Joule heat`
+(0.571 mOhm), and a `Calculate peak entropic heat` branch is added from the
+pack current and summed with the Joule heat. The path gain changes from 3.10
+to 0.305 K/W. CI generates and compile-checks the new model on every push; a
+fresh MATLAB Online screenshot is still to be captured.
 
 | Block group | Function |
 |---|---|
 | C-rate → current | Multiplies sustained C-rate by the 134 Ah capacity |
-| Current → cell heat | Squares current and multiplies by the 0.40 mOhm ACR proxy |
+| Current → Joule heat | Squares current and multiplies by the 0.571 mOhm DC resistance |
+| Current → entropic heat | Multiplies current by 298.15 K and the 0.37 mV/K low-SOC peak |
 | Cell heat → pack heat | Multiplies by 108 series cells and converts W to kW |
-| Cell heat → required temperature difference | Multiplies by the reconstructed 3.10 K/W base path |
+| Cell heat → required temperature difference | Multiplies by the 0.305 K/W cell-to-coolant path |
 | Temperature limits → coolant boundary | Subtracts the required temperature difference from the 55 C charge and 60 C absolute limits |
 
 The model has no transient battery state, coolant circuit or cooling component.
@@ -94,13 +100,13 @@ actions such as `Divide by motor thermal capacity`.
 |---|---|
 | Motor heat balance | Drive-unit heat minus heat transferred to coolant |
 | Motor temperature state | Divides net motor heat by assumed motor thermal capacity and integrates it |
-| Motor-to-coolant transfer | Uses the motor/coolant temperature difference and assumed thermal resistance |
+| Motor-to-coolant transfer | Uses the motor/coolant temperature difference and the 0.0331 K/W calibrated resistance |
 | Coolant heat balance | Motor-to-coolant heat minus ideal radiator rejection |
 | Radiator rejection | Multiplies coolant-to-ambient difference by the scenario `UA` and prevents negative rejection |
 
-The thermal capacitances and motor-to-coolant resistance are uncalibrated
-assumptions. The model is for parameter sensitivity only and does not predict
-validated vehicle temperatures.
+The motor-to-coolant resistance is calibrated on the supplier 143 C rated
+point. The thermal capacitances are still assumptions, so the model is a
+screen, not a validated temperature prediction.
 
 ## Propulsion coolant loop
 
@@ -110,8 +116,9 @@ validated vehicle temperatures.
 |---|---|
 | `motor_heat` | Drive-unit heat for NYCC, HWFET and two hot-weather operating cases |
 | `motor_cooling` | Six-hose pressure loss and radiator requirement sensitivity |
-| `battery_cooling` | Sustained ACR-based heat floor and coolant-temperature requirement |
-| `cabin_cooling` | Independent recovered cabin sensible-load subtotal |
+| `battery_cooling` | Sustained cell heat and coolant-temperature requirement with 5-95% band |
+| `cabin_cooling` | Workbook audit and heat-balance cabin load |
+| `literature_gap_fill` | Estimate figures, discharge transient and the robustness test of each correction |
 
 The compressor and battery/cabin allocation model were removed. The former
 battery drive-cycle temperature result was also removed because it was
@@ -142,16 +149,19 @@ map. NYCC and HWFET are supplemented by:
 | Sustained grade | 40 km/h | 10% | 20 min | 45 C |
 | Low-speed hot-weather grade | 15 km/h | 5% | 30 min | 45 C |
 
-### Motor/coolant parameter sensitivity
+### Motor/coolant temperatures
 
-<img src="docs/images/results/motor_thermal_response.png" width="820" alt="Uncalibrated motor and coolant temperature sensitivity for four operating schedules">
+<img src="docs/images/results/motor_thermal_response.png" width="820" alt="Two-node drive-unit and coolant temperatures for four operating schedules">
 
-The four panels show what the assumed two-node model produces for NYCC, HWFET,
-the sustained 10% grade and the low-speed hot-weather grade. The curves are
-useful for locating sensitivity to sustained heat duration. They are not used
-for a temperature-limit verdict because motor thermal capacity,
-motor-to-coolant resistance, coolant thermal capacity and achieved radiator
-`UA` have not been measured.
+The two-node model now uses a winding-to-coolant resistance of 0.0331 K/W.
+That value is calibrated on the supplier rated point (143 C winding with 60 C
+coolant, at base speed). The radiator UA is the candidate-core estimate:
+139.7 W/K normal, 122.3 W/K fan-only. On the 20-minute 10% grade the drive
+unit reaches 98.55 C and the coolant 53.9 C; the superseded parameters gave
+81.6 C and 48.3 C. The full integrated loss crosses the winding resistance,
+so the drive-unit curve is an upper bound on winding temperature. Thermal
+capacitances are still assumed, and the grade cases have not reached steady
+state.
 
 ## Propulsion-loop hydraulics
 
@@ -203,75 +213,72 @@ supplier map or a prototype heat-rejection test.
 
 ## Sustained battery thermal screen
 
-<img src="docs/images/results/battery_c_rate_sweep.png" width="820" alt="Sustained battery heat floor and allowable coolant temperature generated by MATLAB">
+<img src="docs/images/results/battery_c_rate_sweep.png" width="820" alt="Battery pack heat and allowable coolant temperature with uncertainty band and superseded result">
 
-The only available resistance is the SVOLT limit of 0.40 mOhm ACR at 1 kHz,
-25 C and 60% SOC. Therefore the calculated `I^2R` value is a minimum ohmic heat
-floor, not a DC heat estimate.
+Cell heat is DC Joule heat (0.40 mOhm ACR / 0.7 = 0.571 mOhm at 25 C) plus
+the low-SOC entropic peak. The path is a 0.305 K/W bottom-cooling build-up.
+The graph reports the maximum coolant temperature that keeps the cell at
+55 C (charge cutoff) and 60 C (absolute limit), with a 5-95% band over the
+register ranges:
 
-The graph reports the maximum coolant temperature compatible with the
-reconstructed 3.10 K/W base path at:
+| C-rate | Superseded (ACR, 3.10 K/W) | Corrected | 5-95% |
+|---:|---:|---:|---:|
+| 1C | 37.7 C | 52.4 C | 50.4-53.5 C |
+| 2C | -29.1 C | 38.5 C | 32.3-41.9 C |
 
-- 55 C, above which the SVOLT continuous-charge table prohibits charging;
-- 60 C, the absolute operating protection limit.
+The superseded result implied the cell needs sub-zero coolant at 2C, which
+contradicts its own 2C rating. The corrected result says the battery loop
+needs coolant below about 38 C at 2C. A chiller can supply that; 45 C ambient
+air cannot.
 
-The severe coolant requirement above roughly 1.25C conflicts with the SVOLT
-2C continuous-discharge rating. This identifies the reconstructed 3.10 K/W
-thermal path as requiring validation; it does not prove that the cell cannot
-operate at 2C.
-
-The Simulink battery requirements screen implements this same calculation
+The Simulink battery requirements screen implements the central calculation
 with one sustained C-rate input and six outputs. It does not add a coolant
 temperature, transient battery state or cooling-component model. See
 [`models/battery_requirements/README.md`](models/battery_requirements/README.md).
 
-## Recovered cabin-load subtotal
+## Cabin load
 
-<img src="docs/images/results/cabin_load_breakdown.png" width="820" alt="Recovered partial sensible cabin-load breakdown from the supplied Excel workbook">
+<img src="docs/images/results/cabin_load_breakdown.png" width="820" alt="Cabin workbook subtotal as recorded and recomputed beside the heat-balance load for two humidity scenarios">
 
-This plot reproduces the current Excel subtotal: body/glazing sensible load,
-occupant metabolic sensible load and infiltration sensible load. The 4.156 kW
-sum is not a complete air-conditioning requirement because the workbook does
-not close the full solar, latent, ventilation or transient pull-down load. No
-compressor is selected or evaluated.
+The recovered workbook sums to 4.156 kW, but its body and glazing rows have
+five defects. They include U multiplied by the solar cooling load, solar gain
+on opaque doors, west rows copied from east, a Fahrenheit CLTD correction
+with Celsius temperatures, and a roof CLTD on the floor. Recomputed with the
+workbook's own inputs, the subtotal is 2.69 kW. The workbook file itself is
+left unchanged as hashed source evidence.
 
-## Literature gap fill (estimates, not evidence)
+The heat-balance rebuild at 45 C gives 4.31 kW in dry heat (25% RH) and
+5.19 kW in humid heat (44% RH, the 2015 heat-wave peak). The configured
+45 C / 70% RH pairing was dropped because its 38 C dew point exceeds any
+recorded. No compressor is selected or evaluated.
 
-The outputs above stop where project evidence stops. Version `4.5.0` adds a
-separate estimate layer that fills each blocked input with a value from
-comparable published designs, keeps its low/high range and source in
-[`data/literature/literature_assumption_register.csv`](data/literature/literature_assumption_register.csv),
-and plots it the way those studies do. Full reasoning:
+## Corrections and their robustness
+
+<img src="docs/images/gap_fill/gap_correction_robustness.png" width="820" alt="Tornado charts of each correction against its assumption ranges and superseded value">
+
+Each correction is tested three ways. One at a time moves each assumption to
+its low and high value. The combined extreme sets every assumption to the
+end that favours the superseded value. The 5-95% band uses 1024
+deterministic Halton samples over triangular distributions.
+
+| Correction | Adopted | 5-95% | Combined extreme | Superseded | Verdict |
+|---|---:|---:|---:|---:|---|
+| Battery cell-to-coolant path | 0.305 K/W | 0.26-0.38 | 0.19-1.70 | 3.10 K/W | Holds at every extreme |
+| Radiator UA, normal driving | 139.7 W/K | 125-161 | 93-201 | 665 W/K | Holds at every extreme |
+| Winding-to-coolant resistance | 0.0331 K/W | not sampled | 0.0158-0.0514 | 0.015 K/W | Holds, narrowly at the low end |
+| Cabin load, humid heat | 5.19 kW | 4.58-6.63 | 3.22-9.13 | 4.156 kW | Holds within 5-95%, not at every extreme |
+
+Every literature value, with its range and source, is in
+[`data/literature/literature_assumption_register.csv`](data/literature/literature_assumption_register.csv).
+The estimate figures behind each correction are drawn in the form the related
+studies use: supplier-style radiator map, battery heat terms against SOC with
+a resistance budget, discharge transient, cabin load breakdown, and
+operating points on the efficiency map. They are in
 [`docs/LITERATURE_GAP_FILL.md`](docs/LITERATURE_GAP_FILL.md).
-
-| Finding | Estimate | Consequence |
-|---|---|---|
-| Battery cell-to-coolant path | 0.30 K/W vs reconstructed 3.10 K/W | The sub-zero coolant requirement at 2C comes from the path value, not the cell |
-| Battery entropic heat | Up to about 15 W per cell at 1C, low SOC | ACR Joule heat (7 W) is not a lower bound across the SOC range |
-| Radiator achieved UA | 110-185 W/K at 1.5-8 m/s | The two-node model's 665 W/K is about 4 times too high; the 10% grade needs about 6.2 m/s |
-| Winding-to-coolant resistance | 0.017-0.043 K/W from the supplier 143 C point | The configured 0.015 K/W understates winding temperature |
-| Cabin workbook | 1.87 kW recomputed vs 3.34 kW recorded | Unit and formula errors in the body/glazing rows |
-| Cabin load at 45 C | 4.3-5.2 kW steady, plus 0.6-2.4 kW for a 30 min pull-down | Solar, latent and fresh-air terms now estimated |
-| Design climate | 45 C at 70% RH implies a 38 C dew point | Replaced by 25% and 44% RH scenarios |
 
 <img src="docs/images/gap_fill/gap_radiator_performance_map.png" width="820" alt="Estimated candidate radiator heat rejection and UA against face velocity">
 
-<img src="docs/images/gap_fill/gap_battery_heat_and_path.png" width="820" alt="Battery heat terms, thermal resistance budget and coolant envelope">
-
 <img src="docs/images/gap_fill/gap_battery_discharge_transient.png" width="820" alt="Lumped cell temperature during constant-current discharge">
-
-<img src="docs/images/gap_fill/gap_cabin_heat_balance.png" width="820" alt="Cabin workbook audit, heat-balance breakdown and pull-down capacity">
-
-<img src="docs/images/gap_fill/gap_motor_resistance_calibration.png" width="820" alt="Winding resistance implied by the supplier rated temperature point">
-
-<img src="docs/images/gap_fill/gap_drive_operating_points.png" width="820" alt="Drive-cycle operating points and heat density on the efficiency map">
-
-These previews come from
-[`tools/gap_fill_reference.py`](tools/gap_fill_reference.py), an independent
-Python implementation. The MATLAB module
-`modules/literature_gap_fill` produces the same plots in
-`outputs/literature_gap_fill/`, and the regression checks assert the same
-values.
 
 ## Repository layout
 
@@ -287,7 +294,6 @@ models/propulsion_thermal_sensitivity/ standalone two-node sensitivity model
 src/calculations/        reusable equations
 tests/                   regression, interface and energy-balance checks
 data/literature/         literature-assumption register with ranges and sources
-tools/                   Python cross-check of the gap-fill equations
 references/              source provenance and retained project figures
 outputs/                 generated results
 docs/images/simulink/    model screenshots and readable topology diagrams

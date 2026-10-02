@@ -1,20 +1,26 @@
 # Battery sustained thermal screen
 
-The active battery model uses only the SVOLT 134 Ah specification and the
-reconstructed 3.10 K/W cell-base thermal path.
+The active battery model uses the SVOLT 134 Ah specification and a
+cell-to-coolant path built from sourced literature values. The superseded
+3.10 K/W reconstruction is kept for comparison; see
+[`CORRECTIONS.md`](CORRECTIONS.md).
 
 | Input | Value | Status |
 |---|---:|---|
 | Capacity | 134 Ah | SVOLT specification |
-| ACR | <=0.40 mOhm | 1 kHz, 25 C, 60% SOC; lower-bound proxy |
+| ACR | <=0.40 mOhm | 1 kHz, 25 C, 60% SOC |
+| DC resistance | 0.571 mOhm | ACR / 0.7 at 25 C; range 0.44-0.80 mOhm |
+| Entropic coefficient | -0.37 mV/K peak | Low-SOC LFP value; adds about 15 W per cell at 1C |
 | Continuous discharge | 2C maximum | SVOLT specification at 25 +/- 3 C |
 | Charging cutoff | 55 C | SVOLT continuous-charge table |
 | Absolute limit | 60 C | SVOLT protection requirement |
-| Base thermal path | 3.10 K/W | Reconstructed; requires validation |
+| Cell-to-coolant path | 0.305 K/W | Bottom-cooling build-up; 5-95% 0.26-0.38 K/W |
+| Superseded base path | 3.10 K/W | Reconstruction; above even the 1.70 K/W worst case |
 
-The model reports minimum ohmic heat and the maximum coolant temperature that
-would keep the cell at 55 C or 60 C under a sustained load. It does not impose
-a coolant temperature or simulate a transient cell state.
+The screen reports cell heat and the maximum coolant temperature that keeps
+the cell at 55 C or 60 C under a sustained load. The lumped discharge
+transient in `modules/literature_gap_fill` adds cell temperature against
+time for fixed coolant temperatures.
 
 ## Archived thermal-network figures
 

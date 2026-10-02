@@ -2,20 +2,26 @@
 
 ## 4.5.0 — 2026-10-02
 
-- Added a separate literature gap-fill layer (`modules/literature_gap_fill`)
-  driven by a sourced assumption register with low/high ranges.
-- Estimated candidate-radiator performance with the Chang-Wang louvered-fin
-  correlation and e-NTU, plus the radiator coolant pressure drop.
-- Added DCIR (ACR/0.7 with Arrhenius scaling), LFP entropic heat, a
-  bottom-cooled cell-to-coolant resistance build-up and a lumped
-  constant-current discharge transient.
-- Back-calculated the winding-to-coolant resistance from the supplier 143 C
-  rated reference.
-- Audited the recovered cabin workbook and rebuilt the cabin load by heat
-  balance with solar, latent, fresh-air and pull-down terms.
-- Replaced the 45 C / 70% RH pairing with physically consistent humidity
-  scenarios for the gap-fill layer.
-- Added an independent Python cross-check that renders the preview figures.
+- Corrected six inputs and kept each superseded value for comparison
+  (`docs/CORRECTIONS.md`):
+  - battery cell-to-coolant path 3.10 to 0.305 K/W (bottom-cooling build-up);
+  - battery heat from 1 kHz ACR to DC resistance (ACR/0.7) plus low-SOC
+    entropic heat;
+  - two-node radiator UA 665/300 to 139.7/122.3 W/K (Chang-Wang estimate for
+    the candidate core);
+  - winding-to-coolant resistance 0.015 to 0.0331 K/W (calibrated on the
+    supplier 143 C rated point at base speed);
+  - cabin workbook rows recomputed (2.69 kW, not 4.16 kW) and the cabin load
+    rebuilt by heat balance (4.31-5.19 kW at 45 C);
+  - design humidity 70% to 44% RH at 45 C (70% implies a 38 C dew point).
+- Added a sourced literature register with low/high ranges for every
+  estimate (`data/literature/literature_assumption_register.csv`).
+- Tested each correction one assumption at a time, at the combined worst
+  case, and with a deterministic 1024-point Halton 5-95% band.
+- Added the battery 5-95% coolant band, a lumped-cell discharge transient,
+  the radiator coolant pressure drop and operating-point heat maps.
+- Updated the battery Simulink screen to DC Joule heat plus a peak entropic
+  branch across the corrected path.
 
 ## 4.4.2 — 2026-09-13
 

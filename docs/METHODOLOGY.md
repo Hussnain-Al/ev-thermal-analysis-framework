@@ -25,8 +25,14 @@ C_m\frac{dT_m}{dt}=\dot Q_{drive}-\frac{T_m-T_c}{R_{mc}}
 C_c\frac{dT_c}{dt}=\frac{T_m-T_c}{R_{mc}}-UA\max(T_c-T_a,0)
 \]
 
-`C_m`, `C_c`, `R_mc` and `UA` are exposed calibration assumptions. The model
-reports temperatures and energy balance but issues no component pass/fail.
+`R_mc` is calibrated on the supplier rated point: 143 C winding with 60 C
+coolant at 60 kW. At base speed (4192 rpm) the efficiency map gives the
+integrated loss; subtracting the 1.58 kW controller loss gives
+`R_mc = 83 K / 2.51 kW = 0.0331 K/W`. `UA` is the Chang-Wang estimate for the
+candidate core: 139.7 W/K at 3.0 m/s face velocity, 122.3 W/K fan-only at
+2.0 m/s. `C_m` and `C_c` remain assumptions. Because the full integrated
+loss crosses the winding resistance, the drive-unit node is an upper bound
+on winding temperature. See [`CORRECTIONS.md`](CORRECTIONS.md).
 The 83.5 kg three-in-one drive-unit mass is known. Its 45 kJ/K thermal
 capacitance corresponds to an assumed effective specific heat of about
 539 J/(kg K); the complete assembly is not treated as solid ADC12.
@@ -63,22 +69,31 @@ converted to core airflow because no installation or fan model is available.
 The battery module is independent of drive cycles. For sustained C-rate `C`:
 
 \[
-I=134C,\qquad \dot Q_{cell}=I^2R_{ACR}
+I=134C,\qquad \dot Q_{cell}=I^2R_{DC}+I\,T_{ref}\left|\frac{dU}{dT}\right|_{peak}
 \]
 
 \[
-T_{coolant,max}=T_{limit}-\dot Q_{cell}R_{base}
+T_{coolant,max}=T_{limit}-\dot Q_{cell}R_{cell\to coolant}
 \]
 
-`R_ACR = 0.40 mOhm` is the only available resistance and is a minimum heat
-proxy. The model uses the SVOLT 55 C charging cutoff and 60 C absolute limit.
-It does not calculate transient cell temperature or delivered cooling.
+`R_DC = 0.40/0.7 = 0.571 mOhm` at 25 C converts the SVOLT 1 kHz ACR to a DC
+value. The entropic term uses the low-SOC peak of 0.37 mV/K. Both are held
+at their conservative values. `R_cell-to-coolant = 0.305 K/W` is a
+bottom-cooling build-up (cell interior, film, pad, cold-plate film). The
+5-95% band comes from 1024 Halton samples over the register ranges. The
+superseded ACR/3.10 K/W result is plotted for comparison. A lumped-cell
+discharge transient is in `modules/literature_gap_fill`.
 
 ## Cabin load
 
 The surface-load subtotal is read from the recovered Excel workbook and checked
-against the derived input table. The module then adds the recovered occupant
-and infiltration terms. It remains an independent partial sensible-load result.
+against the derived input table. `audit_cabin_workbook` then recomputes each
+row consistently (SCL with the shading coefficient, opaque doors, west SCL,
+SI CLTD correction), giving 2.69 kW instead of the recorded 4.16 kW. The
+cabin load itself comes from a heat-balance rebuild at 45 C:
+sol-air conduction, glazing conduction and solar gain from ASHRAE clear-sky
+irradiance, floor, occupants and fresh air with psychrometrics. The coincident
+humidity is 44% RH (2015 heat-wave peak) or 25% RH (dry heat).
 
 ## Validation target
 

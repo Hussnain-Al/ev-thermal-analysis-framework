@@ -7,15 +7,15 @@ V05,Vehicle,Road-load speed term B,0.4185918,N/(m/s)^2,Reconstructed from two op
 B01,Battery,Cell capacity,134,Ah,SVOLT manufacturer specification,Confirm production cell revision
 B02,Battery,Cell nominal voltage,3.2,V,SVOLT manufacturer specification,Confirm production cell revision
 B03,Battery,Series-cell count,108,count,Project pack topology,Confirm production pack topology
-B04,Battery,Resistance proxy,0.40,mOhm,SVOLT manufacturer ACR limit,Not a temperature and SOC dependent DC resistance model
-B05,Battery,Cell-base thermal resistance,3.10,K/W,Reconstructed thermal network,Validate against cell-to-coolant test
+B04,Battery,Resistance basis,0.571,mOhm,DC resistance = 0.40 mOhm ACR / 0.7 at 25 C (range 0.44-0.80),Replace with HPPC DCIR versus SOC and temperature
+B05,Battery,Cell-to-coolant thermal resistance,0.305,K/W,Bottom-cooling build-up from literature register (5-95% 0.26-0.38; worst case 1.70),Superseded 3.10 K/W reconstruction; validate with a cell-to-plate step test
 B06,Battery,Continuous-charge cutoff,55,degC,SVOLT manufacturer specification,Applies to continuous charging table
 B07,Battery,Absolute operating limit,60,degC,SVOLT manufacturer specification,BMS must stop battery operation
 D01,Drive unit,Integrated efficiency surface,50-95.2,percent,Digitized 125 kW supplier chart,Replace with supplier numerical test map
 D02,Drive unit,Three-in-one assembly mass,83.5,kg,Project component input,Mass confirmed; internal material split unavailable
 D03,Drive unit,Assumed effective specific heat,538.9222,J/(kg K),Calibration assumption,ADC12 applies only to the outer casing
 D04,Drive unit,Assumed thermal capacitance,45000,J/K,Derived sensitivity input,Mass multiplied by assumed effective specific heat
-D05,Drive unit,Assumed motor-to-coolant resistance,0.015,K/W,Calibration assumption,Identify experimentally
+D05,Drive unit,Winding-to-coolant resistance,0.0331,K/W,Calibrated on supplier 143 C rated point at 4192 rpm base speed (range 0.016-0.051),Superseded 0.015 K/W assumption; confirm rated speed and torque
 C01,Coolant,Mixture,50/50 water-glycol,-,Project system input,Use selected coolant properties
 C02,Coolant,Assumed loop thermal capacitance,17500,J/K,Calibration assumption,Replace with measured coolant volume and component masses
 H01,Hydraulics,Hose internal diameter,20,mm,Confirmed project geometry,Applies to all six external hoses
@@ -27,7 +27,8 @@ R02,Radiator,Flat-tube external cross-section,26 x 2,mm,Retained project geometr
 R03,Radiator,Assumed tube wall thickness,0.2,mm,Comparable tested automotive radiator,Screening geometry only; not measured for this candidate
 R04,Radiator,Fin pitch,2.8,mm,Retained project geometry,Fin-stock thickness is not stated in the project drawing
 R05,Radiator,Assumed fin thickness,0.1,mm,Comparable tested automotive radiator,Screening geometry only; not measured for this candidate
-R06,Radiator,Assumed transient-model UA,665,W/K,Calibration assumption,Compare with calculated requirement and selected-core map or test
-R07,Radiator,Assumed fan-only transient UA,300,W/K,Calibration assumption,Not a fan selection or measured core result
+R06,Radiator,Two-node UA in normal driving,139.7,W/K,Chang-Wang louver estimate at 3.0 m/s face velocity (5-95% 125-161),Superseded 665 W/K assumption; replace with selected-core map
+R07,Radiator,Two-node fan-only UA,122.3,W/K,Chang-Wang louver estimate at 2.0 m/s face velocity,Superseded 300 W/K assumption; replace with fan and core test
 R08,Radiator,Air temperature rise sensitivity,5-15,degC,Declared analysis range,Boundary-condition sweep only; not measured air-side performance
 A01,Ambient,Hot-weather air inlet,45,degC,Design boundary,Replace with project climate requirement
+A02,Ambient,Coincident relative humidity at 45 C,44,percent,Back-calculated from 2015 Karachi peak (44.8 C and 66 C heat index),Superseded 70% RH pairing has a 38 C dew point
