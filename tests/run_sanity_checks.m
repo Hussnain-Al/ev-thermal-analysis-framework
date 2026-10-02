@@ -90,7 +90,12 @@ assert(abs(hydraulic.HoseAndFittingLoss_kPa-21.980)<0.15);
 assert(hydraulic.HoseAndFittingLoss_kPa< ...
     cfg.motorCooling.pump.minimumHead_kPa);
 assert(abs(cfg.motorCooling.transient.driveUnitMass_kg-83.5)<1e-12);
-assert(abs(cfg.motorCooling.transient.motorThermalCapacity_JK-45000)<1e-8);
+assert(abs(cfg.motorCooling.transient.driveUnitThermalCapacity_JK-45000)<1e-8);
+% Winding node from the supplier heating curve; the unit's total kept.
+tr = cfg.motorCooling.transient;
+assert(abs(tr.windingTimeConstant_s-304.6)<2);
+assert(abs(tr.motorThermalCapacity_JK-tr.windingTimeConstant_s/tr.motorToCoolantResistance_KW)<1e-6);
+assert(abs(tr.motorThermalCapacity_JK+tr.coolantThermalCapacity_JK-62500)<1e-6);
 
 % Cabin workbook is the authoritative source for the surface-load subtotal.
 surfaceLoads_W = readmatrix(cfg.cabinCooling.files.sourceWorkbook, ...
@@ -206,21 +211,26 @@ assert(abs(screen1C.MaximumCoolantForDischargeP95_C-40.35662)<1e-4);
 thermal = results.motorCooling.summary;
 gradeRow = thermal.Case=="Sustained 10% grade";
 lowRow = thermal.Case=="Low-speed hot-weather grade";
-assert(abs(thermal.PeakMotorTemperature_C(gradeRow)-100.286)<0.01);
-assert(abs(thermal.PeakCoolantTemperature_C(gradeRow)-53.996)<0.01);
-assert(abs(thermal.PeakMotorTemperature_C(lowRow)-85.359)<0.01);
+assert(abs(thermal.PeakMotorTemperature_C(gradeRow)-128.957)<0.01);
+assert(abs(thermal.PeakCoolantTemperature_C(gradeRow)-62.290)<0.01);
+assert(abs(thermal.PeakMotorTemperature_C(lowRow)-103.674)<0.01);
 l6Row = thermal.Case=="Project L6: 8% continuous grade, full load";
-assert(abs(thermal.PeakMotorTemperature_C(l6Row)-120.241)<0.01);
+assert(abs(thermal.PeakMotorTemperature_C(l6Row)-139.123)<0.01);
 supersededParameters = cfg.motorCooling.transient;
 supersededParameters.motorToCoolantResistance_KW = ...
     supersededParameters.superseded.motorToCoolantResistance_KW;
 supersededParameters.radiatorUA_WK = supersededParameters.superseded.radiatorUA_WK;
-oldGrade = simulate_motor_coolant_thermal(results.motorHeat.details{3},45, ...
+supersededParameters.motorThermalCapacity_JK = supersededParameters.superseded.motorThermalCapacity_JK;
+supersededParameters.coolantThermalCapacity_JK = supersededParameters.superseded.coolantThermalCapacity_JK;
+% The superseded model sent the whole loss into one 45 kJ/K node.
+oldGrade = simulate_motor_coolant_thermal(removevars(results.motorHeat.details{3}, ...
+    {'MotorLoss_kW','ControllerLoss_kW'}),45, ...
     supersededParameters);
 assert(abs(max(oldGrade.MotorTemperature_C)-82.509)<0.01);
 assert(abs(max(oldGrade.CoolantTemperature_C)-48.389)<0.01);
 supersededParameters.radiatorUA_WK = supersededParameters.superseded.fanOnlyRadiatorUA_WK;
-oldLow = simulate_motor_coolant_thermal(results.motorHeat.details{4},45, ...
+oldLow = simulate_motor_coolant_thermal(removevars(results.motorHeat.details{4}, ...
+    {'MotorLoss_kW','ControllerLoss_kW'}),45, ...
     supersededParameters);
 assert(abs(max(oldLow.MotorTemperature_C)-70.537)<0.01);
 assert(abs(results.cabinCooling.summary.CorrectedWorkbookSubtotal_kW- ...
@@ -256,13 +266,15 @@ assert(abs(l6Heat.MeanBatteryHeatUpperBound_kW-6.420053)<1e-5);
 
 % Supplier and specification reference checks.
 checks = gap.referenceChecks;
-assert(abs(checks.ModelValue(1)-69.2731)<1e-3);
+assert(abs(checks.ModelValue(1)-104.8311)<1e-3);
+assert(abs(checks.ModelValue(1)-checks.ReferenceValue(1))<3);
+assert(abs(checks.ModelValue(2)-8.9636)<1e-3);
 assert(abs(checks.ReferenceValue(2)-9.7954)<1e-3);
 assert(abs(checks.ModelValue(3)-2.1418)<1e-3);
 assert(abs(checks.ModelValue(4)-0.9868)<1e-3);
 assert(checks.ModelValue(5)>checks.ReferenceValue(5));
 assert(checks.ReferenceValue(5)==2.9);
-assert(abs(checks.ModelValue(6)-57.2428)<1e-3);
+assert(abs(checks.ModelValue(6)-68.9688)<1e-3);
 assert(abs(checks.ModelValue(7)+12.94574)<1e-4);
 assert(abs(checks.ReferenceValue(7)+36.7)<1e-12);
 % Cell resistance against the SVOLT pulse-power ceiling and the GFL test.
@@ -298,7 +310,15 @@ assert(system.summary.TimeCellAbove55C_s(l6Old)==225);
 assert(abs(system.summary.CabinAtEnd_C(l6Old)-48.839)<0.01);
 assert(system.summary.TimeToCabinComfort_s(l6New)==406);
 assert(abs(system.summary.PeakCell_C(l6New)-51.473)<0.01);
-assert(abs(system.summary.PeakDriveUnit_C(l6New)-143.18)<0.01);
+assert(abs(system.summary.PeakDriveUnit_C(l6New)-145.081)<0.01);
+% Pull-down slows as the cabin thermal mass grows.
+assert(all(diff(system.cabinMassSensitivity.TimeToComfortL6Recommended_min)>0));
+% Motor plus controller loss equals the drive-unit heat on every case.
+for k = 1:numel(results.motorHeat.details)
+    d = results.motorHeat.details{k};
+    assert(max(abs(d.MotorLoss_kW+d.ControllerLoss_kW-d.DriveUnitHeat_kW))<1e-12);
+    assert(all(d.ControllerLoss_kW>=0 & d.MotorLoss_kW>=-1e-12));
+end
 assert(abs(system.summary.SOCAtEnd_pct(l6New)-12.537)<0.01);
 % SOC is carried across cycle repeats, not reset.
 urbanTrace = system.traces{cfg.systemThermal.cycles=="urban_cycle",end};

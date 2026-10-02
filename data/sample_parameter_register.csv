@@ -15,7 +15,7 @@ B07,Battery,Absolute operating limit,60,degC,SVOLT manufacturer specification,BM
 D01,Drive unit,Integrated efficiency surface,50-95.2,percent,Digitized 125 kW supplier chart,Replace with supplier numerical test map
 D02,Drive unit,Three-in-one assembly mass,83.5,kg,Project component input,Mass confirmed; internal material split unavailable
 D03,Drive unit,Assumed effective specific heat,538.9222,J/(kg K),Calibration assumption,ADC12 applies only to the outer casing
-D04,Drive unit,Assumed thermal capacitance,45000,J/K,Derived sensitivity input,Mass multiplied by assumed effective specific heat
+D04,Drive unit,Winding thermal capacitance,8964,J/K,Supplier rated heating curve (time constant 305 s / 0.0340 K/W),The rest of the 45 kJ/K unit is lumped with the coolant node (53.5 kJ/K)
 D05,Drive unit,Winding-to-coolant resistance,0.0340,K/W,Calibrated on supplier 143 C rated point (60 kW at 125 Nm and 4584 rpm; range 0.030-0.039 from controller loss +/-20%),Superseded 0.015 K/W assumption; supplier point is at 8 L/min
 C01,Coolant,Mixture,50/50 water-glycol,-,Project system input,Use selected coolant properties
 C02,Coolant,Assumed loop thermal capacitance,17500,J/K,Calibration assumption,Replace with measured coolant volume and component masses

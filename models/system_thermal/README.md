@@ -7,7 +7,7 @@ charge, Joule and entropic heat) and the compressor sharing are Simulink
 blocks. CI builds and simulates it on all five cycles with the recommended
 compressor (9.19 kW) and on L6 with the DM18A1 (2.9 kW), and requires every
 temperature and the state of charge to match the MATLAB model within 1.
-The current match is within 0.13 K and 0.05 points of SOC.
+The current match is within 0.35 K and 0.05 points of SOC.
 
 ```matlab
 cfg = setup_project();
@@ -23,8 +23,8 @@ build_system_thermal_simscape(cfg,results.systemThermal, ...
 | Battery coolant and plates | Thermal Mass | 15 kJ/K (register S01), starts at 45 C |
 | Cell-to-coolant path | Thermal Resistance | 1.033 K/W / 108 cells = 0.0096 K/W |
 | Battery heat | Controlled Heat Flow Rate Source | `I = P_dc / 321 V` from the cycle; SOC integrated from 90%; `108 (I^2 x 0.571 mOhm - I x 298 K x dU/dT(SOC))` |
-| Drive unit and its coolant | Thermal Mass x 2, Thermal Resistance | 45 and 17.5 kJ/K, 0.0340 K/W, both start at 45 C |
-| Drive-unit heat | Controlled Heat Flow Rate Source | Cycle trace from `motor_heat` |
+| Winding and propulsion coolant | Thermal Mass x 2, Thermal Resistance | 9.0 kJ/K (supplier heating curve) and 53.5 kJ/K, 0.0340 K/W, both start at 45 C |
+| Motor loss, controller loss | Controlled Heat Flow Rate Source x 2 | Cycle traces from `motor_heat`: motor loss into the winding, controller loss into the coolant |
 | Radiator | Controlled Heat Flow Rate Source | `UA max(T_coolant - 45 C, 0)`, 139.7 W/K (122.3 W/K fan-only) |
 | Cabin net heat | Controlled Heat Flow Rate Source | Heat-balance load at cabin temperature minus evaporator duty |
 | Chiller | Controlled Heat Flow Rate Source | Chiller duty, extracted from the coolant |

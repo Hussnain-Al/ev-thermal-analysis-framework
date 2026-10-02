@@ -32,12 +32,14 @@ map gives 93.7%, a 4.02 kW loss; subtracting the 1.58 kW controller loss gives
 98% reducer (project power-demand sheet) sits between it and the wheel, and
 its loss is reported but not sent to the coolant. `UA` is the Chang-Wang estimate for the
 candidate core: 139.7 W/K at 3.0 m/s face velocity, 122.3 W/K fan-only at
-2.0 m/s. `C_m` and `C_c` remain assumptions. Because the full integrated
-loss crosses the winding resistance, the drive-unit node is an upper bound
-on winding temperature. See [`CORRECTIONS.md`](CORRECTIONS.md).
-The 83.5 kg three-in-one drive-unit mass is known. Its 45 kJ/K thermal
-capacitance corresponds to an assumed effective specific heat of about
-539 J/(kg K); the complete assembly is not treated as solid ADC12.
+2.0 m/s. `C_m` is the winding node, 9.0 kJ/K, from the time constant of the
+supplier's rated heating curve (305 s) divided by `R_mc`. The rest of the
+assumed 45 kJ/K unit (83.5 kg at about 539 J/(kg K)) is lumped with the 17.5
+kJ/K coolant node, so `C_c` = 53.5 kJ/K. Only the motor loss heats the
+winding node; the controller loss, scaled from the supplier controller
+figure against output power, goes to the coolant node. Checked against the
+supplier's 30 s peak: 104.8 C against 103 C. See
+[`CORRECTIONS.md`](CORRECTIONS.md).
 
 Darcy-Weisbach and fitting losses define the six-hose system curve. The
 supplier component drops are added: MCU 13 kPa and motor 11 kPa at 16 L/min,

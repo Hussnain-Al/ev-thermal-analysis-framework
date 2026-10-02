@@ -64,7 +64,9 @@ for i = 1:nCycles
     pick = mod(time_s,samples)+1;
     drive = table(repmat(detail.Cycle(1),numel(time_s),1),time_s, ...
         detail.DCLinkPower_kW(pick),detail.DriveUnitHeat_kW(pick), ...
-        'VariableNames',{'Cycle','Time_s','DCLinkPower_kW','DriveUnitHeat_kW'});
+        detail.MotorLoss_kW(pick),detail.ControllerLoss_kW(pick), ...
+        'VariableNames',{'Cycle','Time_s','DCLinkPower_kW','DriveUnitHeat_kW', ...
+        'MotorLoss_kW','ControllerLoss_kW'});
     batteryTrace = calculate_battery_cycle_heat(drive,battery);
     motorParameters = cfg.motorCooling.transient;
     if results.motorHeat.fanOnly(index)
@@ -89,6 +91,25 @@ for i = 1:nCycles
     end
 end
 out.summary = vertcat(rows{:});
+
+% Cabin pull-down depends on the interior thermal mass, which is a
+% screening value (register C23-C25): rerun the L6 case at each.
+l6 = find(s.cycles=="project_l6_continuous_grade",1);
+masses_kJK = [a.C23;a.C24;a.C25];
+comfort_s = nan(numel(masses_kJK),1);
+for k = 1:numel(masses_kJK)
+    q = p;
+    q.cabinCapacitance_JK = 1000*masses_kJK(k);
+    tr = simulate_system_thermal(time_s,out.traces{l6,end}.BatteryHeat_kW, ...
+        cabinGrid_C,cabinLoad_kW,capacity_kW(end),q);
+    first = find(tr.Cabin_C<=s.cabinSetpoint_C+s.comfortBand_C,1);
+    if ~isempty(first)
+        comfort_s(k) = time_s(first);
+    end
+end
+out.cabinMassSensitivity = table(masses_kJK,comfort_s/60, ...
+    'VariableNames',{'CabinThermalMass_kJK','TimeToComfortL6Recommended_min'});
+writetable(out.cabinMassSensitivity,fullfile(outputDir,"cabin_mass_sensitivity.csv"));
 
 % Front end: condenser heat at full capacity against the radiator's L6 air
 % stream. If the condenser sits upstream on that stream, the radiator sees

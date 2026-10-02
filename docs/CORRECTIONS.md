@@ -189,12 +189,24 @@ corner (4192 rpm, 0.0331 K/W).
 **Robustness.** With the rated point known, only the ±20% controller-loss
 uncertainty remains: 0.0301-0.0390 K/W, at least twice 0.015 K/W. The
 calibration figure still shows the 3000-9000 rpm sweep, to show how far the
-value would move if the rated point were wrong. This value is a hot-spot
-resistance. Pushing the whole motor-plus-controller loss through it makes the
-drive-unit temperature an upper bound on the winding.
+value would move if the rated point were wrong.
 
-**What would overturn it.** Confirmation that the 143 C figure is a steady
-state, or a thermocouple step test on the stator.
+**Winding capacitance and loss split.** The supplier's rated heating curve
+(digitized in `data/motor_cooling/rated_winding_rise_curve.csv`) levels off
+at 143 C after about 3600 s, so 143 C is a steady state. Its time constant is
+305 s (3.2 K RMS fit), which with 0.0340 K/W gives a 9.0 kJ/K winding node.
+The earlier model used the whole unit's 45 kJ/K as the winding node and sent
+the controller loss through the winding too. Within 20 minutes the slow node
+hid the error; held longer, L6 would have settled near 200 C against the
+supplier's 143 C at a similar output. Now only the motor loss heats the
+winding, the controller loss (supplier figure, 1.58 kW at 60 kW and 3.218 kW
+at 125 kW, through zero) goes to the coolant, and the rest of the unit sits
+on the coolant node. On a point the fit never saw, the supplier's 125 kW peak
+for 30 s, the model gives 104.8 C against 103 C.
+
+**What would overturn it.** A thermocouple step test on the stator in the
+vehicle loop, which has a different flow (16-20 L/min against the
+supplier's 8 L/min).
 
 ## 5. Cabin load: workbook audit and heat-balance rebuild
 
@@ -256,10 +268,10 @@ exceedance frequency.
 | Max coolant for 60 C cell at 1C | 37.7 C | 34.1 C | 27.9-40.4 C (5-95%) |
 | Max coolant for 60 C cell at 2C | -29.1 C | -12.9 C | -31.7 to +5.3 C (5-95%) |
 | Sustained C-rate at the project's 30 C coolant | 1.16C | 1.11C | |
-| 10% grade, drive-unit peak after 20 min | 82.5 C | 100.3 C | Upper bound on winding |
-| 10% grade, coolant peak after 20 min | 48.4 C | 54.0 C | |
-| Low-speed grade, drive-unit peak after 30 min | 70.5 C | 85.4 C | Fan-only UA |
-| L6 8% grade full load, drive-unit peak after 20 min | not run | 120.2 C | Upper bound on winding |
+| 10% grade, winding peak after 20 min | 82.5 C | 129.0 C | Supplier-calibrated winding node |
+| 10% grade, coolant peak after 20 min | 48.4 C | 62.3 C | |
+| Low-speed grade, winding peak after 30 min | 70.5 C | 103.7 C | Fan-only UA |
+| L6 8% grade full load, winding peak after 20 min | not run | 139.1 C | Levels off near 148 C |
 | Cabin subtotal from workbook | 4.16 kW | 2.69 kW | Deterministic audit |
 | Cabin load at 45 C, humid heat | not calculated | 5.19 kW | 4.58-6.63 kW (5-95%) |
 
@@ -289,7 +301,8 @@ affect.
 | Winding calibration | Supplier point measured at 8 L/min; model runs at 20 L/min | Overestimates R at 20 L/min | Conservative for winding temperature |
 | Reducer | 98% from the project power-demand sheet; its loss (0.57 kW on the 10% grade, 1.26 kW on L6) is kept out of the coolant heat | Underestimates coolant heat if part of it reaches the jacket | Reported per case in `motor_heat_summary.csv` |
 | Component pressure drops | Supplier points at 16 L/min, unknown coolant temperature; scaled with flow squared outside them | Unknown sign | The OBC curve itself rises with flow to the power 2.05 |
-| Winding calibration | Assumes the 143 C rated rise is a steady state | Unknown until the duration is confirmed | Disclosed as an open input |
+| Winding calibration | One time constant fitted to a curve that has a fast start and a slow tail (3.2 K RMS) | Slightly fast in the first minute, slightly slow late | Reproduces the 30 s peak within 1.8 K |
+| Controller loss | Scaled linearly with output power through zero between the two supplier points | Low-load controller loss is underestimated, so more goes to the winding | Conservative for the winding |
 | Radiator estimate | Chang-Wang correlation assumes louvered fins; the drawing does not say | If the fins are plain, the UA is lower | Strengthens the claim that 665 W/K is unreachable |
 | Radiator estimate | Face velocities of 2-3 m/s are screening values, not measurements | Unknown sign | Even 8 m/s with every favourable value, including +15% correlation scatter, gives 226 W/K |
 | Cabin heat balance | Single steady hour (15:00), lumped cabin, no seat or trim storage in the steady load | Unknown sign | Fresh-air rate dominates the spread; the claim holds only within the 5-95% band |
@@ -379,12 +392,12 @@ constraint; the 2.9 kW compressor is.
 
 | Check | Reference | Model | Finding |
 |---|---:|---:|---|
-| Drive unit after 30 s at 125 kW peak (280 Nm, 4263 rpm), from 60 C | 103 C (supplier) | 69.3 C | The two-node model is too slow for 30 s peaks. Use it for minutes-long duties only |
-| Winding thermal capacitance | 9.8 kJ/K implied by the supplier peak | 45 kJ/K assumed | The lumped value is the whole unit; the winding behaves like about a fifth of it |
+| Drive unit after 30 s at 125 kW peak (280 Nm, 4263 rpm), from 60 C | 103 C (supplier) | 104.8 C | Within 1.8 K; the winding node was fitted only to the rated heating curve |
+| Winding thermal capacitance | 9.8 kJ/K implied by the supplier peak | 9.0 kJ/K from the rated heating curve | Consistent |
 | Cell rise, 1C for 600 s (adiabatic) | SVOLT limit 15 C | 2.1 C | Consistent; reaching the limit would need 3.7 mOhm, so it does not test the resistance |
 | Cell rise, 3C for 30 s (adiabatic) | SVOLT limit 10 C | 1.0 C | Consistent; not a discriminating test |
 | Cabin load, humid heat | DM18A1 rated 2.9 kW | 5.19 kW | The compressor is below the cabin load before any battery chiller duty |
-| Peak propulsion coolant, all cases | LubeMax boiling point 107 C (no cap) | about 57 C | Large boiling margin even without the 15 psi cap (129.4 C) |
+| Peak propulsion coolant, all cases | LubeMax boiling point 107 C (no cap) | about 69 C | Large boiling margin even without the 15 psi cap (129.4 C) |
 | Coolant needed for sustained 2C | LubeMax freeze point -36.7 C | -12.9 C | Above freezing but far below a practical chiller supply; 2C sustained is not a cooling target |
 | Cell DC resistance, top of band | SVOLT 10 s power ceiling 1.36 mOhm | 0.80 mOhm | Consistent; a minimum power only caps the resistance |
 | Cell DC resistance, central | GFL 100 Ah rate test, scaled: 0.582 mOhm | 0.571 mOhm | Within 2% |
@@ -398,8 +411,10 @@ at the register's lowest fresh-air rate the cabin alone is still 4.26 kW.
 
 ## Remaining assumptions that were not corrected
 
-The drive-unit (45 kJ/K) and coolant-loop (17.5 kJ/K) thermal capacitances
-are still unidentified. They set how fast the two-node temperatures rise,
-not where they settle. The 20- and 30-minute grade cases have not reached
-steady state, so their peaks depend on these values. A coolant volume
-measurement and one drive-unit warm-up test would identify both.
+The winding node is now identified from the supplier heating curve. The
+coolant node (53.5 kJ/K) still rests on an assumed coolant inventory and an
+assumed 539 J/(kg K) for the unit's remaining mass. It sets how fast the
+coolant warms, not where it settles. A coolant volume measurement would fix
+it. The battery-loop capacitance (15 kJ/K) and cabin interior mass (40 kJ/K)
+are the other open inertias; the cabin mass moves the pull-down from 3.6 to
+13.4 minutes across its range.

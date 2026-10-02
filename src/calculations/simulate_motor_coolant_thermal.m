@@ -1,10 +1,18 @@
 function trace = simulate_motor_coolant_thermal(motorHeatTrace,ambient_C,p)
-%SIMULATE_MOTOR_COOLANT_THERMAL Two-node drive-unit/coolant energy balance.
-% The thermal parameters are exposed calibration assumptions. This function
-% predicts their consequences but does not claim a validated motor limit.
+%SIMULATE_MOTOR_COOLANT_THERMAL Two-node winding/coolant energy balance.
+% With MotorLoss_kW and ControllerLoss_kW in the trace, the motor loss heats
+% the winding node and the controller loss goes straight to the coolant
+% node; otherwise all of DriveUnitHeat_kW heats the winding node.
 
 t = motorHeatTrace.Time_s;
 n = numel(t);
+if ismember('MotorLoss_kW',motorHeatTrace.Properties.VariableNames)
+    windingHeat_kW = motorHeatTrace.MotorLoss_kW;
+    coolantHeat_kW = motorHeatTrace.ControllerLoss_kW;
+else
+    windingHeat_kW = motorHeatTrace.DriveUnitHeat_kW;
+    coolantHeat_kW = zeros(n,1);
+end
 motor_C = zeros(n,1);
 coolant_C = zeros(n,1);
 motorToCoolant_kW = zeros(n,1);
@@ -20,10 +28,10 @@ for k = 1:n
     if k < n
         dt = t(k+1)-t(k);
         motor_C(k+1) = motor_C(k)+dt*1000* ...
-            (motorHeatTrace.DriveUnitHeat_kW(k)-motorToCoolant_kW(k))/ ...
+            (windingHeat_kW(k)-motorToCoolant_kW(k))/ ...
             p.motorThermalCapacity_JK;
         coolant_C(k+1) = coolant_C(k)+dt*1000* ...
-            (motorToCoolant_kW(k)-radiatorHeat_kW(k))/ ...
+            (motorToCoolant_kW(k)+coolantHeat_kW(k)-radiatorHeat_kW(k))/ ...
             p.coolantThermalCapacity_JK;
     end
 end

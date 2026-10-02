@@ -15,6 +15,8 @@ out.controllerLossReference = read_project_csv( ...
     'DiodeLossPerBridgeArm_W'});
 writetable(out.controllerLossReference,fullfile(outputDir, ...
     "controller_loss_reference_used.csv"));
+out.curves.controllerPower_kW = [0;out.controllerLossReference.OutputPower_kW];
+out.curves.controllerLoss_kW = [0;out.controllerLossReference.TotalControllerLoss_W/1000];
 nCycles = height(cfg.cycles);
 nCases = height(p.operatingCases);
 details = cell(nCycles+nCases,1);

@@ -16,6 +16,7 @@ results = run_all(cfg);
 sys = results.systemThermal;
 disp(sys.summary);
 disp(sys.frontEnd);
+disp(sys.cabinMassSensitivity);
 
 % Every cycle with the recommended compressor, and L6 with the DM18A1.
 runs = [(1:numel(cfg.systemThermal.cycles))' repmat(numel(sys.capacity_kW),numel(cfg.systemThermal.cycles),1); ...

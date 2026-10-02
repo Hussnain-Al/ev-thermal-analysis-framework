@@ -8,8 +8,9 @@ function modelFile = build_system_thermal_simscape(cfg,systemThermal,options)
 %     cell-to-coolant resistance; chiller extraction;
 %   - cabin: thermal mass with the heat-balance load at its own temperature
 %     less the evaporator duty;
-%   - propulsion: drive-unit and coolant thermal masses joined by the
-%     winding-to-coolant resistance, drive-unit heat from the cycle, radiator
+%   - propulsion: winding and coolant thermal masses joined by the
+%     winding-to-coolant resistance, motor loss into the winding and
+%     controller loss into the coolant from the cycle, radiator
 %     rejection UA max(T_coolant - T_ambient, 0);
 %   - Simulink: compressor demands and proportional sharing of its capacity.
 % Example:
@@ -109,7 +110,8 @@ add_block([thermal 'Thermal Elements/Thermal Resistance'],[m '/Winding to coolan
 connect(m,'Drive unit','LConn',1,'Winding to coolant','LConn',1);
 connect(m,'Winding to coolant','RConn',1,'Propulsion coolant','LConn',1);
 connect(m,'Propulsion solver','RConn',1,'Drive unit','LConn',1);
-add_source(m,'Drive-unit heat',sourceLib,toPS,'Drive unit',[560 900 620 960]);
+add_source(m,'Motor loss',sourceLib,toPS,'Drive unit',[560 900 620 960]);
+add_source(m,'Controller loss',sourceLib,toPS,'Propulsion coolant',[560 1000 620 1060]);
 add_source(m,'Radiator rejection',sourceLib,toPS,'Propulsion coolant',[560 1100 620 1160]);
 add_sensor(m,'Drive unit',sensorLib,fromPS,[900 900 960 960]);
 add_sensor(m,'Propulsion coolant',sensorLib,fromPS,[900 1100 960 1160]);
@@ -125,10 +127,13 @@ add_sensor(m,'Battery coolant',sensorLib,fromPS,[900 480 960 540]);
 % each second as in the MATLAB model.
 add_block('simulink/Sources/Clock',[m '/Clock'],'Position',[40 700 70 720]);
 cycleTable(m,'DC-link power W',drive.Time_s,1000*drive.DCLinkPower_kW,[120 690 200 730]);
-cycleTable(m,'Drive-unit heat W',drive.Time_s,1000*drive.DriveUnitHeat_kW,[120 900 200 940]);
+cycleTable(m,'Motor loss W',drive.Time_s,1000*drive.MotorLoss_kW,[120 900 200 940]);
+cycleTable(m,'Controller loss W',drive.Time_s,1000*drive.ControllerLoss_kW,[120 1000 200 1040]);
 add_line(m,'Clock/1','DC-link power W/1');
-add_line(m,'Clock/1','Drive-unit heat W/1');
-add_line(m,'Drive-unit heat W/1','Drive-unit heat input/1');
+add_line(m,'Clock/1','Motor loss W/1');
+add_line(m,'Clock/1','Controller loss W/1');
+add_line(m,'Motor loss W/1','Motor loss input/1');
+add_line(m,'Controller loss W/1','Controller loss input/1');
 
 % Battery electrical side: current, state of charge, Joule and entropic heat.
 gain(m,'Pack current A',1/battery.cycleVoltage_V,[240 695 290 725]);

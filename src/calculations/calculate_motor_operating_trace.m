@@ -72,8 +72,21 @@ result.RequestedMotorTorque_Nm = requestedMotorTorque_Nm;
 result.AvailableTorque_Nm = maxTorque_Nm;
 result.AvailablePower_kW = maxPower_kW;
 result.IntegratedEfficiency_pct = 100*eta;
+% Split the motor-system loss: the controller (inverter) loss follows the
+% supplier's controller figure against output power (through the origin,
+% so the motor keeps the larger share at light load) and is rejected
+% through its own cold plate to the coolant; the rest is motor loss,
+% which heats the winding.
+controllerLoss_kW = zeros(size(t));
+if isfield(curves,'controllerPower_kW')
+    controllerLoss_kW = interp1(curves.controllerPower_kW,curves.controllerLoss_kW, ...
+        abs(shaftPower_kW),'linear','extrap');
+    controllerLoss_kW = min(max(controllerLoss_kW,0),driveHeat_kW);
+end
 result.DCLinkPower_kW = dcLinkPower_kW;
 result.DriveUnitHeat_kW = driveHeat_kW;
+result.MotorLoss_kW = driveHeat_kW-controllerLoss_kW;
+result.ControllerLoss_kW = controllerLoss_kW;
 result.TorqueWithinCurve = torqueWithinCurve;
 result.PowerWithinCurve = powerWithinCurve;
 end

@@ -37,6 +37,13 @@ number (`docs/CORRECTIONS.md`, "Supplier documents folded in"):
 - New Simscape model of the same three loops (`models/system_thermal`),
   simulated on all five cycles in CI and matched to the MATLAB model within
   0.13 K and 0.05 points of SOC; CI now installs Simscape.
+- Drive-unit node checked against the supplier's tests of this motor and
+  corrected: winding capacitance 9.0 kJ/K from the supplier heating curve
+  (was the whole unit's 45 kJ/K), and only the motor loss heats the winding
+  (the controller loss goes to the coolant). It now reproduces the supplier's
+  30 s peak within 1.8 K. The old node would have settled near 200 C on L6.
+- Benchmark against the MG ZS EV (same 280 Nm, 51 kWh LFP) and a cabin
+  thermal-mass sensitivity (pull-down 3.6-13.4 min).
 - L6 added to the radiator design table; parameter register, provenance and
   regression values updated.
 

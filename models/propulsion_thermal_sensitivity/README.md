@@ -19,10 +19,12 @@ integrates a two-node drive-unit/coolant energy balance.
 - radiator heat rejection.
 
 The motor-to-coolant resistance (0.0340 K/W) is calibrated on the supplier
-143 C rated point. The drive-unit and coolant-loop thermal capacities remain
-assumptions. The radiator UA input defaults to the candidate-core estimate
-(139.7 W/K normal, 122.3 W/K fan-only). Outputs are screening results;
-the drive-unit node is an upper bound on winding temperature.
+143 C rated point and the winding capacitance (9.0 kJ/K) on the supplier's
+rated heating curve; the coolant node (53.5 kJ/K) lumps the rest of the unit.
+This Simulink model takes one heat input on the winding node; the cycle-driven
+model with the controller loss split to the coolant is
+`models/system_thermal`. The radiator UA input defaults to the candidate-core
+estimate (139.7 W/K normal, 122.3 W/K fan-only).
 
 ## Generate and check
 

@@ -188,15 +188,24 @@ assumed.
 
 <img src="docs/images/results/motor_thermal_response.png" width="820" alt="Two-node drive-unit and coolant temperatures for four operating schedules">
 
-The two-node model now uses a winding-to-coolant resistance of 0.0340 K/W.
-That value is calibrated on the supplier rated point (143 C winding with 60 C
-coolant at 60 kW and 125 Nm, so 4584 rpm). The radiator UA is the
+Both nodes are now set from the supplier's own test of this motor:
+
+- winding-to-coolant resistance 0.0340 K/W from the rated point (143 C
+  winding with 60 C coolant at 60 kW and 125 Nm, so 4584 rpm);
+- winding thermal capacitance 9.0 kJ/K from the supplier's rated heating
+  curve (time constant 305 s, fit within 3.2 K RMS); the rest of the 45 kJ/K
+  unit is lumped with the coolant node;
+- only the motor loss heats the winding; the controller loss (from the
+  supplier controller figure) goes to the coolant through the inverter's
+  cold plate.
+
+Checked on a point it was not fitted to: 30 s at the supplier's 125 kW peak
+gives 104.8 C against the supplier's 103 C. The radiator UA is the
 candidate-core estimate: 139.7 W/K normal, 122.3 W/K fan-only. On the
-20-minute 10% grade the drive unit reaches 100.3 C and the coolant 54.0 C;
-the superseded parameters gave 82.5 C and 48.4 C. L6 reaches 120.2 C. The full integrated loss crosses the winding resistance,
-so the drive-unit curve is an upper bound on winding temperature. Thermal
-capacitances are still assumed, and the grade cases have not reached steady
-state.
+20-minute 10% grade the winding reaches 129.0 C and the coolant 62.3 C; L6
+reaches 139.1 C. The superseded parameters gave 82.5 C on the grade, but only
+because 45 kJ/K heated slowly: held long enough they settled far higher (about
+200 C on L6), because the whole loss crossed the winding resistance.
 
 ## Propulsion-loop hydraulics
 
@@ -396,14 +405,14 @@ drive cycle, repeated to 30 minutes from a hot soak on the 45 C day:
 | Compressor use (mean) | 100% on every cycle | 76-83% |
 
 The propulsion loop does not depend on the compressor. Held for 30 minutes,
-L6 takes the drive unit to 143 C (still below the 150 C hot-spot target, and
-an upper bound on the winding) and the pack to 12.5% SOC; the 10% grade
-reaches 117 C.
+L6 takes the winding to 145 C, where it levels off (steady about 148 C,
+below the 150 C hot-spot target), and the pack to 12.5% SOC; the 10% grade
+reaches 134 C.
 
 The same model is built as a Simscape thermal network
 (`models/system_thermal`): three physical networks with the battery's
 electrical side, the drive cycle and the compressor sharing in Simulink. CI
-simulates it on all five cycles and it matches the MATLAB model within 0.13 K
+simulates it on all five cycles and it matches the MATLAB model within 0.35 K
 on every temperature and 0.05 points of SOC.
 
 What is dynamic and what is not:
@@ -426,6 +435,40 @@ air to 81 C, above the 65 C coolant, and the propulsion radiator would stop
 rejecting heat. The condenser needs its own air path or a larger
 front-end fan; the DM18A1 hid this (56 C air, still workable).
 
+## Are the peaks realistic? Benchmark against a comparable car
+
+The closest production car is the MG ZS EV (2021 facelift, standard range):
+130 kW and 280 Nm front motor, a 51 kWh LFP pack, 1570 kg kerb and 2060 kg
+gross ([zecar](https://zecar.com/electric-vehicles/mg/zs-ev/2022-1/standard-range),
+[auto-data](https://www.auto-data.net/en/mg-zs-ev-facelift-2021-51.1-kwh-176hp-45484)).
+This project has the same peak torque, a 46.3 kWh LFP pack and a 1950 kg
+test mass.
+
+| Peak | This model | Benchmark | Verdict |
+|---|---|---|---|
+| Winding, 30 s at 125 kW from 60 C | 104.8 C | 103 C, supplier test of this motor | Matches |
+| Winding at rated output, steady | 143 C (calibration) | 143 C, supplier | Same point |
+| Winding on L6, 30 min | 145 C, levelling at about 148 C | L6 needs 64 kW at the shaft, 7% over the 60 kW rating; the supplier's rated case is 143 C | Consistent: L6 runs the motor at its continuous limit |
+| Previous model on L6 | rising past 143 C toward about 200 C | as above | Was too peaked; corrected |
+| Cell resistance | 0.571 mOhm | 0.582 mOhm from a vendor 100 Ah LFP test, scaled | Matches within 2% |
+| Pack power per kWh on L6 | 68.8 kW from 46.3 kWh: 1.49 per hour | About 63 kW from 51 kWh for the ZS EV at its 2060 kg gross mass on the same grade and speed: 1.23 per hour (same road-load model) | Higher by design: heavier car, smaller pack. Cell heat goes with current squared, so about 1.5 times the ZS EV's per cell |
+| Cabin pull-down from 80 C | 6.8 min (40 kJ/K interior) | 3.6-13.4 min over 20-80 kJ/K | Depends on the assumed interior mass; no measured pull-down for this cabin |
+
+What this means:
+
+- **The drive unit was too peaked** in the earlier model: the controller loss
+  went through the winding and a 45 kJ/K node hid it for the first 20 minutes.
+  It now matches the supplier's own tests of this motor.
+- **The battery peaks are a load question, not a model question.** L6 at
+  2300 kg is 240 kg over the comparable car's gross mass. Check whether the
+  1950 kg test mass already includes payload: if it does, L6 double counts
+  350 kg, and every L6 peak (cells, drive unit, compressor duty) is
+  overstated.
+- **The cabin pull-down is the least certain.** The supplier data does not
+  cover it, and the measured-test sources I tried were blocked in this
+  environment. 6.8 min from an 80 C soak is at the fast end; quote the 3.6-13.4
+  min range until a soak test fixes the interior mass.
+
 ## Checks against the project's own references
 
 `outputs/literature_gap_fill/reference_checks.csv` compares stated
@@ -433,12 +476,12 @@ assumptions with the supplier and project references:
 
 | Check | Reference | Model | Finding |
 |---|---:|---:|---|
-| Drive unit 30 s after 125 kW peak (280 Nm) | 103 C (supplier) | 69.3 C | Two-node model is too slow for 30 s peaks; valid for minutes-long duties |
-| Winding thermal capacitance | 9.8 kJ/K (implied) | 45 kJ/K | Lumped value is the whole unit |
+| Drive unit 30 s after 125 kW peak (280 Nm) | 103 C (supplier) | 104.8 C | Within 1.8 K; the winding node was fitted only to the rated heating curve |
+| Winding thermal capacitance | 9.8 kJ/K (implied by the peak) | 9.0 kJ/K (rated heating curve) | Consistent |
 | Cell rise, 1C for 600 s | 15 C (SVOLT) | 2.1 C | Consistent, not discriminating |
 | Cell rise, 3C for 30 s | 10 C (SVOLT) | 1.0 C | Consistent, not discriminating |
 | Cabin load vs DM18A1 | 2.9 kW rated | 5.19 kW | Compressor undersized |
-| Peak propulsion coolant, all cases | 107 C boiling (LubeMax, no cap) | 57 C | Large boiling margin |
+| Peak propulsion coolant, all cases | 107 C boiling (LubeMax, no cap) | 69 C | Large boiling margin |
 | Coolant needed for sustained 2C | -36.7 C freeze (LubeMax) | -12.9 C | 2C sustained is not a cooling target |
 | Cell DC resistance, top of band | 1.36 mOhm ceiling (SVOLT 10 s power) | 0.80 mOhm | Consistent |
 | Cell DC resistance, central | 0.582 mOhm (GFL 100 Ah test, scaled) | 0.571 mOhm | Within 2% |

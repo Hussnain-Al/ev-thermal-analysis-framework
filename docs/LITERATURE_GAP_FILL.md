@@ -49,8 +49,8 @@ winding-to-coolant resistance (0.0340 K/W, the marked point). The left panel
 still sweeps the speed from 3000 to 9000 rpm to show how sensitive the
 calibration would be to a wrong rated point. LPTN studies plot
 winding hot-spot against coolant temperature with the insulation-class limit,
-and the right panel follows that form. The full integrated loss is pushed
-through the winding path, so the solid lines are upper bounds.
+and the right panel follows that form, using the motor loss only (the
+controller loss goes to the coolant).
 
 ## Gap fill 3: radiator achieved performance
 

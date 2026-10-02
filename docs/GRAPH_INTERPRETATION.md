@@ -10,10 +10,10 @@ Every graph is limited to a quantity the available inputs can support.
 | Battery sustained screen | DC Joule plus peak entropic heat and allowable coolant temperature across the 1.03 K/W path, with a 5-95% band and the superseded result | Transient cell temperature or delivered cooling |
 | Correction robustness | One-at-a-time tornado, combined worst case and 5-95% band for each correction | That the literature values are right for this vehicle; only that the conclusion survives their ranges |
 
-The two-node motor/coolant output now uses a calibrated winding resistance and
-an estimated core UA. Its thermal capacitances are still assumptions, so the
-20- and 30-minute peaks depend on them. The drive-unit node is an upper bound
-on winding temperature.
+The two-node motor/coolant output now uses a winding node calibrated on the
+supplier's rated point and heating curve, and an estimated core UA. It
+reproduces the supplier's 30 s peak within 1.8 K. The coolant node lumps the
+rest of the unit with an assumed coolant inventory.
 
 The cabin figure shows the workbook subtotal as recorded and as recomputed,
 beside the heat-balance load for two humidity scenarios. It is a steady load,

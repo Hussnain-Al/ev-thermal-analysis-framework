@@ -63,6 +63,26 @@ highLoss = calibrate_winding_resistance(curves,d.ratedSpeed_rpm,a.M01,controller
 allR = [lowLoss.ImpliedWindingToCoolant_KW;highLoss.ImpliedWindingToCoolant_KW];
 transient.motorToCoolantResistanceRange_KW = [min(allR) max(allR)];
 
+% Winding thermal capacitance from the supplier rated heating curve: the
+% winding node follows T = 60 + 83 (1 - exp(-t/tau)) and C = tau / R. The
+% rest of the 45 kJ/K unit (housing, jacket) is lumped with the coolant node,
+% so the stored energy of the whole unit is unchanged.
+curve = read_project_csv(cfg.motorCooling.files.ratedRiseCurve, ...
+    {'Time_s','WindingTemperature_C'},{'Time_s','WindingTemperature_C'});
+g = cfg.literatureGapFill.motor;
+riseModel = @(tau) g.referenceCoolant_C+rise*(1-exp(-curve.Time_s/tau));
+tau_s = fminsearch(@(tau) sum((curve.WindingTemperature_C-riseModel(abs(tau))).^2),300);
+tau_s = abs(tau_s);
+transient.windingTimeConstant_s = tau_s;
+transient.windingFitRms_K = sqrt(mean((curve.WindingTemperature_C-riseModel(tau_s)).^2));
+transient.driveUnitThermalCapacity_JK = transient.motorThermalCapacity_JK;
+transient.superseded.motorThermalCapacity_JK = transient.motorThermalCapacity_JK;
+transient.superseded.coolantThermalCapacity_JK = transient.coolantThermalCapacity_JK;
+windingCapacity_JK = tau_s/transient.motorToCoolantResistance_KW;
+transient.coolantThermalCapacity_JK = transient.coolantThermalCapacity_JK+ ...
+    transient.motorThermalCapacity_JK-windingCapacity_JK;
+transient.motorThermalCapacity_JK = windingCapacity_JK;
+
 transient.radiatorUA_WK = d.radiatorUA_WK;
 transient.fanOnlyRadiatorUA_WK = d.fanOnlyRadiatorUA_WK;
 [~,uaRange] = evaluate_assumption_sensitivity( ...
@@ -74,7 +94,7 @@ transient.radiatorUARange_WK = [uaRange.Minimum uaRange.Maximum];
     a,register,radiator_ids("R10"));
 transient.fanOnlyRadiatorUARange_WK = [fanRange.Minimum fanRange.Maximum];
 transient.modelBoundary = ...
-    "Two-node screen: winding resistance calibrated on the supplier rated point, radiator UA estimated for the candidate core; thermal capacitances remain assumptions";
+    "Two-node screen: winding node (motor loss) calibrated on the supplier rated point and its heating curve; controller loss and the rest of the unit on the coolant node; radiator UA estimated for the candidate core";
 cfg.motorCooling.transient = transient;
 
 % Cabin: replace the physically impossible 45 C / 70% RH pairing.
