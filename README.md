@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Modular MATLAB screening model for a compact battery-electric SUV under a
-45 C Karachi hot-weather boundary. Version `4.4.2` contains four independent
+45 C Karachi hot-weather boundary. Version `4.5.0` contains four independent
 domains: motor heat, transient propulsion cooling, sustained battery thermal
 screening and the recovered cabin-load calculation.
 
@@ -235,6 +235,44 @@ sum is not a complete air-conditioning requirement because the workbook does
 not close the full solar, latent, ventilation or transient pull-down load. No
 compressor is selected or evaluated.
 
+## Literature gap fill (estimates, not evidence)
+
+The outputs above stop where project evidence stops. Version `4.5.0` adds a
+separate estimate layer that fills each blocked input with a value from
+comparable published designs, keeps its low/high range and source in
+[`data/literature/literature_assumption_register.csv`](data/literature/literature_assumption_register.csv),
+and plots it the way those studies do. Full reasoning:
+[`docs/LITERATURE_GAP_FILL.md`](docs/LITERATURE_GAP_FILL.md).
+
+| Finding | Estimate | Consequence |
+|---|---|---|
+| Battery cell-to-coolant path | 0.30 K/W vs reconstructed 3.10 K/W | The sub-zero coolant requirement at 2C comes from the path value, not the cell |
+| Battery entropic heat | Up to about 15 W per cell at 1C, low SOC | ACR Joule heat (7 W) is not a lower bound across the SOC range |
+| Radiator achieved UA | 110-185 W/K at 1.5-8 m/s | The two-node model's 665 W/K is about 4 times too high; the 10% grade needs about 6.2 m/s |
+| Winding-to-coolant resistance | 0.017-0.043 K/W from the supplier 143 C point | The configured 0.015 K/W understates winding temperature |
+| Cabin workbook | 1.87 kW recomputed vs 3.34 kW recorded | Unit and formula errors in the body/glazing rows |
+| Cabin load at 45 C | 4.3-5.2 kW steady, plus 0.6-2.4 kW for a 30 min pull-down | Solar, latent and fresh-air terms now estimated |
+| Design climate | 45 C at 70% RH implies a 38 C dew point | Replaced by 25% and 44% RH scenarios |
+
+<img src="docs/images/gap_fill/gap_radiator_performance_map.png" width="820" alt="Estimated candidate radiator heat rejection and UA against face velocity">
+
+<img src="docs/images/gap_fill/gap_battery_heat_and_path.png" width="820" alt="Battery heat terms, thermal resistance budget and coolant envelope">
+
+<img src="docs/images/gap_fill/gap_battery_discharge_transient.png" width="820" alt="Lumped cell temperature during constant-current discharge">
+
+<img src="docs/images/gap_fill/gap_cabin_heat_balance.png" width="820" alt="Cabin workbook audit, heat-balance breakdown and pull-down capacity">
+
+<img src="docs/images/gap_fill/gap_motor_resistance_calibration.png" width="820" alt="Winding resistance implied by the supplier rated temperature point">
+
+<img src="docs/images/gap_fill/gap_drive_operating_points.png" width="820" alt="Drive-cycle operating points and heat density on the efficiency map">
+
+These previews come from
+[`tools/gap_fill_reference.py`](tools/gap_fill_reference.py), an independent
+Python implementation. The MATLAB module
+`modules/literature_gap_fill` produces the same plots in
+`outputs/literature_gap_fill/`, and the regression checks assert the same
+values.
+
 ## Repository layout
 
 ```text
@@ -243,11 +281,13 @@ data/common/cycles/      EPA NYCC and HWFET schedules
 data/motor_heat/         original torque workbook and efficiency map
 data/motor_cooling/      pump, radiator and motor reference data
 data/cabin_cooling/      recovered cabin workbook and derived inputs
-modules/                 four domain entry points
+modules/                 four domain entry points plus literature_gap_fill
 models/battery_requirements/ standalone Simulink battery screen
 models/propulsion_thermal_sensitivity/ standalone two-node sensitivity model
 src/calculations/        reusable equations
 tests/                   regression, interface and energy-balance checks
+data/literature/         literature-assumption register with ranges and sources
+tools/                   Python cross-check of the gap-fill equations
 references/              source provenance and retained project figures
 outputs/                 generated results
 docs/images/simulink/    model screenshots and readable topology diagrams

@@ -2,7 +2,7 @@
 rootDir = fileparts(fileparts(mfilename('fullpath')));
 addpath(rootDir,'-begin');
 cfg = setup_project();
-assert(strcmp(cfg.project.version,"4.4.2"));
+assert(strcmp(cfg.project.version,"4.5.0"));
 assert(~isfield(cfg,'sharedCompressor'));
 
 % Every active CSV is imported through the deterministic project reader.
@@ -131,6 +131,34 @@ assert(all(results.motorHeat.summary.MaximumTrailing60sHeat_kW<= ...
     results.motorHeat.summary.PeakOneSecondDriveUnitHeat_kW+1e-12));
 assert(abs(results.cabinCooling.summary.WorkbookBodyAndGlazingLoad_kW- ...
     3.33594)<1e-8);
+
+% Literature gap-fill layer: register integrity and regression values that
+% were cross-checked with tools/gap_fill_reference.py.
+[lit,register] = read_literature_assumptions( ...
+    cfg.literatureGapFill.files.assumptionRegister);
+assert(all(register.Low<=register.Central & register.Central<=register.High));
+assert(all(strlength(register.Source)>0));
+gap = results.literatureGapFill;
+terms = gap.batteryTerms;
+assert(abs(terms.dcir25_Ohm-0.40e-3/lit.B01)<1e-12);
+assert(abs(terms.pathResistance_KW-0.3047)<1e-3);
+assert(terms.pathResistance_KW<cfg.batteryCooling.baseResistance_KW);
+designCheck = gap.radiatorDesignCheck;
+gradeRow = contains(designCheck.Case,"10%");
+assert(abs(designCheck.EstimatedFaceVelocityForDuty_ms(gradeRow)-6.2)<0.15);
+assert(all(designCheck.EstimatedUAAtRequiredVelocity_WK< ...
+    designCheck.UAUsedInTwoNodeModel_WK));
+assert(abs(designCheck.EstimatedCoolantPressureDrop_kPa(1)-0.583)<0.01);
+assert(all(gap.motorCalibration.ImpliedWindingToCoolant_KW> ...
+    cfg.motorCooling.transient.motorToCoolantResistance_KW));
+assert(abs(sum(gap.cabinAudit.RecordedInWorkbook_W)-3335.94)<0.01);
+assert(abs(sum(gap.cabinAudit.Recomputed_W)-1871.67)<0.1);
+humid = gap.cabinHeatBalance.Scenario==cfg.literatureGapFill.cabin.scenarioNames(end);
+assert(abs(sum(gap.cabinHeatBalance.Load_kW(humid))-5.193)<0.01);
+discharge = gap.batteryTransientSummary;
+row = discharge.C_rate==2 & discharge.Coolant_C==25 & ...
+    abs(discharge.PathResistance_KW-terms.pathResistance_KW)<1e-12;
+assert(abs(discharge.PeakCellTemperature_C(row)-36.78)<0.05);
 
 fprintf('All simplified EV thermal framework checks passed.\n');
 

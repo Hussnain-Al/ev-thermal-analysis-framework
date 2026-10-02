@@ -1,0 +1,484 @@
+function out = run_literature_gap_fill(cfg,motorHeat,motorCooling)
+%RUN_LITERATURE_GAP_FILL Estimates for the blocked outputs using literature values.
+% Each estimate is driven by data/literature/literature_assumption_register.csv
+% and is reported separately from the evidence-based results. None of these
+% outputs replaces a supplier map or a test; they show what comparable
+% published designs imply and where the current assumptions disagree.
+
+p = cfg.literatureGapFill;
+outputDir = fullfile(cfg.project.outputDir,"literature_gap_fill");
+ensure_output_folder(outputDir);
+[a,out.register] = read_literature_assumptions(p.files.assumptionRegister);
+
+out.operatingPoints = summarize_operating_points(motorHeat);
+out.motorCalibration = calibrate_winding_resistance(cfg,p,motorHeat.curves,a);
+[out.radiatorMap,out.radiatorDesignCheck] = estimate_radiator(cfg,p,motorCooling,a);
+[out.batteryTerms,out.batteryEnvelope,out.batteryTransient,out.batteryTransientSummary] = ...
+    estimate_battery(cfg,p,a);
+[out.cabinAudit,out.cabinHeatBalance,out.cabinPullDown] = estimate_cabin(cfg,p,a);
+
+writetable(out.register,fullfile(outputDir,"literature_assumptions_used.csv"));
+writetable(out.operatingPoints,fullfile(outputDir,"drive_operating_point_heat.csv"));
+writetable(out.motorCalibration,fullfile(outputDir,"winding_resistance_calibration.csv"));
+writetable(out.radiatorMap,fullfile(outputDir,"radiator_estimated_performance.csv"));
+writetable(out.radiatorDesignCheck,fullfile(outputDir,"radiator_estimated_design_check.csv"));
+writetable(out.batteryTerms.pathBudget,fullfile(outputDir,"battery_path_budget.csv"));
+writetable(out.batteryEnvelope,fullfile(outputDir,"battery_coolant_envelope_comparison.csv"));
+writetable(out.batteryTransientSummary,fullfile(outputDir,"battery_discharge_summary.csv"));
+writetable(out.cabinAudit,fullfile(outputDir,"cabin_workbook_audit.csv"));
+writetable(out.cabinHeatBalance,fullfile(outputDir,"cabin_heat_balance.csv"));
+writetable(out.cabinPullDown,fullfile(outputDir,"cabin_pull_down_capacity.csv"));
+
+plot_operating_points(motorHeat,outputDir);
+plot_motor_calibration(out.motorCalibration,motorHeat,p,outputDir);
+plot_radiator(out.radiatorMap,out.radiatorDesignCheck,motorCooling,cfg,outputDir);
+plot_battery_heat_and_path(cfg.batteryCooling,p,out.batteryTerms,out.batteryEnvelope,outputDir);
+plot_battery_transient(out.batteryTransient,cfg.batteryCooling,p,out.batteryTerms,outputDir);
+plot_cabin(out.cabinAudit,out.cabinHeatBalance,out.cabinPullDown,cfg,outputDir);
+end
+
+% -------------------------------------------------------------------------
+% Calculations
+% -------------------------------------------------------------------------
+function summary = summarize_operating_points(motorHeat)
+nCases = numel(motorHeat.details);
+caseName = strings(nCases,1);
+meanSpeed = zeros(nCases,1);
+meanTorque = zeros(nCases,1);
+heatWeightedEfficiency = zeros(nCases,1);
+fractionBelow85 = zeros(nCases,1);
+for i = 1:nCases
+    d = motorHeat.details{i};
+    motoring = d.RequestedWheelPower_kW>0;
+    caseName(i) = d.Cycle(1);
+    meanSpeed(i) = mean(d.MotorSpeed_rpm(motoring));
+    meanTorque(i) = mean(d.RequestedMotorTorque_Nm(motoring));
+    wheelEnergy = trapz(d.Time_s,max(d.RequestedWheelPower_kW,0));
+    dcEnergy = trapz(d.Time_s,max(d.DCLinkPower_kW,0));
+    heatWeightedEfficiency(i) = 100*wheelEnergy/dcEnergy;
+    heat = d.DriveUnitHeat_kW;
+    fractionBelow85(i) = 100*sum(heat(d.IntegratedEfficiency_pct<85))/max(sum(heat),eps);
+end
+summary = table(caseName,meanSpeed,meanTorque,heatWeightedEfficiency,fractionBelow85, ...
+    'VariableNames',{'Case','MeanMotoringSpeed_rpm','MeanMotoringTorque_Nm', ...
+    'EnergyWeightedMotoringEfficiency_pct','HeatShareBelow85pctEfficiency_pct'});
+end
+
+function result = calibrate_winding_resistance(cfg,p,curves,a)
+speed = p.motor.ratedSpeedSweep_rpm;
+ratedPower_kW = a.M01;
+torque = ratedPower_kW*1000./(speed*2*pi/60);
+eta = estimate_integrated_drive_efficiency(speed,torque,curves);
+integratedLoss_kW = ratedPower_kW./eta-ratedPower_kW;
+controllerLoss_kW = 1.580;
+motorLoss_kW = integratedLoss_kW-controllerLoss_kW;
+rise_C = p.motor.referenceWinding_C-p.motor.referenceCoolant_C;
+result = table(speed,torque,100*eta,integratedLoss_kW,motorLoss_kW, ...
+    rise_C./(motorLoss_kW*1000), ...
+    repmat(cfg.motorCooling.transient.motorToCoolantResistance_KW,numel(speed),1), ...
+    'VariableNames',{'AssumedRatedSpeed_rpm','RatedTorque_Nm', ...
+    'IntegratedEfficiency_pct','IntegratedLoss_kW','MotorAndReducerLoss_kW', ...
+    'ImpliedWindingToCoolant_KW','ConfiguredMotorToCoolant_KW'});
+end
+
+function [map,check] = estimate_radiator(cfg,p,motorCooling,a)
+thermal = cfg.motorCooling.thermal;
+coolant = cfg.motorCooling.coolant;
+coolantRow = coolant(coolant.Temperature_C==thermal.propertyTemperature_C,:);
+tables = cell(numel(p.radiator.coolantFlows_Lmin),1);
+for i = 1:numel(p.radiator.coolantFlows_Lmin)
+    tables{i} = calculate_louvered_radiator_performance( ...
+        p.radiator.faceVelocity_ms,p.radiator.coolantFlows_Lmin(i), ...
+        motorCooling.radiatorCandidate,coolantRow, ...
+        thermal.radiatorCoolantIn_C,thermal.airIn_C,a);
+end
+map = vertcat(tables{:});
+
+design = motorCooling.radiatorDesign;
+atDesign = map(map.CoolantFlow_Lmin==thermal.designFlow_Lmin,:);
+n = height(design);
+estimatedAtRequiredVelocity_kW = interp1(atDesign.FaceVelocity_ms, ...
+    atDesign.EstimatedHeatRejection_kW,design.RequiredCoreFaceVelocity_ms);
+velocityForDuty_ms = nan(n,1);
+for i = 1:n
+    if design.SustainedHeatDuty_kW(i)<=max(atDesign.EstimatedHeatRejection_kW)
+        velocityForDuty_ms(i) = interp1(atDesign.EstimatedHeatRejection_kW, ...
+            atDesign.FaceVelocity_ms,design.SustainedHeatDuty_kW(i));
+    end
+end
+estimatedUA_WK = interp1(atDesign.FaceVelocity_ms,atDesign.EstimatedUA_WK, ...
+    design.RequiredCoreFaceVelocity_ms);
+check = table(design.Case,design.SustainedHeatDuty_kW, ...
+    design.RequiredCoreFaceVelocity_ms,estimatedAtRequiredVelocity_kW, ...
+    velocityForDuty_ms,design.RequiredIdealUA_WK,estimatedUA_WK, ...
+    repmat(cfg.motorCooling.transient.radiatorUA_WK,n,1), ...
+    repmat(atDesign.EstimatedCoolantPressureDrop_kPa(1),n,1), ...
+    'VariableNames',{'Case','SustainedHeatDuty_kW', ...
+    'RequiredFaceVelocity_10KRise_ms','EstimatedRejectionAtThatVelocity_kW', ...
+    'EstimatedFaceVelocityForDuty_ms','RequiredIdealUA_WK', ...
+    'EstimatedUAAtRequiredVelocity_WK','UAUsedInTwoNodeModel_WK', ...
+    'EstimatedCoolantPressureDrop_kPa'});
+end
+
+function [terms,envelope,transient,summary] = estimate_battery(cfg,p,a)
+battery = cfg.batteryCooling;
+terms = calculate_battery_literature_terms(battery,p.battery,a);
+cRate = battery.cRates(:);
+current = cRate*battery.capacity_Ah;
+acrHeat = current.^2*battery.resistanceProxy_Ohm;
+literatureHeat = current.^2*terms.dcir(25)+current*298.15*terms.peakDischargeEntropic_VK;
+envelope = table(cRate,acrHeat, ...
+    battery.absoluteOperatingLimit_C-acrHeat*battery.baseResistance_KW, ...
+    battery.regenChargeCutoff_C-acrHeat*battery.baseResistance_KW, ...
+    literatureHeat, ...
+    battery.absoluteOperatingLimit_C-literatureHeat*terms.pathResistance_KW, ...
+    battery.regenChargeCutoff_C-literatureHeat*terms.pathResistance_KW, ...
+    'VariableNames',{'C_rate','ACRCellHeat_W','ReconstructedMaxCoolant60_C', ...
+    'ReconstructedMaxCoolant55_C','LiteratureCellHeat_W', ...
+    'LiteratureMaxCoolant60_C','LiteratureMaxCoolant55_C'});
+
+paths = [terms.pathResistance_KW battery.baseResistance_KW];
+traces = {};
+for i = 1:numel(p.battery.cRates)
+    for j = 1:numel(p.battery.coolantScenarios_C)
+        for k = 1:numel(paths)
+            traces{end+1,1} = simulate_battery_cell_discharge( ...
+                p.battery.cRates(i),p.battery.coolantScenarios_C(j),paths(k), ...
+                battery.capacity_Ah,terms,p.battery.timeStep_s); %#ok<AGROW>
+        end
+    end
+end
+transient = traces;
+n = numel(traces);
+rate = zeros(n,1);
+coolant = zeros(n,1);
+path = zeros(n,1);
+peak = zeros(n,1);
+jouleKJ = zeros(n,1);
+reversibleKJ = zeros(n,1);
+for i = 1:n
+    t = traces{i};
+    rate(i) = t.C_rate(1);
+    coolant(i) = t.Coolant_C(1);
+    path(i) = t.PathResistance_KW(1);
+    peak(i) = max(t.CellTemperature_C);
+    jouleKJ(i) = trapz(t.Time_s,t.JouleHeat_W)/1000;
+    reversibleKJ(i) = trapz(t.Time_s,t.ReversibleHeat_W)/1000;
+end
+summary = table(rate,coolant,path,peak,peak>battery.regenChargeCutoff_C, ...
+    peak>battery.absoluteOperatingLimit_C,jouleKJ,reversibleKJ, ...
+    'VariableNames',{'C_rate','Coolant_C','PathResistance_KW', ...
+    'PeakCellTemperature_C','Exceeds55C','Exceeds60C', ...
+    'JouleHeat_kJ','ReversibleHeat_kJ'});
+end
+
+function [audit,balance,pullDown] = estimate_cabin(cfg,p,a)
+audit = audit_cabin_workbook(cfg.cabinCooling.files.sourceWorkbook, ...
+    p.cabin.workbookOutdoor_C,p.cabin.workbookIndoor_C);
+rh = [a.K03;a.K02];
+tables = cell(numel(rh),1);
+for i = 1:numel(rh)
+    components = calculate_cabin_heat_balance(a.K01,rh(i), ...
+        cfg.cabinCooling.cabinSetpoint_C,cfg.cabinCooling.cabinRelativeHumidity_pct, ...
+        p.cabin,a);
+    components.Scenario = repmat(p.cabin.scenarioNames(i),height(components),1);
+    components.OutdoorDryBulb_C = repmat(a.K01,height(components),1);
+    components.OutdoorRH_pct = repmat(rh(i),height(components),1);
+    tables{i} = components(:,{'Scenario','OutdoorDryBulb_C','OutdoorRH_pct', ...
+        'Component','Load_kW'});
+end
+balance = vertcat(tables{:});
+
+steady_kW = sum(balance.Load_kW(balance.Scenario==p.cabin.scenarioNames(end)));
+mass_kJK = [a.C23 a.C24 a.C25];
+minutes = p.cabin.pullDownTime_min;
+capacity = steady_kW+mass_kJK.*(a.C26-cfg.cabinCooling.cabinSetpoint_C)./(minutes*60);
+pullDown = array2table([minutes capacity],'VariableNames', ...
+    {'PullDownTime_min','MeanCapacity_LowMass_kW', ...
+    'MeanCapacity_CentralMass_kW','MeanCapacity_HighMass_kW'});
+end
+
+% -------------------------------------------------------------------------
+% Figures
+% -------------------------------------------------------------------------
+function plot_operating_points(motorHeat,outputDir)
+curves = motorHeat.curves;
+fig = figure('Visible','off','Color','w','Position',[100 100 1300 520]);
+layout = tiledlayout(1,2,'TileSpacing','compact');
+nexttile;
+contourf(curves.efficiencyRPM,curves.efficiencyTorque_Nm, ...
+    100*curves.integratedEfficiency',[50 70 80 85 88 90 92 93 94 95.5], ...
+    'LineColor',[1 1 1]);
+colormap(gca,flipud(bone(12)));
+cb = colorbar;
+cb.Label.String = 'Integrated efficiency (%)';
+hold on;
+plot(curves.torqueRPM,curves.maxTorque_Nm,'k-','LineWidth',1.6, ...
+    'DisplayName','Peak torque envelope');
+markers = {'.','.','d','d'};
+colors = lines(numel(motorHeat.details));
+for i = 1:numel(motorHeat.details)
+    d = motorHeat.details{i};
+    motoring = d.RequestedWheelPower_kW>0;
+    if strcmp(markers{min(i,4)},'d')
+        plot(d.MotorSpeed_rpm(1),d.RequestedMotorTorque_Nm(1),'d', ...
+            'MarkerSize',9,'MarkerFaceColor',colors(i,:),'MarkerEdgeColor','w', ...
+            'DisplayName',d.Cycle(1));
+    else
+        scatter(d.MotorSpeed_rpm(motoring),d.RequestedMotorTorque_Nm(motoring), ...
+            8,colors(i,:),'filled','MarkerFaceAlpha',0.45,'DisplayName',d.Cycle(1));
+    end
+end
+xlim([0 12000]); ylim([0 300]);
+xlabel('Drive-unit speed (rpm)'); ylabel('Torque (Nm)');
+title('Where each schedule operates on the efficiency map');
+legend('Location','northeast');
+
+nexttile;
+speedEdges = linspace(0,12000,13);
+torqueEdges = linspace(0,300,13);
+heat_Wh = zeros(12,12);
+for i = 1:2
+    d = motorHeat.details{i};
+    s = discretize(d.MotorSpeed_rpm,speedEdges);
+    t = discretize(abs(d.RequestedMotorTorque_Nm),torqueEdges);
+    ok = ~isnan(s) & ~isnan(t);
+    heat_Wh = heat_Wh+accumarray([s(ok) t(ok)],d.DriveUnitHeat_kW(ok)*1000/3600,[12 12]);
+end
+imagesc(speedEdges(1:end-1)+500,torqueEdges(1:end-1)+12.5,heat_Wh');
+set(gca,'YDir','normal');
+colormap(gca,flipud(hot(64)));
+cb = colorbar;
+cb.Label.String = 'Drive-unit heat (Wh)';
+hold on;
+plot(curves.torqueRPM,curves.maxTorque_Nm,'k-','LineWidth',1.6);
+xlim([0 12000]); ylim([0 300]);
+xlabel('Drive-unit speed (rpm)'); ylabel('|Torque| (Nm)');
+title('Heat energy by operating region (NYCC + HWFET)');
+title(layout,'Gap fill 1: operating-point density on the supplied map (calculated, no new assumption)');
+exportgraphics(fig,fullfile(outputDir,"gap_drive_operating_points.png"),'Resolution',150);
+close(fig);
+end
+
+function plot_motor_calibration(cal,motorHeat,p,outputDir)
+fig = figure('Visible','off','Color','w','Position',[100 100 1300 480]);
+layout = tiledlayout(1,2,'TileSpacing','compact');
+nexttile;
+plot(cal.AssumedRatedSpeed_rpm,cal.ImpliedWindingToCoolant_KW,'LineWidth',2, ...
+    'DisplayName','Implied winding-to-coolant R');
+hold on;
+yline(cal.ConfiguredMotorToCoolant_KW(1),'r--','LineWidth',1.5, ...
+    'DisplayName','Configured R');
+grid on; ylim([0 1.2*max(cal.ImpliedWindingToCoolant_KW)]);
+xlabel('Assumed rated operating speed (rpm)');
+ylabel('Winding-to-coolant resistance (K/W)');
+title('Supplier 143 C rated-rise point implies a higher resistance');
+legend('Location','southeast');
+
+nexttile;
+hold on;
+rMid = median(cal.ImpliedWindingToCoolant_KW);
+coolant = linspace(45,75,31)';
+nCycles = numel(motorHeat.details)-2;
+colors = lines(2);
+for i = 1:2
+    row = nCycles+i;
+    q = motorHeat.summary.AverageDriveUnitHeat_kW(row)*1000;
+    name = motorHeat.summary.Cycle(row);
+    plot(coolant,coolant+q*rMid,'-','Color',colors(i,:),'LineWidth',2, ...
+        'DisplayName',sprintf('%s: implied R %.3f K/W (upper bound)',name,rMid));
+    plot(coolant,coolant+q*cal.ConfiguredMotorToCoolant_KW(1),'--', ...
+        'Color',colors(i,:),'LineWidth',1.2, ...
+        'DisplayName',sprintf('%s: configured R',name));
+end
+yline(p.motor.insulationClassH_C,'k:','Class H insulation 180 C','HandleVisibility','off');
+yline(150,':','Typical design hot-spot target 150 C','HandleVisibility','off');
+grid on; ylim([40 200]);
+xlabel('Coolant at drive unit (C)'); ylabel('Winding hot-spot (C)');
+title('Steady winding hot-spot at sustained design duty');
+legend('Location','southeast','FontSize',7);
+title(layout,'Gap fill 2: winding resistance back-calculated from supplied reference (rated speed assumed)');
+exportgraphics(fig,fullfile(outputDir,"gap_motor_resistance_calibration.png"),'Resolution',150);
+close(fig);
+end
+
+function plot_radiator(map,check,motorCooling,cfg,outputDir)
+fig = figure('Visible','off','Color','w','Position',[100 100 1300 480]);
+layout = tiledlayout(1,2,'TileSpacing','compact');
+nexttile;
+hold on;
+flows = unique(map.CoolantFlow_Lmin);
+for i = 1:numel(flows)
+    rows = map.CoolantFlow_Lmin==flows(i);
+    plot(map.FaceVelocity_ms(rows),map.EstimatedHeatRejection_kW(rows), ...
+        'LineWidth',2,'DisplayName',sprintf('%g L/min coolant',flows(i)));
+end
+for i = 1:height(check)
+    yline(check.SustainedHeatDuty_kW(i),'--',sprintf('%s: needs %.1f m/s', ...
+        check.Case(i),check.EstimatedFaceVelocityForDuty_ms(i)), ...
+        'HandleVisibility','off','LabelHorizontalAlignment','left');
+end
+grid on;
+xlabel('Core-face air velocity (m/s)'); ylabel('Heat rejection (kW)');
+title('Estimated heat rejection, 65 C coolant in, 45 C air in');
+legend('Location','southeast');
+
+nexttile;
+rows = map.CoolantFlow_Lmin==cfg.motorCooling.thermal.designFlow_Lmin;
+plot(map.FaceVelocity_ms(rows),map.EstimatedUA_WK(rows),'LineWidth',2, ...
+    'DisplayName','Estimated achieved UA (20 L/min)');
+hold on;
+for i = 1:height(motorCooling.radiatorDesign)
+    yline(motorCooling.radiatorDesign.RequiredIdealUA_WK(i),'--', ...
+        'DisplayName',"Required ideal UA, "+motorCooling.radiatorDesign.Case(i));
+end
+yline(cfg.motorCooling.transient.radiatorUA_WK,':','LineWidth',1.3, ...
+    'DisplayName','UA assumed in two-node model');
+grid on;
+xlabel('Core-face air velocity (m/s)'); ylabel('UA (W/K)');
+title('Estimated achieved UA vs requirement and model input');
+legend('Location','east');
+title(layout,'Gap fill 3: candidate core performance from Chang-Wang louver correlation (louver geometry assumed)');
+exportgraphics(fig,fullfile(outputDir,"gap_radiator_performance_map.png"),'Resolution',150);
+close(fig);
+end
+
+function plot_battery_heat_and_path(battery,p,terms,envelope,outputDir)
+fig = figure('Visible','off','Color','w','Position',[100 100 1600 480]);
+layout = tiledlayout(1,3,'TileSpacing','compact');
+nexttile;
+soc = linspace(0,100,201)';
+current = battery.capacity_Ah;
+plot(soc,repmat(current^2*terms.dcir(25),size(soc)),'LineWidth',2, ...
+    'DisplayName','Joule, DCIR at 25 C');
+hold on;
+plot(soc,repmat(current^2*terms.dcir(45),size(soc)),'LineWidth',2, ...
+    'DisplayName','Joule, DCIR at 45 C');
+plot(soc,repmat(current^2*battery.resistanceProxy_Ohm,size(soc)),'k--', ...
+    'DisplayName','Current ACR heat floor');
+plot(soc,-current*298.15*terms.entropic_VK(soc),'LineWidth',2, ...
+    'DisplayName','Reversible (entropic), 25 C');
+yline(0,'k-','HandleVisibility','off');
+grid on;
+xlabel('State of charge (%)'); ylabel('Cell heat (W)');
+title('Cell heat sources at 1C discharge');
+legend('Location','northeast');
+
+nexttile;
+budget = terms.pathBudget;
+nElements = height(budget);
+stackData = [budget.Resistance_KW' 0; zeros(1,nElements) battery.baseResistance_KW];
+barh([1 2],stackData,'stacked');
+yticks([1 2]);
+yticklabels({'Literature build-up','Reconstructed path'});
+legend([budget.PathElement+compose(": %.3f",budget.Resistance_KW); ...
+    sprintf("Reconstructed: %.2f",battery.baseResistance_KW)], ...
+    'Location','southeast','FontSize',7);
+grid on;
+xlabel('Thermal resistance (K/W)');
+title(sprintf('Cell-to-coolant resistance: %.2f vs %.2f K/W', ...
+    terms.pathResistance_KW,battery.baseResistance_KW));
+
+nexttile;
+plot(envelope.C_rate,envelope.ReconstructedMaxCoolant60_C,'r--','LineWidth',2, ...
+    'DisplayName','Reconstructed path, ACR, 60 C');
+hold on;
+plot(envelope.C_rate,envelope.ReconstructedMaxCoolant55_C,'r:','LineWidth',1.4, ...
+    'DisplayName','Reconstructed path, ACR, 55 C');
+plot(envelope.C_rate,envelope.LiteratureMaxCoolant60_C,'b-','LineWidth',2, ...
+    'DisplayName','Literature path, DCIR(25 C) + peak entropic, 60 C');
+plot(envelope.C_rate,envelope.LiteratureMaxCoolant55_C,'b:','LineWidth',1.4, ...
+    'DisplayName','Literature path, DCIR(25 C) + peak entropic, 55 C');
+yline(45,'k:','45 C ambient','HandleVisibility','off');
+grid on; ylim([-40 65]);
+xlabel('Sustained C-rate'); ylabel('Maximum allowable coolant temperature (C)');
+title('Coolant envelope comparison');
+legend('Location','southwest','FontSize',7);
+title(layout,'Gap fill 4: battery heat terms and cell-to-coolant path from literature values');
+exportgraphics(fig,fullfile(outputDir,"gap_battery_heat_and_path.png"),'Resolution',150);
+close(fig);
+end
+
+function plot_battery_transient(traces,battery,p,terms,outputDir)
+fig = figure('Visible','off','Color','w','Position',[100 100 1300 480]);
+layout = tiledlayout(1,2,'TileSpacing','compact');
+colors = lines(numel(p.battery.cRates));
+for j = 1:numel(p.battery.coolantScenarios_C)
+    nexttile;
+    hold on;
+    coolant = p.battery.coolantScenarios_C(j);
+    for k = 1:numel(traces)
+        t = traces{k};
+        if t.Coolant_C(1)~=coolant
+            continue
+        end
+        c = find(p.battery.cRates==t.C_rate(1),1);
+        if abs(t.PathResistance_KW(1)-terms.pathResistance_KW)<1e-12
+            style = '-'; width = 2; label = sprintf('%gC, literature path %.2f K/W', ...
+                t.C_rate(1),terms.pathResistance_KW);
+        else
+            style = '--'; width = 1.2; label = sprintf('%gC, reconstructed %.2f K/W', ...
+                t.C_rate(1),battery.baseResistance_KW);
+        end
+        plot(t.Time_s/60,t.CellTemperature_C,style,'Color',colors(c,:), ...
+            'LineWidth',width,'DisplayName',label);
+    end
+    yline(battery.absoluteOperatingLimit_C,'r:','60 C absolute','HandleVisibility','off');
+    yline(battery.regenChargeCutoff_C,':','55 C charge cutoff','HandleVisibility','off');
+    grid on;
+    xlabel('Time from full charge (min)'); ylabel('Cell temperature (C)');
+    title(sprintf('%s, %g C',p.battery.coolantScenarioNames(j),coolant));
+    legend('Location','northeast','FontSize',7);
+end
+title(layout,'Gap fill 5: constant-current discharge transient (single lumped cell, DCIR + entropic heat)');
+exportgraphics(fig,fullfile(outputDir,"gap_battery_discharge_transient.png"),'Resolution',150);
+close(fig);
+end
+
+function plot_cabin(audit,balance,pullDown,cfg,outputDir)
+fig = figure('Visible','off','Color','w','Position',[100 100 1700 520]);
+layout = tiledlayout(1,3,'TileSpacing','compact');
+nexttile;
+barh([audit.RecordedInWorkbook_W audit.Recomputed_W]);
+yticks(1:height(audit)); yticklabels(audit.Surface);
+set(gca,'YDir','reverse');
+legend({sprintf('Recorded in workbook (%.0f W)',sum(audit.RecordedInWorkbook_W)), ...
+    sprintf('Recomputed, same inputs (%.0f W)',sum(audit.Recomputed_W))}, ...
+    'Location','east');
+grid on; xlabel('Load (W)');
+title('Workbook audit: body and glazing rows');
+
+nexttile;
+scenarios = unique(balance.Scenario,'stable');
+components = unique(balance.Component,'stable');
+data = zeros(numel(scenarios),numel(components));
+for i = 1:numel(scenarios)
+    data(i,:) = balance.Load_kW(balance.Scenario==scenarios(i))';
+end
+recovered = cfg.cabinCooling.recoveredCabinDuty_kW;
+groups = [scenarios;"Recovered workbook subtotal"];
+bar(categorical(groups,groups), ...
+    [data zeros(numel(scenarios),1); zeros(1,numel(components)) recovered], ...
+    'stacked');
+legend([components;"Recovered workbook subtotal (as recorded)"], ...
+    'Location','northwest','FontSize',7);
+grid on; ylabel('Load (kW)');
+title('Steady cabin load at 15:00, 25 C / 50% RH cabin');
+
+nexttile;
+plot(pullDown.PullDownTime_min,pullDown{:,2:4},'LineWidth',2);
+xline(30,':','30 min target');
+legend({'Effective interior mass, low','central','high'},'Location','northeast');
+grid on;
+xlabel('Pull-down time (min)'); ylabel('Mean cooling capacity (kW)');
+title('Average capacity to pull down 80 C soak to 25 C');
+title(layout,'Gap fill 6: cabin workbook audit and heat-balance rebuild (Fayazbakhsh and Bahrami structure)');
+exportgraphics(fig,fullfile(outputDir,"gap_cabin_heat_balance.png"),'Resolution',150);
+close(fig);
+end
+
+function ensure_output_folder(folder)
+if ~isfolder(folder)
+    mkdir(folder);
+end
+end

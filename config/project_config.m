@@ -8,7 +8,7 @@ arguments
 end
 
 cfg.project.name = "EV Thermal Analysis Framework";
-cfg.project.version = "4.4.2";
+cfg.project.version = "4.5.0";
 cfg.project.rootDir = rootDir;
 cfg.project.outputDir = fullfile(rootDir,"outputs");
 cfg.project.parameterRegister = fullfile(rootDir,"data", ...
@@ -19,4 +19,5 @@ cfg.motorHeat = motor_heat_config(rootDir);
 cfg.motorCooling = motor_cooling_config(rootDir);
 cfg.batteryCooling = battery_cooling_config(rootDir);
 cfg.cabinCooling = cabin_cooling_config(rootDir);
+cfg.literatureGapFill = literature_gap_fill_config(rootDir);
 end

@@ -8,6 +8,7 @@
 | Radiator design | `radiator_candidate_geometry.csv`, `radiator_design_requirements.csv`, `radiator_airside_sensitivity.csv` | Candidate core, required face velocity and ideal UA sensitivity; no delivered fan/core performance |
 | Battery | `battery_sustained_screen.csv`, `battery_specification_limits.csv` | ACR-based heat floor and allowable coolant temperature |
 | Cabin | `cabin_cooling_summary.csv`, `cabin_load_inputs_used.csv` | Independent recovered partial sensible load |
+| Literature gap fill | `literature_gap_fill/*.csv` | Estimates from the literature-assumption register; not project evidence |
 
 Generated plots:
 
@@ -17,6 +18,7 @@ Generated plots:
 - `motor_cooling/radiator_design_requirements.png`
 - `battery_cooling/battery_c_rate_sweep.png`
 - `cabin_cooling/cabin_load_breakdown.png`
+- `literature_gap_fill/gap_*.png` (six estimate figures, see `LITERATURE_GAP_FILL.md`)
 
 All six plot types are displayed in the README. The files under
 `docs/images/results/` are publication copies of the passing MATLAB workflow

@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.5.0 — 2026-10-02
+
+- Added a separate literature gap-fill layer (`modules/literature_gap_fill`)
+  driven by a sourced assumption register with low/high ranges.
+- Estimated candidate-radiator performance with the Chang-Wang louvered-fin
+  correlation and e-NTU, plus the radiator coolant pressure drop.
+- Added DCIR (ACR/0.7 with Arrhenius scaling), LFP entropic heat, a
+  bottom-cooled cell-to-coolant resistance build-up and a lumped
+  constant-current discharge transient.
+- Back-calculated the winding-to-coolant resistance from the supplier 143 C
+  rated reference.
+- Audited the recovered cabin workbook and rebuilt the cabin load by heat
+  balance with solar, latent, fresh-air and pull-down terms.
+- Replaced the 45 C / 70% RH pairing with physically consistent humidity
+  scenarios for the gap-fill layer.
+- Added an independent Python cross-check that renders the preview figures.
+
 ## 4.4.2 — 2026-09-13
 
 - Published all six generated plot types in the README, grouped as calculated

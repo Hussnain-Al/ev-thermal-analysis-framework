@@ -1,0 +1,44 @@
+ID,Domain,Parameter,Central,Low,High,Unit,EvidenceClass,Source,Replaces
+M01,Drive unit,Rated output power for the 143 C winding reference,60,60,60,kW,Project evidence,Controller rated point in data/motor_heat/controller_loss_reference.csv,Unknown rated operating point of the winding-temperature reference
+R01,Radiator,Louver pitch,1.0,0.8,1.4,mm,Literature typical value,Chang and Wang 1997 Int J Heat Mass Transfer 40(3) 533-544 dataset range,Louver geometry absent from radiator drawing
+R02,Radiator,Louver angle,27,22,30,deg,Literature typical value,Chang and Wang 1997 dataset range,Louver geometry absent from radiator drawing
+R03,Radiator,Louver length as fraction of fin height,0.85,0.75,0.90,-,Literature typical value,Chang and Wang 1997 dataset range,Louver geometry absent from radiator drawing
+R04,Radiator,Fin conductivity,200,180,220,W/(m K),Material property,Aluminium 3003-series brazing alloy,Fin material not stated
+R05,Radiator,Coolant conductivity at 60 C,0.40,0.38,0.42,W/(m K),Property table,ASHRAE Handbook Fundamentals ethylene glycol 50% by volume,No coolant conductivity in config
+R06,Radiator,Laminar Nusselt number in 16:1 flat tube,6.45,6.45,7.28,-,Correlation,Shah and London 1978 rectangular duct (constant wall T; upper value constant flux),Coolant-side film coefficient
+R07,Radiator,Laminar Darcy f Re in 16:1 flat tube,88.6,85,96,-,Correlation,Shah and London 1978 rectangular duct,Radiator coolant pressure drop
+R08,Radiator,Header entry plus exit loss coefficient,1.5,1.0,2.0,-,Literature typical value,Standard sudden contraction plus expansion K,Radiator coolant pressure drop
+B01,Battery,ACR to DCIR ratio,0.70,0.50,0.90,-,Literature rule of thumb,batterydesign.net DCIR of a cell (ACIR ~70% of 10 s DCIR),1 kHz ACR used as DC heat resistance
+B02,Battery,DCIR Arrhenius activation energy,20,15,35,kJ/mol,Screening assumption,Value giving roughly 2x DCIR from 25 C to 0 C as commonly reported for LFP,Temperature-independent resistance
+B10,Battery,Cell width,220,220,220,mm,Supplier listing,SVOLT 134Ah listing 220 x 44.6 x 112 mm and 2.42 kg (confirm against cell drawing),Cell geometry absent from model
+B11,Battery,Cell thickness,44.6,44.6,44.6,mm,Supplier listing,SVOLT 134Ah listing,Cell geometry absent from model
+B12,Battery,Cell height (base to terminals),112,112,220,mm,Supplier listing,Orientation assumed; 220 mm if the cell stands on its narrow face,Cell geometry absent from model
+B13,Battery,In-plane jelly-roll conductivity,25,15,30,W/(m K),Literature range,Typical in-plane conductivity of LFP/graphite wound or stacked electrodes,Internal conduction path
+B14,Battery,Cell insulation film thickness,0.15,0.10,0.25,mm,Literature typical value,PET/PI wrap on prismatic cans,Cell-to-pad interface
+B15,Battery,Insulation film conductivity,0.20,0.15,0.30,W/(m K),Material property,PET film,Cell-to-pad interface
+B16,Battery,Thermal pad compressed thickness,1.0,0.5,2.0,mm,Screening assumption,Compressed thickness not given in project pad datasheet,Cell-to-plate interface
+B17,Battery,Thermal pad conductivity,12.5,3,12.5,W/(m K),Project evidence,Thermal_pad_data_sheet.pdf nominal value (low value is a generic gap filler),Cell-to-plate interface
+B18,Battery,Cold-plate channel heat-transfer coefficient,1500,800,3000,W/(m2 K),Literature range,Laminar to transitional water-glycol minichannel cold plates,Coolant-side film
+B19,Battery,Cold-plate area spreading factor,1.0,1.0,1.5,-,Screening assumption,Plate wetted area relative to cell footprint,Coolant-side film
+B20,Battery,Cell mass,2.42,2.3,2.5,kg,Supplier listing,SVOLT 134Ah listing,Cell thermal capacitance
+B21,Battery,Cell specific heat,1100,1000,1200,J/(kg K),Literature range,Typical calorimetric values for LFP prismatic cells,Cell thermal capacitance
+C10,Cabin,Clear-sky haze multiplier for Karachi,0.85,0.75,1.0,-,Screening assumption,Reduces ASHRAE clear-sky direct normal for coastal dust and aerosol,Solar irradiance not in workbook
+C11,Cabin,Exterior film coefficient (parked or slow),15,10,25,W/(m2 K),Literature range,ASHRAE outside film coefficients; Fayazbakhsh and Bahrami SAE 2013-01-1507,Sol-air temperature
+C12,Cabin,Body paint solar absorptivity,0.60,0.30,0.90,-,Literature range,White 0.3 to dark 0.9 automotive paint,Sol-air temperature
+C13,Cabin,Air temperature under floor,55,48,65,degC,Screening assumption,Hot asphalt boundary layer at 45 C ambient,Floor CLTD of 98 used in workbook
+C14,Cabin,Windshield solar transmittance,0.45,0.40,0.60,-,Literature range,Laminated green-tint windshield,Glazing solar gain
+C15,Cabin,Side and rear glazing transmittance,0.60,0.30,0.75,-,Literature range,Tempered tinted glass; low value is privacy glass,Glazing solar gain
+C16,Cabin,Glazing solar absorptance,0.25,0.15,0.35,-,Literature range,Tinted automotive glass,Glazing solar gain
+C17,Cabin,Inward-flowing fraction of absorbed solar,0.40,0.30,0.50,-,Literature range,ASHRAE fenestration inward-flowing fraction,Glazing solar gain
+C18,Cabin,Occupants,5,1,5,persons,Project evidence,Workbook metabolic term (594 W at 119 W each),Occupant load
+C19,Cabin,Sensible heat per occupant,70,65,75,W,Property table,ASHRAE Handbook Fundamentals Ch.18 seated very light work,Occupant split
+C20,Cabin,Latent heat per occupant,45,30,55,W,Property table,ASHRAE Handbook Fundamentals Ch.18 seated very light work,Occupant split
+C21,Cabin,Fresh air per occupant,5,2.5,10,L/s,Screening assumption,CO2 control in recirculation-biased automotive HVAC,Infiltration-only workbook term
+C22,Cabin,Electronics and blower heat,150,80,250,W,Screening assumption,Blower motor and displays,Missing internal gains
+C23,Cabin,Effective interior thermal mass (low),20,20,20,kJ/K,Screening assumption,Pull-down sensitivity,Missing transient term
+C24,Cabin,Effective interior thermal mass (central),40,40,40,kJ/K,Screening assumption,Pull-down sensitivity,Missing transient term
+C25,Cabin,Effective interior thermal mass (high),80,80,80,kJ/K,Screening assumption,Pull-down sensitivity,Missing transient term
+C26,Cabin,Hot-soak interior temperature,80,70,85,degC,Project evidence,config/cabin_cooling_config.m initialHotSoak_C,Pull-down start
+K01,Climate,Design dry-bulb,45,40,47,degC,Project evidence,config/cabin_cooling_config.m,Unchanged
+K02,Climate,Humid-heat coincident RH,44,40,50,%,Back-calculated,2015 Karachi peak 44.8 C with 66 C heat index (MoCC technical report) via Rothfusz,Physically implausible 45 C / 70% RH pairing
+K03,Climate,Dry-heat coincident RH,25,15,30,%,Screening assumption,Continental wind heat event,Physically implausible 45 C / 70% RH pairing
