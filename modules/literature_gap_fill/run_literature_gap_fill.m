@@ -338,7 +338,7 @@ for i = 1:height(summary)
         'DisplayName','Superseded value');
     yticks(1:height(rows));
     yticklabels(rows.Assumption+": "+rows.Parameter);
-    set(gca,'FontSize',7);
+    set(gca,'FontSize',7,'TickLabelInterpreter','none');
     grid on;
     if summary.ClaimHoldsAcrossRange(i)
         verdict = "holds at every combined extreme";
@@ -362,8 +362,8 @@ layout = tiledlayout(1,2,'TileSpacing','compact');
 nexttile;
 contourf(curves.efficiencyRPM,curves.efficiencyTorque_Nm, ...
     100*curves.integratedEfficiency',[50 70 80 85 88 90 92 93 94 95.5], ...
-    'LineColor',[1 1 1]);
-colormap(gca,flipud(bone(12)));
+    'LineColor',[1 1 1],'HandleVisibility','off');
+colormap(gca,parula(12));
 cb = colorbar;
 cb.Label.String = 'Integrated efficiency (%)';
 hold on;
@@ -380,7 +380,9 @@ for i = 1:numel(motorHeat.details)
             'DisplayName',d.Cycle(1));
     else
         scatter(d.MotorSpeed_rpm(motoring),d.RequestedMotorTorque_Nm(motoring), ...
-            8,colors(i,:),'filled','MarkerFaceAlpha',0.45,'DisplayName',d.Cycle(1));
+            10,[0.85 0.15 0.15]*(i==2)+[0.95 0.95 0.95]*(i==1), ...
+            'filled','MarkerEdgeColor','k','LineWidth',0.2, ...
+            'DisplayName',d.Cycle(1));
     end
 end
 xlim([0 12000]); ylim([0 300]);
@@ -484,8 +486,10 @@ rows = map.CoolantFlow_Lmin==cfg.motorCooling.thermal.designFlow_Lmin;
 plot(map.FaceVelocity_ms(rows),map.EstimatedUA_WK(rows),'LineWidth',2, ...
     'DisplayName','Estimated achieved UA (20 L/min)');
 hold on;
+requirementColors = [0.85 0.15 0.15;0.55 0.25 0.75];
 for i = 1:height(motorCooling.radiatorDesign)
     yline(motorCooling.radiatorDesign.RequiredIdealUA_WK(i),'--', ...
+        'Color',requirementColors(i,:),'LineWidth',1.4, ...
         'DisplayName',"Required ideal UA, "+motorCooling.radiatorDesign.Case(i));
 end
 yline(cfg.motorCooling.transient.superseded.radiatorUA_WK,':','LineWidth',1.3, ...
@@ -584,7 +588,7 @@ for j = 1:numel(p.battery.coolantScenarios_C)
     grid on;
     xlabel('Time from full charge (min)'); ylabel('Cell temperature (C)');
     title(sprintf('%s, %g C',p.battery.coolantScenarioNames(j),coolant));
-    legend('Location','northeast','FontSize',7);
+    legend('Location','southoutside','NumColumns',3,'FontSize',7);
 end
 title(layout,'Gap fill 5: constant-current discharge transient (single lumped cell, DCIR + entropic heat)');
 exportgraphics(fig,fullfile(outputDir,"gap_battery_discharge_transient.png"),'Resolution',150);
@@ -613,9 +617,16 @@ for i = 1:numel(scenarios)
 end
 recovered = cfg.cabinCooling.recoveredCabinDuty_kW;
 groups = [scenarios;"Recovered workbook subtotal"];
-bar(categorical(groups,groups), ...
+bars = bar(categorical(groups,groups), ...
     [data zeros(numel(scenarios),1); zeros(1,numel(components)) recovered], ...
     'stacked');
+palette = cabin_palette();
+for k = 1:numel(components)
+    bars(k).FaceColor = palette(k,:);
+end
+bars(end).FaceColor = [0.55 0.55 0.55];
+set(gca,'XTickLabelRotation',0);
+ylim([0 1.6*max(sum([data;recovered zeros(1,numel(components)-1)],2))]);
 legend([components;"Recovered workbook subtotal (as recorded)"], ...
     'Location','northwest','FontSize',7);
 grid on; ylabel('Load (kW)');
@@ -637,4 +648,10 @@ function ensure_output_folder(folder)
 if ~isfolder(folder)
     mkdir(folder);
 end
+end
+
+function palette = cabin_palette()
+% Nine distinguishable component colours, shared with the cabin module.
+palette = [0.12 0.35 0.75;0.55 0.70 0.95;0.90 0.55 0.10;0.55 0.35 0.10; ...
+    0.10 0.55 0.35;0.55 0.85 0.65;0.50 0.20 0.70;0.80 0.65 0.95;0.40 0.40 0.45];
 end

@@ -88,12 +88,18 @@ for i = 1:numel(g.scenarioNames)
 end
 fig = figure('Visible','off','Color','w','Position',[100 100 1150 650]);
 bars = bar(categorical(groups,groups),data,'stacked');
+palette = [0.12 0.35 0.75;0.55 0.70 0.95;0.90 0.55 0.10;0.55 0.35 0.10; ...
+    0.10 0.55 0.35;0.55 0.85 0.65;0.50 0.20 0.70;0.80 0.65 0.95;0.40 0.40 0.45];
+for k = 1:nComponents
+    bars(k).FaceColor = palette(k,:);
+end
 bars(end-1).FaceColor = [0.55 0.55 0.55];
 bars(end).FaceColor = [0.35 0.35 0.35];
 totals = sum(data,2);
 text(1:numel(groups),totals,compose(' %.2f kW',totals), ...
     'HorizontalAlignment','center','VerticalAlignment','bottom');
 grid on;
+ylim([0 1.6*max(totals)]);
 ylabel('Cabin cooling load (kW)');
 legend([components;"Workbook subtotal as recorded";"Workbook subtotal recomputed"], ...
     'Location','northwest','FontSize',8);
