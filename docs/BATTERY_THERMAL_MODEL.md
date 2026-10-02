@@ -14,8 +14,8 @@ cell-to-coolant path built from sourced literature values. The superseded
 | Continuous discharge | 2C maximum | SVOLT specification at 25 +/- 3 C |
 | Charging cutoff | 55 C | SVOLT continuous-charge table |
 | Absolute limit | 60 C | SVOLT protection requirement |
-| Cell-to-coolant path | 0.305 K/W | Bottom-cooling build-up; 5-95% 0.26-0.38 K/W |
-| Superseded base path | 3.10 K/W | Reconstruction; above even the 1.70 K/W worst case |
+| Cell-to-coolant path | 0.458 K/W | Bottom-cooling build-up including the internal base insulator; 5-95% 0.37-0.59 K/W |
+| Superseded base path | 3.10 K/W | Reconstruction; above even the 2.70 K/W worst case |
 
 The screen reports cell heat and the maximum coolant temperature that keeps
 the cell at 55 C or 60 C under a sustained load. The lumped discharge

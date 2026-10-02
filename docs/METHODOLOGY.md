@@ -78,8 +78,9 @@ T_{coolant,max}=T_{limit}-\dot Q_{cell}R_{cell\to coolant}
 
 `R_DC = 0.40/0.7 = 0.571 mOhm` at 25 C converts the SVOLT 1 kHz ACR to a DC
 value. The entropic term uses the low-SOC peak of 0.37 mV/K. Both are held
-at their conservative values. `R_cell-to-coolant = 0.305 K/W` is a
-bottom-cooling build-up (cell interior, film, pad, cold-plate film). The
+at their conservative values. `R_cell-to-coolant = 0.458 K/W` is a
+bottom-cooling build-up (cell interior, internal base insulator, film, pad,
+cold-plate film). The
 5-95% band comes from 1024 Halton samples over the register ranges. The
 superseded ACR/3.10 K/W result is plotted for comparison. A lumped-cell
 discharge transient is in `modules/literature_gap_fill`.

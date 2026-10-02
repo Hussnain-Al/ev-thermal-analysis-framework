@@ -28,7 +28,10 @@ jobs:
       - name: Copy figures into docs
         run: |
           mkdir -p docs/images/results docs/images/gap_fill
+          cp outputs/motor_heat/motor_heat_traces.png docs/images/results/
           cp outputs/motor_cooling/motor_thermal_response.png docs/images/results/
+          cp outputs/motor_cooling/loop_sensitivity.png docs/images/results/
+          cp outputs/motor_cooling/radiator_design_requirements.png docs/images/results/
           cp outputs/battery_cooling/battery_c_rate_sweep.png docs/images/results/
           cp outputs/cabin_cooling/cabin_load_breakdown.png docs/images/results/
           cp outputs/literature_gap_fill/gap_*.png docs/images/gap_fill/
@@ -37,6 +40,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -q --ignore-unmatch docs/images/results/*.jpg
           git add docs/images/results docs/images/gap_fill
           if git diff --cached --quiet; then
             echo "Figures unchanged."

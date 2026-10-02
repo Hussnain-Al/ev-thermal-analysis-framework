@@ -37,14 +37,14 @@ survives only the 5-95% band is reported as such.
 
 | Correction | Adopted | 5-95% | Combined extreme | Superseded | Claim | Verdict |
 |---|---:|---:|---:|---:|---|---|
-| Battery cell-to-coolant path | 0.305 K/W | 0.262-0.376 | 0.188-1.696 | 3.10 K/W | Superseded value is above the whole range | Holds at every extreme |
+| Battery cell-to-coolant path | 0.458 K/W | 0.373-0.589 | 0.221-2.697 | 3.10 K/W | Superseded value is above the whole range | Holds at every extreme, narrowly at the worst case |
 | Radiator UA, normal driving | 139.7 W/K | 125-161 | 93-201 | 665 W/K | Superseded value is above the whole range | Holds at every extreme |
 | Winding-to-coolant resistance | 0.0331 K/W | not sampled | 0.0158-0.0514 | 0.015 K/W | Superseded value is below the whole range | Holds, narrowly at the low end |
 | Cabin load, humid heat | 5.19 kW | 4.58-6.63 | 3.22-9.13 | 4.156 kW | Load exceeds the recorded subtotal | Holds within 5-95%, not at every extreme |
 
-## 1. Battery cell-to-coolant path: 3.10 to 0.305 K/W
+## 1. Battery cell-to-coolant path: 3.10 to 0.458 K/W
 
-**Claim.** The path from cell to coolant is about ten times less resistive
+**Claim.** The path from cell to coolant is about seven times less resistive
 than the reconstruction.
 
 **Why 3.10 K/W fails.** With 3.10 K/W, a sustained 2C discharge would need
@@ -61,20 +61,28 @@ checked.
 | Element | Equation | Value (K/W) | Source |
 |---|---|---:|---|
 | Cell interior, mean | `H / (3 k A)` | 0.152 | SVOLT 220 x 44.6 x 112 mm; in-plane k 25 W/(m K) |
+| Jelly roll to can base | `t / (k A)` | 0.153 | 0.3 mm polymer bottom insulator, 0.2 W/(m K) |
 | Insulation film | `t / (k A)` | 0.076 | 0.15 mm PET, 0.2 W/(m K) |
 | Thermal pad | `t / (k A)` | 0.008 | Project pad datasheet, 12.5 W/(m K), 1 mm |
 | Cold-plate film | `1 / (h A)` | 0.068 | 1500 W/(m2 K) minichannel plate |
-| **Total** | | **0.305** | |
+| **Total** | | **0.458** | |
 
 The `H/(3kA)` term is the mean temperature rise of a slab with uniform heat
 generation, an insulated top and a cooled base.
 
-**Robustness.** The worst combination gives 1.70 K/W. That includes the cell
+The jelly-roll-to-can-base row was missing from the first version of this
+build-up (0.305 K/W). A defensibility review caught it: prismatic cans
+carry a polymer insulator between the jelly roll and the base, and heat
+cooled through the base must cross it.
+
+**Robustness.** The worst combination gives 2.70 K/W. That includes the cell
 standing on its narrow face (which halves the base area), the lowest
-in-plane conductivity, the thickest film, a 3 W/(m K) gap filler and a
-800 W/(m2 K) plate. Even that stays below 3.10 K/W. The largest single
-driver is orientation, then the cold-plate coefficient and the in-plane
-conductivity.
+in-plane conductivity, a 0.5 mm insulator with a partial gas gap, the
+thickest film, a 3 W/(m K) gap filler and a 800 W/(m2 K) plate. It stays
+below 3.10 K/W, but only by 13%. So 3.10 K/W is not physically impossible;
+it needs every element to be at its worst at once. The 5-95% band
+(0.37-0.59 K/W) is the realistic spread. The largest single drivers are
+orientation, the internal base insulator and the in-plane conductivity.
 
 **What would overturn it.** A single-cell step test on the cold plate: apply a
 known heat, record the cell and plate temperatures, and read the resistance
@@ -99,7 +107,7 @@ as the cell warms) and the low-SOC entropic peak.
 
 **Robustness.** The ACR/DCIR ratio range 0.5-0.9 gives 0.44-0.80 mOhm.
 Combined with the path samples, the allowable coolant temperature at 2C is
-32.3-41.9 C (5-95%), against 38.5 C central and -29 C superseded.
+17.2-34.1 C (5-95%), against 27.7 C central and -29 C superseded.
 
 **What would overturn it.** HPPC pulses at 0, 25 and 45 C give DCIR directly;
 an entropic coefficient measurement (OCV against temperature at several
@@ -216,8 +224,8 @@ exceedance frequency.
 
 | Result | Superseded | Corrected | Spread |
 |---|---:|---:|---|
-| Max coolant for 60 C cell at 1C | 37.7 C | 52.4 C | 50.4-53.5 C (5-95%) |
-| Max coolant for 60 C cell at 2C | -29.1 C | 38.5 C | 32.3-41.9 C (5-95%) |
+| Max coolant for 60 C cell at 1C | 37.7 C | 48.5 C | 45.0-50.7 C (5-95%) |
+| Max coolant for 60 C cell at 2C | -29.1 C | 27.7 C | 17.2-34.1 C (5-95%) |
 | 10% grade, drive-unit peak after 20 min | 81.6 C | 98.55 C | Upper bound on winding |
 | 10% grade, coolant peak after 20 min | 48.3 C | 53.9 C | |
 | Low-speed grade, drive-unit peak after 30 min | 70.1 C | 84.3 C | Fan-only UA |
@@ -226,9 +234,36 @@ exceedance frequency.
 
 The battery result changes direction. Under the superseded inputs, 2C needed
 refrigerated coolant below freezing. With the corrections, it needs coolant
-below about 38 C. A chiller can supply that; ambient air at 45 C cannot. The
+below about 28 C (17-34 C across the band). A chiller can supply that;
+ambient air at 45 C cannot. In the discharge transient, radiator-only coolant
+at 50 C takes the cell to 60.0 C at 2C, exactly the absolute limit. The
 decision that follows is "the battery loop needs a chiller in Karachi", not
 "the cell cannot do 2C".
+
+## Limits of the methods
+
+A defensible result states where its method can be wrong and in which
+direction. Each limit below was checked against the conclusions it could
+affect.
+
+| Method | Limit | Direction of error | Effect on the conclusion |
+|---|---|---|---|
+| Battery path build-up | 1-D series model; ignores lateral spreading into the cold plate and the plate's own wall | Underestimates the path slightly | Covered by the 800-3000 W/(m2 K) plate range; worst case still below 3.10 K/W |
+| Battery path build-up | `H/(3kA)` gives the mean cell temperature; the core hot spot uses `H/(2kA)` | Core is about 0.08 K/W hotter than the mean | Limits apply to the measured surface or mean; add 0.08 K/W if the BMS limit is a core temperature |
+| Battery path build-up | First version omitted the jelly-roll-to-can-base insulator | Underestimated the path by a third | Corrected in this version (0.305 to 0.458 K/W) |
+| DC resistance | ACR/0.7 is a rule of thumb from one practitioner source | Unknown sign | Range 0.5-0.9 is carried in the 5-95% band |
+| Entropic heat | Uses the low-SOC peak for every sustained C-rate and for charging | Overestimates heat at mid SOC; over-conservative for charging | Conservative; the 55 C charge line is pessimistic |
+| Entropic profile | Generic LFP/graphite shape, not measured on this cell | Unknown sign | Only the peak magnitude enters the screen |
+| Winding calibration | Supplier point measured at 8 L/min; model runs at 20 L/min | Overestimates R at 20 L/min | Conservative for winding temperature |
+| Winding calibration | Reducer loss counted as winding-path loss | Underestimates R | Partly offsets the line above; covered by the 3000-9000 rpm sweep |
+| Winding calibration | Assumes the 143 C rated rise is a steady state | Unknown until the duration is confirmed | Disclosed as an open input |
+| Radiator estimate | Chang-Wang correlation assumes louvered fins; the drawing does not say | If the fins are plain, the UA is lower | Strengthens the claim that 665 W/K is unreachable |
+| Radiator estimate | Face velocities of 2-3 m/s are screening values, not measurements | Unknown sign | Even 8 m/s with every favourable value, including +15% correlation scatter, gives 226 W/K |
+| Cabin heat balance | Single steady hour (15:00), lumped cabin, no seat or trim storage in the steady load | Unknown sign | Fresh-air rate dominates the spread; the claim holds only within the 5-95% band |
+| Cabin pull-down | Mean energy over the pull-down, not a transient simulation | Underestimates the initial peak | Shown as a range over thermal mass, not a compressor size |
+| Workbook audit | Recomputes the workbook's own building-CLTD method, which is not a vehicle method | None for the audit | The audit shows the arithmetic errors; the heat balance replaces the method |
+| Humidity | Rothfusz heat-index inversion is extrapolated at 66 C heat index | About +/-6% RH | Register range 40-50% RH; the 70% RH rejection does not depend on it |
+| Uncertainty bands | Triangular distributions assumed independent | Correlated inputs would widen or narrow the band | Claims are also tested at the combined extreme, which needs no distribution |
 
 ## Remaining assumptions that were not corrected
 

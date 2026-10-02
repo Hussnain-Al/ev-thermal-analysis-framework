@@ -15,7 +15,7 @@ are MATLAB outputs from the CI workflow.
 
 | Gap | Estimate | Effect on the model |
 |---|---|---|
-| Battery cell-to-coolant path | 0.305 K/W bottom-cooling build-up | Replaces the 3.10 K/W reconstruction |
+| Battery cell-to-coolant path | 0.458 K/W bottom-cooling build-up | Replaces the 3.10 K/W reconstruction |
 | Battery heat | DC resistance = ACR/0.7 plus low-SOC entropic heat | Replaces the 1 kHz ACR heat floor |
 | Battery transient | Lumped cell, 2.66 kJ/K | New: cell temperature during full discharges |
 | Radiator performance | Chang-Wang louver j-factor, e-NTU | Two-node UA 140/122 W/K replaces 665/300 W/K; the 10% grade needs about 6.2 m/s face velocity |
@@ -82,13 +82,13 @@ The resistance build-up uses the SVOLT listing geometry (220 x 44.6 x 112 mm,
 2.42 kg), in-plane jelly-roll conductivity, a PET wrap, the project thermal pad
 (12.5 W/(m K)) and a cold-plate film coefficient. If the cell stands on its
 220 mm face instead, the base area halves and the interior path doubles. The
-total is then about 0.9 K/W, still a third of 3.10 K/W. Check whether the 3.10 K/W reconstruction
+total is then about 1.19 K/W, still well below 3.10 K/W. Check whether the 3.10 K/W reconstruction
 summed parallel paths in series, or used pad conductivity in place of a
 contact conductance.
 
 The radiator-only panel is the decision-relevant one for Karachi. Without a
-chiller the coolant cannot fall below ambient, and at 2C the cell reaches the
-55 C charge cutoff during the discharge.
+chiller the coolant cannot fall below ambient, and at 2C the cell reaches
+60.0 C, the absolute limit, by the end of the discharge.
 
 ## Gap fill 6: cabin workbook audit and heat-balance rebuild
 

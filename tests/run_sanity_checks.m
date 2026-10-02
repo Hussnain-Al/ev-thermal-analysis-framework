@@ -45,7 +45,7 @@ assert(abs((battery.absoluteOperatingLimit_C-riseAtOneC)-37.73456)<1e-8);
 
 % Corrected parameters derived from the literature register.
 assert(abs(battery.dcResistance25_Ohm-0.40e-3/0.7)<1e-15);
-assert(abs(battery.cellToCoolantResistance_KW-0.304729)<1e-5);
+assert(abs(battery.cellToCoolantResistance_KW-0.457603)<1e-5);
 assert(battery.cellToCoolantResistanceRange_KW(2)<battery.superseded.baseResistance_KW);
 assert(abs(battery.entropicPeak_VK-0.37e-3)<1e-15);
 transientCfg = cfg.motorCooling.transient;
@@ -63,7 +63,7 @@ assert(abs(batteryRequirements.JouleHeat_W(1)-134^2*0.40e-3/0.7)<1e-10);
 assert(abs(batteryRequirements.EntropicHeat_W(1)-134*298.15*0.37e-3)<1e-10);
 assert(abs(batteryRequirements.RequiredCellToCoolantRise_C(1)- ...
     batteryRequirements.CellHeat_W(1)*battery.cellToCoolantResistance_KW)<1e-12);
-assert(abs(batteryRequirements.MaximumCoolantForDischarge_C(1)-52.36872)<1e-4);
+assert(abs(batteryRequirements.MaximumCoolantForDischarge_C(1)-48.54032)<1e-4);
 assert(all(batteryRequirements.MaximumCoolantForDischargeP05_C< ...
     batteryRequirements.MaximumCoolantForDischargeP95_C));
 assert(numel(battery.uncertainty.cellToCoolantResistance_KW)== ...
@@ -160,7 +160,7 @@ assert(all(strlength(register.Source)>0));
 gap = results.literatureGapFill;
 terms = gap.batteryTerms;
 assert(abs(terms.dcir25_Ohm-0.40e-3/lit.B01)<1e-12);
-assert(abs(terms.pathResistance_KW-0.3047)<1e-3);
+assert(abs(terms.pathResistance_KW-0.4576)<1e-3);
 assert(terms.pathResistance_KW<cfg.batteryCooling.superseded.baseResistance_KW);
 designCheck = gap.radiatorDesignCheck;
 gradeRow = contains(designCheck.Case,"10%");
@@ -172,23 +172,23 @@ assert(all(gap.motorCalibration.ImpliedWindingToCoolant_KW> ...
     cfg.motorCooling.transient.superseded.motorToCoolantResistance_KW));
 assert(isequal(gap.robustness.ClaimHoldsAcrossRange,[true;true;true;false]));
 assert(isequal(gap.robustness.ClaimHoldsWithin5to95,[true;true;true;true]));
-assert(abs(gap.robustness.CombinedMaximum(1)-1.69607)<1e-4);
+assert(abs(gap.robustness.CombinedMaximum(1)-2.69703)<1e-4);
 assert(abs(gap.robustness.CombinedMaximum(2)-200.590)<0.01);
 assert(abs(gap.robustness.CombinedMinimum(4)-3.21884)<1e-4);
 % Deterministic Halton 5-95% bands.
-assert(abs(gap.robustness.P05(1)-0.262387)<1e-5);
-assert(abs(gap.robustness.P95(1)-0.376027)<1e-5);
+assert(abs(gap.robustness.P05(1)-0.373398)<1e-5);
+assert(abs(gap.robustness.P95(1)-0.589031)<1e-5);
 assert(abs(gap.robustness.P05(2)-125.0465)<1e-3);
 assert(abs(gap.robustness.P95(2)-160.5949)<1e-3);
 assert(abs(gap.robustness.P05(4)-4.58164)<1e-4);
 assert(gap.robustness.P05(4)>cfg.cabinCooling.recoveredCabinDuty_kW);
 screen2C = results.batteryCooling.screen(results.batteryCooling.screen.C_rate==2,:);
-assert(abs(screen2C.MaximumCoolantForDischarge_C-38.48406)<1e-4);
-assert(abs(screen2C.MaximumCoolantForDischargeP05_C-32.27118)<1e-4);
-assert(abs(screen2C.MaximumCoolantForDischargeP95_C-41.94481)<1e-4);
+assert(abs(screen2C.MaximumCoolantForDischarge_C-27.69010)<1e-4);
+assert(abs(screen2C.MaximumCoolantForDischargeP05_C-17.24508)<1e-4);
+assert(abs(screen2C.MaximumCoolantForDischargeP95_C-34.11492)<1e-4);
 screen1C = results.batteryCooling.screen(results.batteryCooling.screen.C_rate==1,:);
-assert(abs(screen1C.MaximumCoolantForDischargeP05_C-50.36281)<1e-4);
-assert(abs(screen1C.MaximumCoolantForDischargeP95_C-53.52428)<1e-4);
+assert(abs(screen1C.MaximumCoolantForDischargeP05_C-44.97323)<1e-4);
+assert(abs(screen1C.MaximumCoolantForDischargeP95_C-50.74599)<1e-4);
 
 % Two-node peaks quoted in README and CORRECTIONS.md, with the corrected and
 % the superseded parameters.
@@ -220,7 +220,7 @@ assert(abs(sum(gap.cabinHeatBalance.Load_kW(humid))-5.193)<0.01);
 discharge = gap.batteryTransientSummary;
 row = discharge.C_rate==2 & discharge.Coolant_C==25 & ...
     abs(discharge.PathResistance_KW-terms.pathResistance_KW)<1e-12;
-assert(abs(discharge.PeakCellTemperature_C(row)-36.78)<0.05);
+assert(abs(discharge.PeakCellTemperature_C(row)-39.395)<0.01);
 
 fprintf('All simplified EV thermal framework checks passed.\n');
 

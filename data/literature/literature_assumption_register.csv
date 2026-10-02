@@ -24,6 +24,8 @@ B16,Battery,Thermal pad compressed thickness,1.0,0.5,2.0,mm,Screening assumption
 B17,Battery,Thermal pad conductivity,12.5,3,12.5,W/(m K),Project evidence,Thermal_pad_data_sheet.pdf nominal value (low value is a generic gap filler),Cell-to-plate interface
 B18,Battery,Cold-plate channel heat-transfer coefficient,1500,800,3000,W/(m2 K),Literature range,Laminar to transitional water-glycol minichannel cold plates,Coolant-side film
 B19,Battery,Cold-plate area spreading factor,1.0,1.0,1.5,-,Screening assumption,Plate wetted area relative to cell footprint,Coolant-side film
+B22,Battery,Jelly-roll to can-base insulator thickness,0.3,0.1,0.5,mm,Literature typical value,Polymer bottom insulator sheet inside prismatic cans (PP or PET; 0.1-0.5 mm),Internal base interface missing from the first build-up
+B23,Battery,Jelly-roll to can-base effective conductivity,0.2,0.1,0.3,W/(m K),Material property,Polypropylene 0.2 W/(m K); 0.1 allows for a partial gas gap,Internal base interface missing from the first build-up
 B20,Battery,Cell mass,2.42,2.3,2.5,kg,Supplier listing,SVOLT 134Ah listing,Cell thermal capacitance
 B21,Battery,Cell specific heat,1100,1000,1200,J/(kg K),Literature range,Typical calorimetric values for LFP prismatic cells,Cell thermal capacitance
 C10,Cabin,Clear-sky haze multiplier for Karachi,0.85,0.75,1.0,-,Screening assumption,Reduces ASHRAE clear-sky direct normal for coastal dust and aerosol,Solar irradiance not in workbook

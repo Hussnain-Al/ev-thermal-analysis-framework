@@ -4,7 +4,8 @@
 
 - Corrected six inputs and kept each superseded value for comparison
   (`docs/CORRECTIONS.md`):
-  - battery cell-to-coolant path 3.10 to 0.305 K/W (bottom-cooling build-up);
+  - battery cell-to-coolant path 3.10 to 0.458 K/W (bottom-cooling build-up
+    including the jelly-roll-to-can-base insulator);
   - battery heat from 1 kHz ACR to DC resistance (ACR/0.7) plus low-SOC
     entropic heat;
   - two-node radiator UA 665/300 to 139.7/122.3 W/K (Chang-Wang estimate for

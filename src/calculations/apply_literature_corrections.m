@@ -32,10 +32,10 @@ battery.cellToCoolantResistanceRange_KW = [pathRange.Minimum pathRange.Maximum];
 % orientation here and appears only in the worst-case range above.
 nSamples = cfg.literatureGapFill.uncertaintySamples;
 [~,samples] = sample_assumption_distribution(@(x) 0,a,register, ...
-    ["B01";"B13";"B14";"B15";"B16";"B17";"B18";"B19"],nSamples);
+    ["B01";"B13";"B14";"B15";"B16";"B17";"B18";"B19";"B22";"B23"],nSamples);
 battery.uncertainty.dcResistance25_Ohm = battery.resistanceProxy_Ohm./samples(:,1);
 battery.uncertainty.cellToCoolantResistance_KW = zeros(nSamples,1);
-ids = ["B13";"B14";"B15";"B16";"B17";"B18";"B19"];
+ids = ["B13";"B14";"B15";"B16";"B17";"B18";"B19";"B22";"B23"];
 for i = 1:nSamples
     x = a;
     for j = 1:numel(ids)
@@ -90,7 +90,7 @@ value = s.(name);
 end
 
 function ids = battery_path_ids()
-ids = ["ORIENTATION";"B13";"B14";"B15";"B16";"B17";"B18";"B19"];
+ids = ["ORIENTATION";"B13";"B14";"B15";"B16";"B17";"B18";"B19";"B22";"B23"];
 end
 
 function ids = radiator_ids(velocityId)
