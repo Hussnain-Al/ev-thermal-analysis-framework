@@ -78,9 +78,10 @@ T_{coolant,max}=T_{limit}-\dot Q_{cell}R_{cell\to coolant}
 
 `R_DC = 0.40/0.7 = 0.571 mOhm` at 25 C converts the SVOLT 1 kHz ACR to a DC
 value. The entropic term uses the low-SOC peak of 0.37 mV/K. Both are held
-at their conservative values. `R_cell-to-coolant = 0.458 K/W` is a
-bottom-cooling build-up (cell interior, internal base insulator, film, pad,
-cold-plate film). The
+at their conservative values. `R_cell-to-coolant = 1.32 K/W` follows the
+project battery network R1-R6 (casing, pad 1, 3 mm base plate, pad 2,
+channel wall, 400 W/(m2 K) over 4.8e-3 m2) with R1 recomputed from its
+stated 0.8 mm aluminium, plus cell interior, base insulator and PET wrap. The
 5-95% band comes from 1024 Halton samples over the register ranges. The
 superseded ACR/3.10 K/W result is plotted for comparison. A lumped-cell
 discharge transient is in `modules/literature_gap_fill`.
@@ -88,13 +89,13 @@ discharge transient is in `modules/literature_gap_fill`.
 ## Battery heat over the drive cycles
 
 Pack current is `I = P_dc / V_pack` from the drive unit's DC-link power
-(negative during regen), with `V_pack = 108 x 3.2 = 345.6 V`. SOC is
+(negative during regen), with `V_pack = 321 V`, the loaded voltage implied by
+archived load cases L1-L7 (314 V for the highest-possible bound). SOC is
 integrated from 90%. Expected heat per cell is
 `I^2 R_DC(25 C) - I T dU/dT(SOC)`; highest possible heat per cell is
 `I^2 R_DC,high + |I| T |dU/dT|peak`. The cycles are chosen with
-`cfg.batteryCooling.cycleSelection`. Nominal voltage is used instead of an
-OCV curve, which slightly overstates current at high SOC and understates it
-at low SOC.
+`cfg.batteryCooling.cycleSelection`. A fixed loaded voltage is used instead
+of an OCV curve; LFP voltage is flat between 10% and 90% SOC.
 
 ## Cabin load
 

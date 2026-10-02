@@ -78,7 +78,7 @@ and adds a peak entropic heat branch summed with it.
 | Current → Joule heat | Squares current and multiplies by the 0.571 mOhm DC resistance |
 | Current → entropic heat | Multiplies current by 298.15 K and the 0.37 mV/K low-SOC peak |
 | Cell heat → pack heat | Multiplies by 108 series cells and converts W to kW |
-| Cell heat → required temperature difference | Multiplies by the 0.458 K/W cell-to-coolant path |
+| Cell heat → required temperature difference | Multiplies by the 1.32 K/W cell-to-coolant path |
 | Temperature limits → coolant boundary | Subtracts the required temperature difference from the 55 C charge and 60 C absolute limits |
 
 The model has no transient battery state, coolant circuit or cooling component.
@@ -137,10 +137,15 @@ a separate cross-check: 1.580 kW loss at 60 kW output and 3.218 kW at 125 kW.
 Those controller-only values are not added to the integrated three-in-one heat
 map. NYCC and HWFET are supplemented by:
 
-| Case | Speed | Grade | Duration | Ambient |
-|---|---:|---:|---:|---:|
-| Sustained grade | 40 km/h | 10% | 20 min | 45 C |
-| Low-speed hot-weather grade | 15 km/h | 5% | 30 min | 45 C |
+| Case | Speed | Grade | Payload | Duration | Ambient |
+|---|---:|---:|---:|---:|---:|
+| Sustained grade | 40 km/h | 10% | 0 kg | 20 min | 45 C |
+| Low-speed hot-weather grade | 15 km/h | 5% | 0 kg | 30 min | 45 C |
+| Project L6: 8% continuous grade | 85.2 km/h | 8% | 350 kg | 20 min | 45 C |
+
+L6 is archived project load case L6 (61.5 kW at the wheel). Its speed is
+solved from the road-load model so the wheel power matches; its duration is
+assumed.
 
 ### Motor/coolant temperatures
 
@@ -209,43 +214,51 @@ supplier map or a prototype heat-rejection test.
 <img src="docs/images/results/battery_c_rate_sweep.png" width="820" alt="Battery pack heat and allowable coolant temperature with uncertainty band and superseded result">
 
 Cell heat is DC Joule heat (0.40 mOhm ACR / 0.7 = 0.571 mOhm at 25 C) plus
-the low-SOC entropic peak. The path is a 0.458 K/W bottom-cooling build-up.
+the low-SOC entropic peak. The 1.32 K/W path is the project's own battery
+network (module base plate, thermal pad 2, 400 W/(m2 K) channel over
+4.8e-3 m2) with its R1 and sum errors corrected, plus the cell internals.
 The graph reports the maximum coolant temperature that keeps the cell at
 55 C (charge cutoff) and 60 C (absolute limit), with a 5-95% band over the
 register ranges:
 
 | C-rate | Superseded (ACR, 3.10 K/W) | Corrected | 5-95% |
 |---:|---:|---:|---:|
-| 1C | 37.7 C | 48.5 C | 45.0-50.7 C |
-| 2C | -29.1 C | 27.7 C | 17.2-34.1 C |
+| 1C | 37.7 C | 26.9 C | 22.5-35.1 C |
+| 2C | -29.1 C | -33.4 C | -47.3 to -9.1 C |
 
-The superseded result implied the cell needs sub-zero coolant at 2C, which
-contradicts its own 2C rating. The corrected result says the battery loop
-needs coolant below about 28 C at 2C. A chiller can supply that; 45 C ambient
-air cannot.
+At the project's 30 C design coolant, the pack sustains about 0.93C. That
+covers the drive cycles and the 10% grade (0.72C), but not load case L6
+(1.52C). Thermal pad 2 and the channel convection are 64% of the path, so
+they are where the cooling design gains most. Sustained 2C is not
+reachable with this module design at any practical coolant temperature.
 
 ### Battery heat over the drive cycles
 
 <img src="docs/images/results/battery_cycle_heat.png" width="820" alt="Battery heat over each drive cycle, expected and highest possible, and mean drive-unit plus battery heat per cycle">
 
 Battery current follows the drive unit's DC-link power each second
-(`I = P_dc / 345.6 V`, negative during regen), and state of charge is tracked
-from 90%. Two heat results are reported for every cycle:
+(`I = P_dc / 321 V`, negative during regen), and state of charge is tracked
+from 90%. 321 V is the loaded pack voltage implied by the archived project
+load cases (314-336 V); 108 x 3.2 V = 345.6 V is only the nominal value. Two
+heat results are reported for every cycle:
 
 - **expected**: DC Joule heat (0.571 mOhm) plus entropic heat that follows
   the actual SOC and current direction;
-- **highest possible**: 0.80 mOhm (top of the DC-resistance range) plus the
-  low-SOC entropic peak at every second.
+- **highest possible**: 0.80 mOhm (top of the DC-resistance range) and the
+  lowest observed voltage (314 V, so the highest current), plus the low-SOC
+  entropic peak at every second.
 
 | Cycle | Mean C-rate | Battery heat, expected | Battery heat, highest possible | Drive-unit heat | Drive unit + battery (expected) |
 |---|---:|---:|---:|---:|---:|
-| NYCC urban | 0.10 | 0.03 kW | 0.20 kW | 0.84 kW | 0.87 kW |
-| HWFET highway | 0.42 | 0.24 kW | 0.98 kW | 1.41 kW | 1.65 kW |
-| 10% grade, 40 km/h | 0.66 | 0.56 kW | 1.75 kW | 2.77 kW | 3.33 kW |
-| 5% grade, 15 km/h | 0.17 | 0.04 kW | 0.32 kW | 1.55 kW | 1.59 kW |
+| NYCC urban | 0.10 | 0.04 kW | 0.23 kW | 0.84 kW | 0.88 kW |
+| HWFET highway | 0.45 | 0.28 kW | 1.12 kW | 1.41 kW | 1.69 kW |
+| 10% grade, 40 km/h | 0.72 | 0.64 kW | 2.00 kW | 2.77 kW | 3.41 kW |
+| 5% grade, 15 km/h | 0.18 | 0.05 kW | 0.36 kW | 1.55 kW | 1.60 kW |
+| Project L6: 8% grade, full load | 1.52 | 2.45 kW | 6.21 kW | 3.77 kW | 6.22 kW |
 
-The battery adds 20% to the drive-unit heat on the 10% grade in the
-expected case, and 63% in the highest-possible case. Choose the cycles with
+On L6 the battery adds 65% to the drive-unit heat in the expected case and
+165% in the highest-possible case, and the pack falls from 90% to 39% SOC
+in 20 minutes. Choose the cycles with
 one setting:
 
 ```matlab
@@ -261,8 +274,8 @@ or, after a full run, for any single cycle:
 out = run_battery_cycle_heat(cfg,results.motorHeat,"urban_cycle");
 ```
 
-Available names are `urban_cycle`, `highway_cycle`, `sustained_grade` and
-`low_speed_hot_weather`. A new drive cycle is added as one row in
+Available names are `urban_cycle`, `highway_cycle`, `sustained_grade`,
+`low_speed_hot_weather` and `project_l6_continuous_grade`. A new drive cycle is added as one row in
 `config/vehicle_config.m` pointing at a time/speed file.
 
 The Simulink battery requirements screen implements the central calculation
@@ -284,7 +297,22 @@ left unchanged as hashed source evidence.
 The heat-balance rebuild at 45 C gives 4.31 kW in dry heat (25% RH) and
 5.19 kW in humid heat (44% RH, the 2015 heat-wave peak). The configured
 45 C / 70% RH pairing was dropped because its 38 C dew point exceeds any
-recorded. No compressor is selected or evaluated.
+recorded. The red line is the archived DM18A1 compressor (3.63 kW at 4 C
+evaporating). It is below the cabin load alone, before any battery chiller
+duty. No compressor is selected here; the line is a capacity reference.
+
+## Checks against the project's own references
+
+`outputs/literature_gap_fill/reference_checks.csv` compares stated
+assumptions with the supplier and project references:
+
+| Check | Reference | Model | Finding |
+|---|---:|---:|---|
+| Drive unit 30 s after 125 kW peak | 103 C (supplier) | 69.2 C | Two-node model is too slow for 30 s peaks; valid for minutes-long duties |
+| Winding thermal capacitance | 9.8 kJ/K (implied) | 45 kJ/K | Lumped value is the whole unit |
+| Cell rise, 1C for 600 s | 15 C (SVOLT) | 2.1 C | Consistent, not discriminating |
+| Cell rise, 3C for 30 s | 10 C (SVOLT) | 1.0 C | Consistent, not discriminating |
+| Cabin load vs DM18A1 | 3.63 kW | 5.19 kW | Compressor undersized |
 
 ## Corrections and their robustness
 
@@ -297,7 +325,7 @@ deterministic Halton samples over triangular distributions.
 
 | Correction | Adopted | 5-95% | Combined extreme | Superseded | Verdict |
 |---|---:|---:|---:|---:|---|
-| Battery cell-to-coolant path | 0.458 K/W | 0.37-0.59 | 0.22-2.70 | 3.10 K/W | Holds at every extreme, narrowly at the worst case |
+| Battery cell-to-coolant path | 1.32 K/W | 0.99-1.46 | 0.59-2.47 | 3.10 K/W | Holds at every extreme; also an arithmetic error in the source network |
 | Radiator UA, normal driving | 139.7 W/K | 125-161 | 93-201 | 665 W/K | Holds at every extreme |
 | Winding-to-coolant resistance | 0.0331 K/W | not sampled | 0.0158-0.0514 | 0.015 K/W | Holds, narrowly at the low end |
 | Cabin load, humid heat | 5.19 kW | 4.58-6.63 | 3.22-9.13 | 4.156 kW | Holds within 5-95%, not at every extreme |

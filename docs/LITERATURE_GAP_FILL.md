@@ -15,7 +15,7 @@ are MATLAB outputs from the CI workflow.
 
 | Gap | Estimate | Effect on the model |
 |---|---|---|
-| Battery cell-to-coolant path | 0.458 K/W bottom-cooling build-up | Replaces the 3.10 K/W reconstruction |
+| Battery cell-to-coolant path | 1.32 K/W: project network corrected, plus cell internals | Replaces the 3.10 K/W network result |
 | Battery heat | DC resistance = ACR/0.7 plus low-SOC entropic heat | Replaces the 1 kHz ACR heat floor |
 | Battery transient | Lumped cell, 2.66 kJ/K | New: cell temperature during full discharges |
 | Radiator performance | Chang-Wang louver j-factor, e-NTU | Two-node UA 140/122 W/K replaces 665/300 W/K; the 10% grade needs about 6.2 m/s face velocity |
@@ -78,17 +78,15 @@ a thermal-resistance stack, and cell temperature against time for several
 C-rates at fixed coolant inlet temperatures. The two figures follow that
 layout.
 
-The resistance build-up uses the SVOLT listing geometry (220 x 44.6 x 112 mm,
-2.42 kg), in-plane jelly-roll conductivity, a PET wrap, the project thermal pad
-(12.5 W/(m K)) and a cold-plate film coefficient. If the cell stands on its
-220 mm face instead, the base area halves and the interior path doubles. The
-total is then about 1.19 K/W, still well below 3.10 K/W. Check whether the 3.10 K/W reconstruction
-summed parallel paths in series, or used pad conductivity in place of a
-contact conductance.
+The resistance stack follows the project battery network (R1-R6) with the
+cell geometry its areas imply (200 x 42 x 112 mm), R1 recomputed from the
+stated 0.8 mm aluminium, and the cell-internal terms added. The network as
+written sums to 2.57 K/W, not the 3.10 K/W it reports; see
+[`CORRECTIONS.md`](CORRECTIONS.md) section 1.
 
 The radiator-only panel is the decision-relevant one for Karachi. Without a
-chiller the coolant cannot fall below ambient, and at 2C the cell reaches
-60.0 C, the absolute limit, by the end of the discharge.
+chiller the coolant cannot fall below ambient. With 50 C coolant the cell
+reaches 57.6 C at 1C and 63.5 C at 2C, above the 60 C absolute limit.
 
 ## Gap fill 6: cabin workbook audit and heat-balance rebuild
 

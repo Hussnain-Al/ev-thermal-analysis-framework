@@ -7,7 +7,7 @@ Every graph is limited to a quantity the available inputs can support.
 | Drive-unit thermal demand | Instantaneous loss from the efficiency map, trailing 60-second mean, cumulative heat energy and two sustained design duties | Motor temperature or radiator adequacy |
 | Propulsion hydraulic evidence | Darcy-Weisbach loss for six external hoses and fittings; one documented active-pump reference point; one separately supplied stopped-pump resistance curve | Complete loop loss, active pump curve or operating point |
 | Radiator requirement sensitivity | Required air flow, core-face velocity and ideal counterflow UA versus assumed air temperature rise | Delivered fan flow, ram-air capture or achieved radiator performance |
-| Battery sustained screen | DC Joule plus peak entropic heat and allowable coolant temperature across the 0.458 K/W path, with a 5-95% band and the superseded result | Transient cell temperature or delivered cooling |
+| Battery sustained screen | DC Joule plus peak entropic heat and allowable coolant temperature across the 1.32 K/W path, with a 5-95% band and the superseded result | Transient cell temperature or delivered cooling |
 | Correction robustness | One-at-a-time tornado, combined worst case and 5-95% band for each correction | That the literature values are right for this vehicle; only that the conclusion survives their ranges |
 
 The two-node motor/coolant output now uses a calibrated winding resistance and

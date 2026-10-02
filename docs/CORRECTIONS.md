@@ -37,57 +37,64 @@ survives only the 5-95% band is reported as such.
 
 | Correction | Adopted | 5-95% | Combined extreme | Superseded | Claim | Verdict |
 |---|---:|---:|---:|---:|---|---|
-| Battery cell-to-coolant path | 0.458 K/W | 0.373-0.589 | 0.221-2.697 | 3.10 K/W | Superseded value is above the whole range | Holds at every extreme, narrowly at the worst case |
+| Battery cell-to-coolant path | 1.322 K/W | 0.990-1.464 | 0.590-2.473 | 3.10 K/W | Superseded value is above the whole range | Holds at every extreme; also an arithmetic error in the source network |
 | Radiator UA, normal driving | 139.7 W/K | 125-161 | 93-201 | 665 W/K | Superseded value is above the whole range | Holds at every extreme |
 | Winding-to-coolant resistance | 0.0331 K/W | not sampled | 0.0158-0.0514 | 0.015 K/W | Superseded value is below the whole range | Holds, narrowly at the low end |
 | Cabin load, humid heat | 5.19 kW | 4.58-6.63 | 3.22-9.13 | 4.156 kW | Load exceeds the recorded subtotal | Holds within 5-95%, not at every extreme |
 
-## 1. Battery cell-to-coolant path: 3.10 to 0.458 K/W
+## 1. Battery cell-to-coolant path: 3.10 to 1.32 K/W
 
-**Claim.** The path from cell to coolant is about seven times less resistive
-than the reconstruction.
+**Claim.** The project's own battery network, evaluated correctly, gives
+1.32 K/W, not 3.10 K/W.
 
-**Why 3.10 K/W fails.** With 3.10 K/W, a sustained 2C discharge would need
-coolant at -29 C to keep the cell under 60 C. SVOLT rates the cell for 2C
-continuous discharge at 25 C, so a pack built from it should not need coolant
-below freezing. The value comes from the private source
-`HEAT TRANSFER PHENOMENA INSIDE A MODULE.pdf` (see
-[`SOURCE_PROVENANCE.md`](../references/SOURCE_PROVENANCE.md)). The repository
-records the result but no element-by-element derivation that could be
-checked.
+**Why 3.10 K/W fails.** The value comes from the project battery network
+(`docs/images/battery_single_cell_equivalent.png`,
+`battery_three_cell_equivalent.png`):
 
-**Derivation.** Series resistances for a cell cooled through its base:
+`R_path,3 = 1.69 + 0.0224 + 3 mm/(154 x 8.4e-3) + 0.33 + 0.6 mm/(154 x 8.4e-3) + 1/(400 x 4.8e-3) = 3.1 K/W`
 
-| Element | Equation | Value (K/W) | Source |
-|---|---|---:|---|
-| Cell interior, mean | `H / (3 k A)` | 0.152 | SVOLT 220 x 44.6 x 112 mm; in-plane k 25 W/(m K) |
-| Jelly roll to can base | `t / (k A)` | 0.153 | 0.3 mm polymer bottom insulator, 0.2 W/(m K) |
-| Insulation film | `t / (k A)` | 0.076 | 0.15 mm PET, 0.2 W/(m K) |
-| Thermal pad | `t / (k A)` | 0.008 | Project pad datasheet, 12.5 W/(m K), 1 mm |
-| Cold-plate film | `1 / (h A)` | 0.068 | 1500 W/(m2 K) minichannel plate |
-| **Total** | | **0.458** | |
+Two errors are visible in that line:
 
-The `H/(3kA)` term is the mean temperature rise of a slab with uniform heat
-generation, an insulated top and a cooled base.
+- **The terms do not add up to 3.1.** They sum to 2.57 K/W.
+- **R1, the "cell aluminium casing", is entered as 1.69 K/W.** A 0.8 mm
+  aluminium wall (k 155 W/(m K)) over the 8.4e-3 m2 base is
+  `0.8e-3/(155 x 8.4e-3) = 0.0006 K/W`, about 2800 times smaller. No layer of
+  the stated casing can produce 1.69 K/W.
 
-The jelly-roll-to-can-base row was missing from the first version of this
-build-up (0.305 K/W). A defensibility review caught it: prismatic cans
-carry a polymer insulator between the jelly roll and the base, and heat
-cooled through the base must cross it.
+**Derivation.** Every term the network defines is kept with its own geometry
+and values. R1 is recomputed from its stated thickness. The cell-internal
+terms the network leaves out are added from literature:
 
-**Robustness.** The worst combination gives 2.70 K/W. That includes the cell
-standing on its narrow face (which halves the base area), the lowest
-in-plane conductivity, a 0.5 mm insulator with a partial gas gap, the
-thickest film, a 3 W/(m K) gap filler and a 800 W/(m2 K) plate. It stays
-below 3.10 K/W, but only by 13%. So 3.10 K/W is not physically impossible;
-it needs every element to be at its worst at once. The 5-95% band
-(0.37-0.59 K/W) is the realistic spread. The largest single drivers are
-orientation, the internal base insulator and the in-plane conductivity.
+| Element | Value (K/W) | Source |
+|---|---:|---|
+| Cell interior, mean `H/(3kA)` | 0.178 | 112 mm height, in-plane k 25 W/(m K), 8.4e-3 m2 base (network area) |
+| Jelly roll to can base | 0.179 | 0.3 mm polymer insulator, 0.2 W/(m K) |
+| Insulation film | 0.089 | 0.15 mm PET, 0.2 W/(m K) |
+| R1 cell casing | 0.0006 | Network: 0.8 mm aluminium, recomputed |
+| R2 thermal pad 1 | 0.022 | Network value |
+| R3 module base plate | 0.002 | Network: 3 mm aluminium |
+| R4 thermal pad 2 | 0.330 | Network value |
+| R5 channel wall | 0.0005 | Network: 0.6 mm aluminium |
+| R6 coolant convection | 0.521 | Network: h = 400 W/(m2 K) over 4.8e-3 m2 channel contact |
+| **Total** | **1.322** | |
 
-**What would overturn it.** A single-cell step test on the cold plate: apply a
-known heat, record the cell and plate temperatures, and read the resistance
-from the steady rise. A result above 1.7 K/W would mean an assembly defect
-(air gap, uncompressed pad), not a property of the design.
+The network areas also fix the cell geometry used here: the 8.4e-3 m2 base
+and 0.0224 m2 side imply a 200 x 42 x 112 mm cell standing upright. That
+replaces the seller listing (220 x 44.6 x 112 mm) and removes orientation as
+an uncertainty.
+
+**What the derivation shows.** Thermal pad 2 and the channel convection are
+64% of the path. They are design choices, not cell properties. A wider
+channel contact (4.8e-3 to 8.4e-3 m2) and a thinner pad 2 are the levers.
+
+**Robustness.** The combined extreme is 0.59-2.47 K/W and the 5-95% band is
+0.99-1.46 K/W, so 3.10 K/W is above the whole range. The claim no longer
+rests on the range, though: the sum error and the R1 unit error are
+arithmetic and need no assumption.
+
+**What would overturn it.** A single-cell step test on the module: apply a
+known heat to one cell and read the resistance from the steady rise between
+the cell base and the coolant.
 
 ## 2. Battery heat: ACR floor to DC resistance plus entropic heat
 
@@ -106,8 +113,8 @@ both terms at their conservative values: 25 C resistance (resistance falls
 as the cell warms) and the low-SOC entropic peak.
 
 **Robustness.** The ACR/DCIR ratio range 0.5-0.9 gives 0.44-0.80 mOhm.
-Combined with the path samples, the allowable coolant temperature at 2C is
-17.2-34.1 C (5-95%), against 27.7 C central and -29 C superseded.
+Combined with the path samples, the allowable coolant temperature at 1C is
+22.5-35.1 C (5-95%), against 26.9 C central and 37.7 C superseded.
 
 **What would overturn it.** HPPC pulses at 0, 25 and 45 C give DCIR directly;
 an entropic coefficient measurement (OCV against temperature at several
@@ -224,21 +231,20 @@ exceedance frequency.
 
 | Result | Superseded | Corrected | Spread |
 |---|---:|---:|---|
-| Max coolant for 60 C cell at 1C | 37.7 C | 48.5 C | 45.0-50.7 C (5-95%) |
-| Max coolant for 60 C cell at 2C | -29.1 C | 27.7 C | 17.2-34.1 C (5-95%) |
+| Max coolant for 60 C cell at 1C | 37.7 C | 26.9 C | 22.5-35.1 C (5-95%) |
+| Max coolant for 60 C cell at 2C | -29.1 C | -33.4 C | -47.3 to -9.1 C (5-95%) |
+| Sustained C-rate at the project's 30 C coolant | 1.16C | 0.93C | |
 | 10% grade, drive-unit peak after 20 min | 81.6 C | 98.55 C | Upper bound on winding |
 | 10% grade, coolant peak after 20 min | 48.3 C | 53.9 C | |
 | Low-speed grade, drive-unit peak after 30 min | 70.1 C | 84.3 C | Fan-only UA |
 | Cabin subtotal from workbook | 4.16 kW | 2.69 kW | Deterministic audit |
 | Cabin load at 45 C, humid heat | not calculated | 5.19 kW | 4.58-6.63 kW (5-95%) |
 
-The battery result changes direction. Under the superseded inputs, 2C needed
-refrigerated coolant below freezing. With the corrections, it needs coolant
-below about 28 C (17-34 C across the band). A chiller can supply that;
-ambient air at 45 C cannot. In the discharge transient, radiator-only coolant
-at 50 C takes the cell to 60.0 C at 2C, exactly the absolute limit. The
-decision that follows is "the battery loop needs a chiller in Karachi", not
-"the cell cannot do 2C".
+With the corrected path and heat, the pack cannot sustain 2C at any
+practical coolant temperature, and at the project's 30 C design coolant it
+sustains about 0.93C. That covers the drive cycles and the 10% grade
+(0.72C), but not archived load case L6 (1.52C mean). The design question is
+the channel and pad 2, not the cell.
 
 ## Limits of the methods
 
@@ -248,9 +254,9 @@ affect.
 
 | Method | Limit | Direction of error | Effect on the conclusion |
 |---|---|---|---|
-| Battery path build-up | 1-D series model; ignores lateral spreading into the cold plate and the plate's own wall | Underestimates the path slightly | Covered by the 800-3000 W/(m2 K) plate range; worst case still below 3.10 K/W |
-| Battery path build-up | `H/(3kA)` gives the mean cell temperature; the core hot spot uses `H/(2kA)` | Core is about 0.08 K/W hotter than the mean | Limits apply to the measured surface or mean; add 0.08 K/W if the BMS limit is a core temperature |
-| Battery path build-up | First version omitted the jelly-roll-to-can-base insulator | Underestimated the path by a third | Corrected in this version (0.305 to 0.458 K/W) |
+| Battery path build-up | 1-D series model; ignores lateral spreading in the base plate beyond the channel contact | Overestimates the path slightly | Conservative; the inter-cell paths (16.67 K/W each) carry no net heat when neighbouring cells are equally loaded |
+| Battery path build-up | `H/(3kA)` gives the mean cell temperature; the core hot spot uses `H/(2kA)` | Core is about 0.09 K/W hotter than the mean | Limits apply to the measured surface or mean; add 0.08 K/W if the BMS limit is a core temperature |
+| Battery path build-up | Earlier versions used literature plate values and omitted the project's base plate and pad 2 | Underestimated the path by a factor of three | Corrected: the path now follows the project network (1.32 K/W) |
 | DC resistance | ACR/0.7 is a rule of thumb from one practitioner source | Unknown sign | Range 0.5-0.9 is carried in the 5-95% band |
 | Entropic heat | Uses the low-SOC peak for every sustained C-rate and for charging | Overestimates heat at mid SOC; over-conservative for charging | Conservative; the 55 C charge line is pessimistic |
 | Entropic profile | Generic LFP/graphite shape, not measured on this cell | Unknown sign | Only the peak magnitude enters the screen |
@@ -264,6 +270,39 @@ affect.
 | Workbook audit | Recomputes the workbook's own building-CLTD method, which is not a vehicle method | None for the audit | The audit shows the arithmetic errors; the heat balance replaces the method |
 | Humidity | Rothfusz heat-index inversion is extrapolated at 66 C heat index | About +/-6% RH | Register range 40-50% RH; the 70% RH rejection does not depend on it |
 | Uncertainty bands | Triangular distributions assumed independent | Correlated inputs would widen or narrow the band | Claims are also tested at the combined extreme, which needs no distribution |
+
+## Project data that had not been used
+
+A review of every file in the repository and its history found project
+evidence the earlier versions of this layer ignored:
+
+| Source | Data | Use now |
+|---|---|---|
+| Battery network figures (`docs/images/battery_*`) | Pack layer stack, areas, pad 2, channel h and contact area | Battery path (section 1) |
+| Archived load cases L1-L7 (git history) | Motor power and pack current per case | Pack voltage under load, 314-336 V (mean 321 V) instead of 345.6 V nominal |
+| Archived load case L6 | 8% continuous grade, full 350 kg load, 61.5 kW at the wheel | New operating case (85.2 km/h, solved from road load) |
+| Archived DM18A1 compressor | 3.63 kW at 4 C evaporating, R134a | Reference line on the cabin load |
+| Archived battery config | 30 C coolant, cooling on at 35 C, 900 J/(kg K) cell specific heat | 30 C used as the design coolant check; 900 J/(kg K) is now the low end of the register range |
+
+The supplier PDFs themselves (SVOLT, 125 kW drive unit, pump, radiator,
+thermal pad) are not in the repository; only the values recorded in
+`references/SOURCE_PROVENANCE.md` and the derived CSVs are.
+
+## Checks against the project's own references
+
+`modules/literature_gap_fill` writes `reference_checks.csv`:
+
+| Check | Reference | Model | Finding |
+|---|---:|---:|---|
+| Drive unit after 30 s at 125 kW peak, from 60 C | 103 C (supplier) | 69.2 C | The two-node model is too slow for 30 s peaks. Use it for minutes-long duties only |
+| Winding thermal capacitance | 9.8 kJ/K implied by the supplier peak | 45 kJ/K assumed | The lumped value is the whole unit; the winding behaves like about a fifth of it |
+| Cell rise, 1C for 600 s (adiabatic) | SVOLT limit 15 C | 2.1 C | Consistent; reaching the limit would need 3.7 mOhm, so it does not test the resistance |
+| Cell rise, 3C for 30 s (adiabatic) | SVOLT limit 10 C | 1.0 C | Consistent; not a discriminating test |
+| Cabin load, humid heat | DM18A1 3.63 kW | 5.19 kW | The archived compressor is below the cabin load before any battery chiller duty |
+
+The compressor finding is the most consequential. On L6 the battery adds
+2.5-6.2 kW of chiller duty on top of the cabin, so cabin plus battery reaches
+7.6-11.4 kW against 3.63 kW.
 
 ## Remaining assumptions that were not corrected
 

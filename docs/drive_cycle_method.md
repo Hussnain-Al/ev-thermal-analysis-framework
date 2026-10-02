@@ -12,5 +12,6 @@ project's sustained propulsion thermal cases:
 |---|---:|---:|---:|---:|
 | Sustained grade | 40 km/h | 10% | 1200 s | 45 C |
 | Low-speed hot-weather grade | 15 km/h | 5% | 1800 s | 45 C |
+| Project L6: 8% continuous grade, 350 kg payload | 85.2 km/h | 8% | 1200 s | 45 C |
 
 Each resulting heat trace feeds the two-node motor/coolant model directly.

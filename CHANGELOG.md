@@ -4,8 +4,8 @@
 
 - Corrected six inputs and kept each superseded value for comparison
   (`docs/CORRECTIONS.md`):
-  - battery cell-to-coolant path 3.10 to 0.458 K/W (bottom-cooling build-up
-    including the jelly-roll-to-can-base insulator);
+  - battery cell-to-coolant path 3.10 to 1.32 K/W (the project battery
+    network with its R1 and sum errors corrected, plus cell internals);
   - battery heat from 1 kHz ACR to DC resistance (ACR/0.7) plus low-SOC
     entropic heat;
   - two-node radiator UA 665/300 to 139.7/122.3 W/K (Chang-Wang estimate for
@@ -18,6 +18,11 @@
 - Added battery heat driven by the drive cycles, expected and highest
   possible, with a `cycleSelection` setting and `run_battery_cycle_heat`
   for choosing the cycles.
+- Used project data the earlier layer missed: battery network layer stack,
+  archived load cases (pack voltage 321 V, L6 continuous grade case),
+  archived DM18A1 compressor rating and battery coolant set point.
+- Added reference checks against the supplier peak winding point, SVOLT
+  rise limits and the archived compressor (`reference_checks.csv`).
 - Added a sourced literature register with low/high ranges for every
   estimate (`data/literature/literature_assumption_register.csv`).
 - Tested each correction one assumption at a time, at the combined worst
