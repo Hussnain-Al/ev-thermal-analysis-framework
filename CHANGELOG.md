@@ -21,6 +21,10 @@ number (`docs/CORRECTIONS.md`, "Supplier documents folded in"):
   57 C condensing); 3.63 kW kept as superseded.
 - Cell DC resistance checked against the GFL 100 Ah vendor rate test (within
   2%) and the SVOLT 10 s power ceiling (1.36 mOhm).
+- New `modules/compressor_sizing`: cabin plus battery chiller demand per
+  scenario at the DM18A1 rating condition. Design 7.75 kW (L6), 9.19 kW with
+  the cabin at its 95th percentile: specify at least 9.2 kW (57 cc at
+  6000 rpm, 43 cc at 8000 rpm) against the DM18A1's 2.9 kW.
 - L6 added to the radiator design table; parameter register, provenance and
   regression values updated.
 

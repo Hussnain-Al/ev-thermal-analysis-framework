@@ -270,6 +270,19 @@ assert(abs(checks.ReferenceValue(8)-1000*(3.29-2.5)/(1456/2.5))<1e-9);
 assert(checks.ModelValue(8)<checks.ReferenceValue(8));
 assert(abs(checks.ReferenceValue(9)-0.039/50*100/134*1000)<1e-9);
 assert(abs(checks.ModelValue(9)/checks.ReferenceValue(9)-1)<0.02);
+% Compressor sizing: cabin (humid heat) plus battery chiller at the DM18A1
+% rating condition. The design scenario is L6 with the expected battery heat.
+sizing = results.compressorSizing;
+assert(abs(sizing.designCapacity_kW-(5.19253+2.556141))<2e-4);
+assert(contains(sizing.sizing.Scenario(1),"L6"));
+assert(abs(sizing.sizing.DisplacementAt6000rpm_cc(1)-18*sizing.designCapacity_kW/2.9)<1e-9);
+assert(abs(sizing.sizing.DisplacementAt6000rpm_cc(1)-48.095)<0.01);
+assert(abs(sizing.sizing.DisplacementAtAlternativeSpeed_cc(1)-36.071)<0.01);
+assert(abs(sizing.sizing.RequiredCapacity_kW(2)-(gap.robustness.P95(4)+2.556141))<1e-5);
+assert(abs(sizing.sizing.RequiredCapacity_kW(3)-(5.19253+6.420053))<2e-4);
+pullRow = contains(sizing.scenarios.Scenario,"pull-down");
+assert(abs(sizing.scenarios.PullDownExtra_kW(pullRow)-40*55/1800)<1e-9);
+assert(all(sizing.scenarios.RequiredCapacity_kW>2.9));
 % Reducer loss is reported and kept out of the coolant heat.
 assert(all(results.motorHeat.summary.AverageReducerLoss_kW>0));
 assert(all(cycleHeat.MeanBatteryHeatUpperBound_kW>=cycleHeat.MeanBatteryHeat_kW));

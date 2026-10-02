@@ -390,7 +390,10 @@ constraint; the 2.9 kW compressor is.
 
 The compressor finding is the most consequential. On L6 the battery adds
 2.6-6.4 kW of chiller duty on top of the cabin, so cabin plus battery reaches
-7.7-11.6 kW against 2.9 kW.
+7.7-11.6 kW against 2.9 kW. `modules/compressor_sizing` turns this into a
+size: at least 9.2 kW at the DM18A1 rating condition (57 cc at 6000 rpm, or
+43 cc at 8000 rpm). Reducing fresh air helps but does not avoid the change:
+at the register's lowest fresh-air rate the cabin alone is still 4.26 kW.
 
 ## Remaining assumptions that were not corrected
 

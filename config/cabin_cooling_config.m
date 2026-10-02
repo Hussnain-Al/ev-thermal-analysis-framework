@@ -26,6 +26,21 @@ cabin.recoveredCabinDuty_kW = 4.156;
 cabin.compressorRatedCapacity_kW = 2.9;
 cabin.compressorRatedInput_kW = 1.5;
 cabin.superseded.archivedCompressorCapacity_kW = 3.63;
+% DM18A1 speed table at the rated condition and its displacement, used to
+% scale the compressor size the loads require (modules/compressor_sizing).
+cabin.compressor.displacement_cc = 18;
+cabin.compressor.speed_rpm = [3000 4000 6000];
+cabin.compressor.capacity_kW = [1.38 1.89 2.9];
+cabin.compressor.input_kW = [0.72 0.98 1.5];
+% Sizing scenarios: the hot-weather cabin load (humid heat) runs with the
+% expected battery heat of every drive cycle, and a 30-minute pull-down
+% from the hot soak runs with the urban cycle. The design capacity is the
+% largest expected demand. A larger-speed alternative shows the displacement
+% if the compressor may run above the DM18A1's 6000 rpm (capacity taken as
+% proportional to speed, which the DM18A1 table follows within 4%).
+cabin.compressor.pullDownMinutes = 30;
+cabin.compressor.pullDownCycle = "urban_cycle";
+cabin.compressor.alternativeSpeed_rpm = 8000;
 cabin.modelBoundary = ...
     "Heat-balance rebuild with literature solar, latent and fresh-air terms; recovered workbook retained as audited source";
 end

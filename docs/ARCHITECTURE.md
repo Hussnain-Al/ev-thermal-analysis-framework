@@ -22,8 +22,10 @@ heat traces to `motor_cooling`. Battery and cabin results are independent.
 | `src/calculations/` | Reusable equations |
 | `tests/` | Regression, energy-balance and interface checks |
 
-The active model contains no compressor, refrigerant circuit or shared
-battery/cabin capacity allocation.
+`modules/compressor_sizing` sizes the compressor from the cabin load and the
+battery chiller duty at the DM18A1 rating condition. It is a capacity screen:
+the model still contains no refrigerant circuit, evaporator or condenser, and
+no transient allocation of capacity between cabin and battery.
 
 The battery Simulink screen is algebraic. The propulsion Simulink model accepts
 heat, ambient temperature and radiator UA through explicit ports. Physical loop

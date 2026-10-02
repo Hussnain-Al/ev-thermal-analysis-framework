@@ -316,6 +316,31 @@ about 0 C evaporating and 57 C condensing, which matches a 45 C day; the
 archived 3.63 kW was read at a cooler condenser). It is below the cabin load
 alone, before any battery chiller duty. No compressor is selected here; the line is a capacity reference.
 
+## Compressor sizing
+
+<img src="docs/images/results/compressor_sizing.png" width="820" alt="Refrigeration demand per scenario against the DM18A1, and the displacement that meets it">
+
+The DM18A1 cannot carry the cabin alone, so `modules/compressor_sizing` works
+out what can. Demand is the humid-heat cabin load plus the battery chiller
+duty (the battery's mean heat on each cycle), plus a 30-minute pull-down from
+the 80 C hot soak. All of it is evaluated at the DM18A1's own rating condition
+(about 0 C evaporating, 57 C condensing, R134a), which matches a 45 C day, so
+capacity scales with displacement:
+
+| Basis | Required capacity | Displacement at 6000 rpm | At 8000 rpm | Electrical input | Condenser heat |
+|---|---:|---:|---:|---:|---:|
+| Design: L6 with expected battery heat | 7.75 kW | 48 cc | 36 cc | 4.0 kW | 11.8 kW |
+| Same, cabin load at its 95th percentile | 9.19 kW | 57 cc | 43 cc | 4.8 kW | 13.9 kW |
+| Bound: highest-possible battery heat | 11.6 kW | 72 cc | 54 cc | 6.0 kW | 17.6 kW |
+
+The DM18A1 gives 2.9 kW from 18 cc. **Specify at least 9.2 kW at 0 C / 57 C**:
+that covers the project's worst sustained case (L6) with the cabin load at
+the top of its uncertainty band. If L6 is dropped as a design case, the 10%
+grade sets 5.9 kW (36 cc at 6000 rpm). The pull-down case (6.5 kW) does not
+set the size. Electrical input uses the DM18A1's COP of 1.93; the condenser
+must reject capacity plus input and shares air with the radiator, so its
+size follows from this choice.
+
 ## Checks against the project's own references
 
 `outputs/literature_gap_fill/reference_checks.csv` compares stated
