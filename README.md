@@ -313,6 +313,8 @@ assumptions with the supplier and project references:
 | Cell rise, 1C for 600 s | 15 C (SVOLT) | 2.1 C | Consistent, not discriminating |
 | Cell rise, 3C for 30 s | 10 C (SVOLT) | 1.0 C | Consistent, not discriminating |
 | Cabin load vs DM18A1 | 3.63 kW | 5.19 kW | Compressor undersized |
+| Peak propulsion coolant, all cases | 107 C boiling (LubeMax, no cap) | 57 C | Large boiling margin |
+| Coolant needed for sustained 2C | -36.7 C freeze (LubeMax) | -33.4 C | 2C sustained is not a cooling target |
 
 ## Corrections and their robustness
 

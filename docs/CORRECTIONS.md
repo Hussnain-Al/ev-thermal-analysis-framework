@@ -283,6 +283,7 @@ evidence the earlier versions of this layer ignored:
 | Archived load case L6 | 8% continuous grade, full 350 kg load, 61.5 kW at the wheel | New operating case (85.2 km/h, solved from road load) |
 | Archived DM18A1 compressor | 3.63 kW at 4 C evaporating, R134a | Reference line on the cabin load |
 | Archived battery config | 30 C coolant, cooling on at 35 C, 900 J/(kg K) cell specific heat | 30 C used as the design coolant check; 900 J/(kg K) is now the low end of the register range |
+| LubeMax Antifreeze/Coolant 50/50 datasheet | Ethylene glycol 50% v/v; boiling 107 C (129.4 C capped); freeze -36.7 C | Confirms the 50/50 ethylene-glycol property basis; limits added as reference checks. The sheet has no specific heat, viscosity or conductivity table |
 
 The supplier PDFs themselves (SVOLT, 125 kW drive unit, pump, radiator,
 thermal pad) are not in the repository; only the values recorded in
@@ -299,6 +300,8 @@ thermal pad) are not in the repository; only the values recorded in
 | Cell rise, 1C for 600 s (adiabatic) | SVOLT limit 15 C | 2.1 C | Consistent; reaching the limit would need 3.7 mOhm, so it does not test the resistance |
 | Cell rise, 3C for 30 s (adiabatic) | SVOLT limit 10 C | 1.0 C | Consistent; not a discriminating test |
 | Cabin load, humid heat | DM18A1 3.63 kW | 5.19 kW | The archived compressor is below the cabin load before any battery chiller duty |
+| Peak propulsion coolant, all cases | LubeMax boiling point 107 C (no cap) | about 57 C | Large boiling margin even without the 15 psi cap (129.4 C) |
+| Coolant needed for sustained 2C | LubeMax freeze point -36.7 C | -33.4 C | Within 3.3 K of freezing and below it across part of the band; 2C sustained is not a cooling target |
 
 The compressor finding is the most consequential. On L6 the battery adds
 2.5-6.2 kW of chiller duty on top of the cabin, so cabin plus battery reaches

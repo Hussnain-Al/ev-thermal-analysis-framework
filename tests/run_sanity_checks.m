@@ -249,6 +249,9 @@ assert(abs(checks.ReferenceValue(2)-9.7550)<1e-3);
 assert(abs(checks.ModelValue(3)-2.1418)<1e-3);
 assert(abs(checks.ModelValue(4)-0.9868)<1e-3);
 assert(checks.ModelValue(5)>checks.ReferenceValue(5));
+assert(abs(checks.ModelValue(6)-57.1282)<1e-3);
+assert(abs(checks.ModelValue(7)+33.36100)<1e-4);
+assert(abs(checks.ReferenceValue(7)+36.7)<1e-12);
 assert(all(cycleHeat.MeanBatteryHeatUpperBound_kW>=cycleHeat.MeanBatteryHeat_kW));
 for k = 1:numel(results.batteryCooling.cycleHeat.traces)
     trace = results.batteryCooling.cycleHeat.traces{k};

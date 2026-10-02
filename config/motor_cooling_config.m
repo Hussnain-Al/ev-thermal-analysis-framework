@@ -12,8 +12,14 @@ motorCooling.files.thermalReference = fullfile(rootDir,"data", ...
 motorCooling.files.radiatorGeometry = fullfile(rootDir,"data", ...
     "motor_cooling","propulsion_radiator_geometry.csv");
 
-% 50/50 water-glycol screening properties. Replace with the selected
-% coolant supplier's temperature-dependent properties before validation.
+% Selected coolant: LubeMax Antifreeze/Coolant 50/50 (ethylene glycol,
+% 50% v/v, ASTM D3306). The datasheet gives limits but no thermophysical
+% table, so the property rows below remain 50% ethylene-glycol screening
+% values; replace them with a supplier table when one is available.
+motorCooling.coolantProduct = "LubeMax Antifreeze/Coolant 50/50";
+motorCooling.coolantBoilingPoint_C = 107;           % ASTM D1120, unpressurized
+motorCooling.coolantBoilingPointCapped_C = 129.4;   % with a 15 psi cap
+motorCooling.coolantFreezePoint_C = -36.7;          % ASTM D1177
 motorCooling.coolant = table([20;40;60],[1065;1055;1040], ...
     [4.50e-3;2.50e-3;1.50e-3],[3400;3500;3600], ...
     'VariableNames',{'Temperature_C','Density_kgm3','Viscosity_Pas','Cp_JkgK'});

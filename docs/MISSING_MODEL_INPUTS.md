@@ -13,7 +13,7 @@ vehicle-specific measurements.
 | Battery plate | Thermal and hydraulic map | Heat transfer and pressure drop versus coolant flow and inlet temperatures | Exact cold-plate supplier test report |
 | Radiator | Validation map | Heat rejection or UA versus coolant flow, air flow and inlet temperatures | Selected-core supplier map or prototype test |
 | Radiator | Hydraulic map | Coolant pressure drop in kPa versus L/min and temperature | Prototype test or validated core model |
-| Coolant | Thermophysical properties | Density, viscosity, specific heat and conductivity versus temperature | Selected coolant manufacturer datasheet |
+| Coolant | Thermophysical properties | Density, viscosity, specific heat and conductivity versus temperature | LubeMax 50/50 is selected; its datasheet gives limits only, so ask LubeMax for a property table or use an ethylene-glycol 50% v/v handbook table |
 | Drive unit | Loss map | Motor/inverter/reducer loss or efficiency versus torque, speed and temperature | Exact drive-unit supplier numerical map |
 
 Useful search strings must include the exact manufacturer and part number, for
