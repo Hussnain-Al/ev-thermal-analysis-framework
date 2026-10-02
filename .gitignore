@@ -7,4 +7,3 @@ references/private_source_documents/*
 slprj/
 *.slxc
 *.autosave
-__pycache__/

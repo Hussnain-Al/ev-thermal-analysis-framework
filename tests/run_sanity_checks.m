@@ -38,16 +38,37 @@ screen = calculate_battery_ohmic_heat([1;2],battery.capacity_Ah, ...
     battery.resistanceProxy_Ohm,battery.seriesCells);
 assert(abs(screen.PackHeat_kW(1)-0.7756992)<1e-8);
 assert(abs(screen.PackHeat_kW(2)-3.1027968)<1e-8);
-riseAtOneC = screen.CellHeat_W(1)*battery.baseResistance_KW;
+% The superseded ACR/3.10 K/W result is still reproduced for comparison.
+riseAtOneC = screen.CellHeat_W(1)*battery.superseded.baseResistance_KW;
 assert(abs(riseAtOneC-22.26544)<1e-8);
 assert(abs((battery.absoluteOperatingLimit_C-riseAtOneC)-37.73456)<1e-8);
 
+% Corrected parameters derived from the literature register.
+assert(abs(battery.dcResistance25_Ohm-0.40e-3/0.7)<1e-15);
+assert(abs(battery.cellToCoolantResistance_KW-0.304729)<1e-5);
+assert(battery.cellToCoolantResistanceRange_KW(2)<battery.superseded.baseResistance_KW);
+assert(abs(battery.entropicPeak_VK-0.37e-3)<1e-15);
+transientCfg = cfg.motorCooling.transient;
+assert(abs(transientCfg.ratedSpeedBasis_rpm-4191.51017)<1e-4);
+assert(abs(transientCfg.motorToCoolantResistance_KW-0.033086)<1e-5);
+assert(transientCfg.motorToCoolantResistanceRange_KW(1)> ...
+    transientCfg.superseded.motorToCoolantResistance_KW);
+assert(abs(transientCfg.radiatorUA_WK-139.678)<0.01);
+assert(abs(transientCfg.fanOnlyRadiatorUA_WK-122.337)<0.01);
+assert(transientCfg.radiatorUARange_WK(2)<transientCfg.superseded.radiatorUA_WK);
+assert(cfg.cabinCooling.ambientRelativeHumidity_pct==44);
+
 batteryRequirements = calculate_battery_requirements_screen([1;2],battery);
-assert(isequal(batteryRequirements.PackHeat_kW,screen.PackHeat_kW));
-assert(abs(batteryRequirements.RequiredCellToCoolantRise_C(1)-22.26544)<1e-8);
-assert(abs(batteryRequirements.MaximumCoolantForRegen_C(1)-32.73456)<1e-8);
-assert(abs(batteryRequirements.MaximumCoolantForDischarge_C(1)-37.73456)<1e-8);
-assert(all(batteryRequirements.ACRProxyOnly));
+assert(abs(batteryRequirements.JouleHeat_W(1)-134^2*0.40e-3/0.7)<1e-10);
+assert(abs(batteryRequirements.EntropicHeat_W(1)-134*298.15*0.37e-3)<1e-10);
+assert(abs(batteryRequirements.RequiredCellToCoolantRise_C(1)- ...
+    batteryRequirements.CellHeat_W(1)*battery.cellToCoolantResistance_KW)<1e-12);
+assert(abs(batteryRequirements.MaximumCoolantForDischarge_C(1)-52.36872)<1e-4);
+assert(all(batteryRequirements.MaximumCoolantForDischargeP05_C< ...
+    batteryRequirements.MaximumCoolantForDischargeP95_C));
+assert(numel(battery.uncertainty.cellToCoolantResistance_KW)== ...
+    cfg.literatureGapFill.uncertaintySamples);
+assert(abs(batteryRequirements.SupersededMaximumCoolantForDischarge_C(1)-37.73456)<1e-8);
 
 % Core coolant transport and hydraulic regressions.
 coolant = cfg.motorCooling.coolant;
@@ -88,7 +109,6 @@ assert(height(results.motorHeat.summary)== ...
     height(cfg.cycles)+height(cfg.motorHeat.operatingCases));
 assert(height(results.motorCooling.summary)==height(results.motorHeat.summary));
 assert(height(results.batteryCooling.screen)==numel(battery.cRates));
-assert(all(results.batteryCooling.screen.ACRProxyOnly));
 assert(~ismember('EstimatedCellTemperature_C', ...
     results.batteryCooling.screen.Properties.VariableNames));
 assert(~ismember('BatteryCoolingRequest_kW', ...
@@ -132,8 +152,7 @@ assert(all(results.motorHeat.summary.MaximumTrailing60sHeat_kW<= ...
 assert(abs(results.cabinCooling.summary.WorkbookBodyAndGlazingLoad_kW- ...
     3.33594)<1e-8);
 
-% Literature gap-fill layer: register integrity and regression values that
-% were cross-checked with tools/gap_fill_reference.py.
+% Literature gap-fill layer: register integrity and regression values.
 [lit,register] = read_literature_assumptions( ...
     cfg.literatureGapFill.files.assumptionRegister);
 assert(all(register.Low<=register.Central & register.Central<=register.High));
@@ -142,15 +161,34 @@ gap = results.literatureGapFill;
 terms = gap.batteryTerms;
 assert(abs(terms.dcir25_Ohm-0.40e-3/lit.B01)<1e-12);
 assert(abs(terms.pathResistance_KW-0.3047)<1e-3);
-assert(terms.pathResistance_KW<cfg.batteryCooling.baseResistance_KW);
+assert(terms.pathResistance_KW<cfg.batteryCooling.superseded.baseResistance_KW);
 designCheck = gap.radiatorDesignCheck;
 gradeRow = contains(designCheck.Case,"10%");
 assert(abs(designCheck.EstimatedFaceVelocityForDuty_ms(gradeRow)-6.2)<0.15);
 assert(all(designCheck.EstimatedUAAtRequiredVelocity_WK< ...
-    designCheck.UAUsedInTwoNodeModel_WK));
+    designCheck.SupersededTwoNodeUA_WK));
 assert(abs(designCheck.EstimatedCoolantPressureDrop_kPa(1)-0.583)<0.01);
 assert(all(gap.motorCalibration.ImpliedWindingToCoolant_KW> ...
-    cfg.motorCooling.transient.motorToCoolantResistance_KW));
+    cfg.motorCooling.transient.superseded.motorToCoolantResistance_KW));
+assert(isequal(gap.robustness.ClaimHoldsAcrossRange,[true;true;true;false]));
+assert(isequal(gap.robustness.ClaimHoldsWithin5to95,[true;true;true;true]));
+assert(abs(gap.robustness.CombinedMaximum(1)-1.69607)<1e-4);
+assert(abs(gap.robustness.CombinedMaximum(2)-200.590)<0.01);
+assert(abs(gap.robustness.CombinedMinimum(4)-3.21884)<1e-4);
+% Deterministic Halton 5-95% bands.
+assert(abs(gap.robustness.P05(1)-0.262387)<1e-5);
+assert(abs(gap.robustness.P95(1)-0.376027)<1e-5);
+assert(abs(gap.robustness.P05(2)-125.0465)<1e-3);
+assert(abs(gap.robustness.P95(2)-160.5949)<1e-3);
+assert(abs(gap.robustness.P05(4)-4.58164)<1e-4);
+assert(gap.robustness.P05(4)>cfg.cabinCooling.recoveredCabinDuty_kW);
+screen2C = results.batteryCooling.screen(results.batteryCooling.screen.C_rate==2,:);
+assert(abs(screen2C.MaximumCoolantForDischarge_C-38.48406)<1e-4);
+assert(abs(screen2C.MaximumCoolantForDischargeP05_C-32.27118)<1e-4);
+assert(abs(screen2C.MaximumCoolantForDischargeP95_C-41.94481)<1e-4);
+assert(abs(results.cabinCooling.summary.CorrectedWorkbookSubtotal_kW- ...
+    (1.871665+0.594+0.226))<1e-4);
+assert(abs(results.cabinCooling.summary.HeatBalanceHumidHeat_kW-5.19253)<1e-4);
 assert(abs(sum(gap.cabinAudit.RecordedInWorkbook_W)-3335.94)<0.01);
 assert(abs(sum(gap.cabinAudit.Recomputed_W)-1871.67)<0.1);
 humid = gap.cabinHeatBalance.Scenario==cfg.literatureGapFill.cabin.scenarioNames(end);

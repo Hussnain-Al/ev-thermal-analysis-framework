@@ -1,5 +1,6 @@
 ID,Domain,Parameter,Central,Low,High,Unit,EvidenceClass,Source,Replaces
 M01,Drive unit,Rated output power for the 143 C winding reference,60,60,60,kW,Project evidence,Controller rated point in data/motor_heat/controller_loss_reference.csv,Unknown rated operating point of the winding-temperature reference
+M02,Drive unit,Controller loss at the rated point,1.580,1.264,1.896,kW,Project evidence,Digitized controller figure +/-20% for digitization and temperature,Loss split between controller and motor
 R01,Radiator,Louver pitch,1.0,0.8,1.4,mm,Literature typical value,Chang and Wang 1997 Int J Heat Mass Transfer 40(3) 533-544 dataset range,Louver geometry absent from radiator drawing
 R02,Radiator,Louver angle,27,22,30,deg,Literature typical value,Chang and Wang 1997 dataset range,Louver geometry absent from radiator drawing
 R03,Radiator,Louver length as fraction of fin height,0.85,0.75,0.90,-,Literature typical value,Chang and Wang 1997 dataset range,Louver geometry absent from radiator drawing
@@ -8,11 +9,14 @@ R05,Radiator,Coolant conductivity at 60 C,0.40,0.38,0.42,W/(m K),Property table,
 R06,Radiator,Laminar Nusselt number in 16:1 flat tube,6.45,6.45,7.28,-,Correlation,Shah and London 1978 rectangular duct (constant wall T; upper value constant flux),Coolant-side film coefficient
 R07,Radiator,Laminar Darcy f Re in 16:1 flat tube,88.6,85,96,-,Correlation,Shah and London 1978 rectangular duct,Radiator coolant pressure drop
 R08,Radiator,Header entry plus exit loss coefficient,1.5,1.0,2.0,-,Literature typical value,Standard sudden contraction plus expansion K,Radiator coolant pressure drop
+R09,Radiator,Core-face velocity in normal driving,3.0,2.0,5.0,m/s,Screening assumption,Typical installed radiator face velocity at moderate road speed; replace with vehicle airflow test,Two-node model UA of 665 W/K
+R10,Radiator,Core-face velocity with fan only,2.0,1.5,3.0,m/s,Screening assumption,Typical electric radiator fan delivery through a core of this size; replace with fan and core test,Two-node fan-only UA of 300 W/K
+R11,Radiator,Chang-Wang correlation scatter on air-side coefficient,1.0,0.85,1.15,-,Correlation accuracy,Chang and Wang 1997 report 89.3% of their database within +/-15%,Correlation uncertainty
 B01,Battery,ACR to DCIR ratio,0.70,0.50,0.90,-,Literature rule of thumb,batterydesign.net DCIR of a cell (ACIR ~70% of 10 s DCIR),1 kHz ACR used as DC heat resistance
 B02,Battery,DCIR Arrhenius activation energy,20,15,35,kJ/mol,Screening assumption,Value giving roughly 2x DCIR from 25 C to 0 C as commonly reported for LFP,Temperature-independent resistance
-B10,Battery,Cell width,220,220,220,mm,Supplier listing,SVOLT 134Ah listing 220 x 44.6 x 112 mm and 2.42 kg (confirm against cell drawing),Cell geometry absent from model
+B10,Battery,Cell footprint length on cold plate,220,112,220,mm,Supplier listing,SVOLT 134Ah listing 220 x 44.6 x 112 mm and 2.42 kg; 112 mm if the cell stands on its narrow face (paired with B12),Cell geometry absent from model
 B11,Battery,Cell thickness,44.6,44.6,44.6,mm,Supplier listing,SVOLT 134Ah listing,Cell geometry absent from model
-B12,Battery,Cell height (base to terminals),112,112,220,mm,Supplier listing,Orientation assumed; 220 mm if the cell stands on its narrow face,Cell geometry absent from model
+B12,Battery,Cell height (base to terminals),112,112,220,mm,Supplier listing,Orientation assumed; 220 mm if the cell stands on its narrow face (paired with B10),Cell geometry absent from model
 B13,Battery,In-plane jelly-roll conductivity,25,15,30,W/(m K),Literature range,Typical in-plane conductivity of LFP/graphite wound or stacked electrodes,Internal conduction path
 B14,Battery,Cell insulation film thickness,0.15,0.10,0.25,mm,Literature typical value,PET/PI wrap on prismatic cans,Cell-to-pad interface
 B15,Battery,Insulation film conductivity,0.20,0.15,0.30,W/(m K),Material property,PET film,Cell-to-pad interface

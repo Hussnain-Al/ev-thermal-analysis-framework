@@ -1,7 +1,8 @@
 function out = run_battery_cooling(cfg)
-%RUN_BATTERY_COOLING Sustained ACR-based battery thermal screen.
-% No drive-cycle temperature state, fixed coolant temperature, cooling
-% request or compressor capacity is calculated here.
+%RUN_BATTERY_COOLING Sustained battery thermal screen.
+% Uses the DC resistance, entropic heat and cell-to-coolant path set by
+% apply_literature_corrections. No coolant temperature is imposed here; the
+% discharge transient is in modules/literature_gap_fill.
 
 p = cfg.batteryCooling;
 outputDir = fullfile(cfg.project.outputDir,"battery_cooling");
@@ -28,32 +29,49 @@ plot_battery_c_rate_sweep(out.screen,p,outputDir);
 end
 
 function plot_battery_c_rate_sweep(screen,battery,outputDir)
-% Plot the useful sustained screen. This does not claim that ACR is DCIR;
-% the resistance remains a lower-bound proxy pending measured DC data.
+% Heat and coolant envelope from the corrected parameters, with the register
+% range as a band and the superseded ACR/3.10 K/W result for comparison.
 fig = figure('Visible','off','Color','w','Position',[100 100 1250 520]);
 layout = tiledlayout(1,2,'TileSpacing','compact');
 
 nexttile;
-plot(screen.C_rate,screen.PackHeat_kW,'o-','LineWidth',1.5);
+area(screen.C_rate,[screen.JouleHeat_W screen.EntropicHeat_W]* ...
+    battery.seriesCells/1000,'LineStyle','none');
+hold on;
+plot(screen.C_rate,screen.SupersededACRCellHeat_W*battery.seriesCells/1000, ...
+    'k--','LineWidth',1.4);
 grid on;
 xlabel('Sustained C-rate');
-ylabel('Minimum ohmic pack heat (kW)');
-title('Heat floor from ACR proxy');
+ylabel('Pack heat (kW)');
+legend({sprintf('Joule, DC resistance %.2f mOhm at 25 C', ...
+    1000*battery.dcResistance25_Ohm), ...
+    'Entropic, low-SOC peak','Superseded: 1 kHz ACR only'}, ...
+    'Location','northwest');
+title('Pack heat generation');
 
 nexttile;
-plot(screen.C_rate,screen.MaximumCoolantForRegen_C, ...
-    'o-','LineWidth',1.5,'DisplayName','55 C regen cutoff');
+fill([screen.C_rate;flipud(screen.C_rate)], ...
+    [screen.MaximumCoolantForDischargeP05_C; ...
+     flipud(screen.MaximumCoolantForDischargeP95_C)], ...
+    [0.75 0.85 1.0],'EdgeColor','none', ...
+    'DisplayName','5-95% over register ranges, 60 C limit');
 hold on;
-plot(screen.C_rate,screen.MaximumCoolantForDischarge_C, ...
-    's-','LineWidth',1.5,'DisplayName','60 C absolute limit');
-yline(0,'k:','LineWidth',1.0,'HandleVisibility','off');
+plot(screen.C_rate,screen.MaximumCoolantForDischarge_C,'b-','LineWidth',2, ...
+    'DisplayName',sprintf('60 C limit, %.2f K/W path',battery.cellToCoolantResistance_KW));
+plot(screen.C_rate,screen.MaximumCoolantForRegen_C,'b:','LineWidth',1.6, ...
+    'DisplayName','55 C charge cutoff');
+plot(screen.C_rate,screen.SupersededMaximumCoolantForDischarge_C,'r--', ...
+    'LineWidth',1.4,'DisplayName',sprintf('Superseded: ACR with %.2f K/W', ...
+    battery.superseded.baseResistance_KW));
+yline(45,'k:','45 C ambient','HandleVisibility','off');
 grid on;
+ylim([-40 65]);
 xlabel('Sustained C-rate');
 ylabel('Maximum allowable coolant temperature (C)');
-title('Coolant requirement from 3.10 K/W base path');
+title('Coolant temperature the cell can tolerate');
 legend('Location','southwest');
 
-title(layout,'Battery sustained-load lower-bound screen');
+title(layout,'Battery sustained screen: corrected heat and cell-to-coolant path');
 exportgraphics(fig,fullfile(outputDir,"battery_c_rate_sweep.png"), ...
     'Resolution',180);
 close(fig);

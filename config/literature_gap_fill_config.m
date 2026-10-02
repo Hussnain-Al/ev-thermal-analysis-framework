@@ -43,6 +43,8 @@ gapFill.cabin.declination_deg = 23.45;
 gapFill.cabin.pullDownTime_min = (10:1:60)';
 gapFill.cabin.workbookOutdoor_C = 38.1;
 gapFill.cabin.workbookIndoor_C = 23;
+% Halton samples used to propagate register ranges to 5-95% bands.
+gapFill.uncertaintySamples = 1024;
 gapFill.modelBoundary = ...
     "Literature-assumption estimates; replace each register row with project measurements";
 end

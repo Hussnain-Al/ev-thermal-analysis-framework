@@ -28,35 +28,77 @@ if abs(calculated.RecoveredPartialSensibleLoad_kW- ...
         'Configured cabin duty does not equal the recovered load-input sum.');
 end
 
+% Corrected results. The workbook stays unchanged (it is hashed source
+% evidence); audit_cabin_workbook recomputes its rows consistently, and the
+% heat-balance rebuild adds the solar, latent and fresh-air terms.
+g = cfg.literatureGapFill.cabin;
+a = cfg.literature.values;
+out.workbookAudit = audit_cabin_workbook(p.files.sourceWorkbook, ...
+    g.workbookOutdoor_C,g.workbookIndoor_C);
+correctedSubtotal_kW = sum(out.workbookAudit.Recomputed_W)/1000+ ...
+    sum(out.inputs.Load_kW(2:end));
+scenarioRH = [a.K03;a.K02];
+balances = cell(numel(scenarioRH),1);
+for i = 1:numel(scenarioRH)
+    components = calculate_cabin_heat_balance(p.designAmbient_C,scenarioRH(i), ...
+        p.cabinSetpoint_C,p.cabinRelativeHumidity_pct,g,a);
+    components.Scenario = repmat(g.scenarioNames(i),height(components),1);
+    components.OutdoorRH_pct = repmat(scenarioRH(i),height(components),1);
+    balances{i} = components(:,{'Scenario','OutdoorRH_pct','Component','Load_kW'});
+end
+out.heatBalance = vertcat(balances{:});
+heatBalanceTotals_kW = zeros(numel(scenarioRH),1);
+for i = 1:numel(scenarioRH)
+    heatBalanceTotals_kW(i) = sum(out.heatBalance.Load_kW( ...
+        out.heatBalance.Scenario==g.scenarioNames(i)));
+end
+
 out.summary = table(p.designLocation,p.designAmbient_C,p.initialHotSoak_C, ...
     p.ambientRelativeHumidity_pct,p.cabinSetpoint_C, ...
     p.cabinRelativeHumidity_pct, ...
     calculated.RecoveredPartialSensibleLoad_kW,p.modelBoundary, ...
     string(p.files.sourceWorkbook),workbookBodyAndGlazing_kW, ...
+    correctedSubtotal_kW,heatBalanceTotals_kW(1),heatBalanceTotals_kW(2), ...
     'VariableNames',{'DesignLocation','DesignAmbient_C','InitialHotSoak_C', ...
     'AmbientRelativeHumidity_pct','CabinSetpoint_C', ...
     'CabinRelativeHumidity_pct','RecoveredPartialSensibleLoad_kW', ...
-    'ModelBoundary','SourceWorkbook','WorkbookBodyAndGlazingLoad_kW'});
+    'ModelBoundary','SourceWorkbook','WorkbookBodyAndGlazingLoad_kW', ...
+    'CorrectedWorkbookSubtotal_kW','HeatBalanceDryHeat_kW', ...
+    'HeatBalanceHumidHeat_kW'});
 
 writetable(out.inputs,fullfile(outputDir,"cabin_load_inputs_used.csv"));
 writetable(out.summary,fullfile(outputDir,"cabin_cooling_summary.csv"));
-plot_cabin_load_breakdown(out.inputs,out.summary,outputDir);
+writetable(out.workbookAudit,fullfile(outputDir,"cabin_workbook_audit.csv"));
+writetable(out.heatBalance,fullfile(outputDir,"cabin_heat_balance.csv"));
+plot_cabin_load_breakdown(out,g,outputDir);
 end
 
-function plot_cabin_load_breakdown(inputs,summary,outputDir)
-fig = figure('Visible','off','Color','w','Position',[100 100 1050 650]);
-bar(inputs.Load_kW);
-grid on;
-xticks(1:height(inputs));
-xticklabels(inputs.LoadComponent);
-xtickangle(20);
-ylabel('Recovered load (kW)');
-title(sprintf('Recovered partial sensible cabin load: %.3f kW', ...
-    summary.RecoveredPartialSensibleLoad_kW));
-for i = 1:height(inputs)
-    text(i,inputs.Load_kW(i),sprintf(' %.3f',inputs.Load_kW(i)), ...
-        'HorizontalAlignment','center','VerticalAlignment','bottom');
+function plot_cabin_load_breakdown(out,g,outputDir)
+% Stacked heat-balance components for both humidity scenarios beside the
+% workbook subtotal as recorded and as recomputed.
+components = unique(out.heatBalance.Component,'stable');
+nComponents = numel(components);
+groups = ["Workbook as recorded";"Workbook recomputed";g.scenarioNames];
+data = zeros(numel(groups),nComponents+2);
+data(1,end-1) = out.summary.RecoveredPartialSensibleLoad_kW;
+data(2,end) = out.summary.CorrectedWorkbookSubtotal_kW;
+for i = 1:numel(g.scenarioNames)
+    data(2+i,1:nComponents) = out.heatBalance.Load_kW( ...
+        out.heatBalance.Scenario==g.scenarioNames(i))';
 end
+fig = figure('Visible','off','Color','w','Position',[100 100 1150 650]);
+bars = bar(categorical(groups,groups),data,'stacked');
+bars(end-1).FaceColor = [0.55 0.55 0.55];
+bars(end).FaceColor = [0.35 0.35 0.35];
+totals = sum(data,2);
+text(1:numel(groups),totals,compose(' %.2f kW',totals), ...
+    'HorizontalAlignment','center','VerticalAlignment','bottom');
+grid on;
+ylabel('Cabin cooling load (kW)');
+legend([components;"Workbook subtotal as recorded";"Workbook subtotal recomputed"], ...
+    'Location','northwest','FontSize',8);
+title(sprintf(['Cabin load at 45 C, 25 C / 50%% RH cabin: workbook ' ...
+    'audit and heat-balance rebuild (15:00 solar)']));
 exportgraphics(fig,fullfile(outputDir,"cabin_load_breakdown.png"), ...
     'Resolution',180);
 close(fig);

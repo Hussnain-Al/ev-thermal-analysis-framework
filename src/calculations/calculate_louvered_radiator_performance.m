@@ -56,7 +56,8 @@ j = reLouver.^-0.49*(louverAngle_deg/90)^0.27*(finPitch/louverPitch)^-0.14* ...
     (finHeight/louverPitch)^-0.29*(tubeDepth/louverPitch)^-0.23* ...
     (louverLength/louverPitch)^0.68*(tubePitch/louverPitch)^-0.28* ...
     (finThickness/louverPitch)^-0.05;
-hAir = j.*rhoAir.*coreVelocity*cpAir/prAir^(2/3);
+% R11 carries the published +/-15% scatter of the correlation.
+hAir = a.R11*j.*rhoAir.*coreVelocity*cpAir/prAir^(2/3);
 m = sqrt(2*hAir/(a.R04*finThickness));
 finHalfHeight = finHeight/2;
 finEfficiency = tanh(m*finHalfHeight)./(m*finHalfHeight);

@@ -12,10 +12,12 @@ cabin.files.sourceWorkbook = fullfile(rootDir,"data", ...
 cabin.designLocation = "Karachi, Pakistan";
 cabin.designAmbient_C = 45;
 cabin.initialHotSoak_C = 80;
-cabin.ambientRelativeHumidity_pct = 70;
+% Superseded: 45 C at 70% RH has a 38 C dew point, above any recorded dew
+% point. apply_literature_corrections sets the coincident humidity.
+cabin.superseded.ambientRelativeHumidity_pct = 70;
 cabin.cabinSetpoint_C = 25;
 cabin.cabinRelativeHumidity_pct = 50;
 cabin.recoveredCabinDuty_kW = 4.156;
 cabin.modelBoundary = ...
-    "Recovered partial sensible load; solar, latent, ventilation and pull-down require validation";
+    "Heat-balance rebuild with literature solar, latent and fresh-air terms; recovered workbook retained as audited source";
 end

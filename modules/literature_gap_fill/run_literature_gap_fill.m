@@ -11,11 +11,12 @@ ensure_output_folder(outputDir);
 [a,out.register] = read_literature_assumptions(p.files.assumptionRegister);
 
 out.operatingPoints = summarize_operating_points(motorHeat);
-out.motorCalibration = calibrate_winding_resistance(cfg,p,motorHeat.curves,a);
+out.motorCalibration = calibration_sweep(cfg,p,motorHeat.curves,a);
 [out.radiatorMap,out.radiatorDesignCheck] = estimate_radiator(cfg,p,motorCooling,a);
 [out.batteryTerms,out.batteryEnvelope,out.batteryTransient,out.batteryTransientSummary] = ...
     estimate_battery(cfg,p,a);
 [out.cabinAudit,out.cabinHeatBalance,out.cabinPullDown] = estimate_cabin(cfg,p,a);
+[out.robustness,out.tornado] = evaluate_robustness(cfg,motorHeat,motorCooling,a,out.register);
 
 writetable(out.register,fullfile(outputDir,"literature_assumptions_used.csv"));
 writetable(out.operatingPoints,fullfile(outputDir,"drive_operating_point_heat.csv"));
@@ -28,6 +29,8 @@ writetable(out.batteryTransientSummary,fullfile(outputDir,"battery_discharge_sum
 writetable(out.cabinAudit,fullfile(outputDir,"cabin_workbook_audit.csv"));
 writetable(out.cabinHeatBalance,fullfile(outputDir,"cabin_heat_balance.csv"));
 writetable(out.cabinPullDown,fullfile(outputDir,"cabin_pull_down_capacity.csv"));
+writetable(out.robustness,fullfile(outputDir,"correction_robustness.csv"));
+writetable(out.tornado,fullfile(outputDir,"correction_sensitivity.csv"));
 
 plot_operating_points(motorHeat,outputDir);
 plot_motor_calibration(out.motorCalibration,motorHeat,p,outputDir);
@@ -35,6 +38,7 @@ plot_radiator(out.radiatorMap,out.radiatorDesignCheck,motorCooling,cfg,outputDir
 plot_battery_heat_and_path(cfg.batteryCooling,p,out.batteryTerms,out.batteryEnvelope,outputDir);
 plot_battery_transient(out.batteryTransient,cfg.batteryCooling,p,out.batteryTerms,outputDir);
 plot_cabin(out.cabinAudit,out.cabinHeatBalance,out.cabinPullDown,cfg,outputDir);
+plot_robustness(out.robustness,out.tornado,outputDir);
 end
 
 % -------------------------------------------------------------------------
@@ -64,21 +68,14 @@ summary = table(caseName,meanSpeed,meanTorque,heatWeightedEfficiency,fractionBel
     'EnergyWeightedMotoringEfficiency_pct','HeatShareBelow85pctEfficiency_pct'});
 end
 
-function result = calibrate_winding_resistance(cfg,p,curves,a)
-speed = p.motor.ratedSpeedSweep_rpm;
-ratedPower_kW = a.M01;
-torque = ratedPower_kW*1000./(speed*2*pi/60);
-eta = estimate_integrated_drive_efficiency(speed,torque,curves);
-integratedLoss_kW = ratedPower_kW./eta-ratedPower_kW;
-controllerLoss_kW = 1.580;
-motorLoss_kW = integratedLoss_kW-controllerLoss_kW;
-rise_C = p.motor.referenceWinding_C-p.motor.referenceCoolant_C;
-result = table(speed,torque,100*eta,integratedLoss_kW,motorLoss_kW, ...
-    rise_C./(motorLoss_kW*1000), ...
-    repmat(cfg.motorCooling.transient.motorToCoolantResistance_KW,numel(speed),1), ...
-    'VariableNames',{'AssumedRatedSpeed_rpm','RatedTorque_Nm', ...
-    'IntegratedEfficiency_pct','IntegratedLoss_kW','MotorAndReducerLoss_kW', ...
-    'ImpliedWindingToCoolant_KW','ConfiguredMotorToCoolant_KW'});
+function result = calibration_sweep(cfg,p,curves,a)
+result = calibrate_winding_resistance(curves,p.motor.ratedSpeedSweep_rpm,a.M01,a.M02, ...
+    p.motor.referenceWinding_C-p.motor.referenceCoolant_C);
+n = height(result);
+result.CalibratedAtBaseSpeed_KW = repmat( ...
+    cfg.motorCooling.transient.motorToCoolantResistance_KW,n,1);
+result.SupersededMotorToCoolant_KW = repmat( ...
+    cfg.motorCooling.transient.superseded.motorToCoolantResistance_KW,n,1);
 end
 
 function [map,check] = estimate_radiator(cfg,p,motorCooling,a)
@@ -112,11 +109,13 @@ check = table(design.Case,design.SustainedHeatDuty_kW, ...
     design.RequiredCoreFaceVelocity_ms,estimatedAtRequiredVelocity_kW, ...
     velocityForDuty_ms,design.RequiredIdealUA_WK,estimatedUA_WK, ...
     repmat(cfg.motorCooling.transient.radiatorUA_WK,n,1), ...
+    repmat(cfg.motorCooling.transient.superseded.radiatorUA_WK,n,1), ...
     repmat(atDesign.EstimatedCoolantPressureDrop_kPa(1),n,1), ...
     'VariableNames',{'Case','SustainedHeatDuty_kW', ...
     'RequiredFaceVelocity_10KRise_ms','EstimatedRejectionAtThatVelocity_kW', ...
     'EstimatedFaceVelocityForDuty_ms','RequiredIdealUA_WK', ...
-    'EstimatedUAAtRequiredVelocity_WK','UAUsedInTwoNodeModel_WK', ...
+    'EstimatedUAAtRequiredVelocity_WK','CorrectedNormalDrivingUA_WK', ...
+    'SupersededTwoNodeUA_WK', ...
     'EstimatedCoolantPressureDrop_kPa'});
 end
 
@@ -128,8 +127,8 @@ current = cRate*battery.capacity_Ah;
 acrHeat = current.^2*battery.resistanceProxy_Ohm;
 literatureHeat = current.^2*terms.dcir(25)+current*298.15*terms.peakDischargeEntropic_VK;
 envelope = table(cRate,acrHeat, ...
-    battery.absoluteOperatingLimit_C-acrHeat*battery.baseResistance_KW, ...
-    battery.regenChargeCutoff_C-acrHeat*battery.baseResistance_KW, ...
+    battery.absoluteOperatingLimit_C-acrHeat*battery.superseded.baseResistance_KW, ...
+    battery.regenChargeCutoff_C-acrHeat*battery.superseded.baseResistance_KW, ...
     literatureHeat, ...
     battery.absoluteOperatingLimit_C-literatureHeat*terms.pathResistance_KW, ...
     battery.regenChargeCutoff_C-literatureHeat*terms.pathResistance_KW, ...
@@ -137,7 +136,7 @@ envelope = table(cRate,acrHeat, ...
     'ReconstructedMaxCoolant55_C','LiteratureCellHeat_W', ...
     'LiteratureMaxCoolant60_C','LiteratureMaxCoolant55_C'});
 
-paths = [terms.pathResistance_KW battery.baseResistance_KW];
+paths = [terms.pathResistance_KW battery.superseded.baseResistance_KW];
 traces = {};
 for i = 1:numel(p.battery.cRates)
     for j = 1:numel(p.battery.coolantScenarios_C)
@@ -198,9 +197,164 @@ pullDown = array2table([minutes capacity],'VariableNames', ...
     'MeanCapacity_CentralMass_kW','MeanCapacity_HighMass_kW'});
 end
 
+function [summary,tornado] = evaluate_robustness(cfg,motorHeat,motorCooling,a,register)
+% For each correction: one-at-a-time sensitivity to every assumption that
+% feeds it, the combined extremes, and whether the conclusion survives.
+geometry = motorCooling.radiatorCandidate;
+curves = motorHeat.curves;
+g = cfg.literatureGapFill;
+transient = cfg.motorCooling.transient;
+battery = cfg.batteryCooling;
+
+pathFn = @(x) path_of(cfg,x);
+[pathT,pathC] = evaluate_assumption_sensitivity(pathFn,a,register, ...
+    ["ORIENTATION";"B13";"B14";"B15";"B16";"B17";"B18";"B19"]);
+uaFn = @(x) normal_ua(cfg,x,curves,geometry);
+[uaT,uaC] = evaluate_assumption_sensitivity(uaFn,a,register, ...
+    ["R09";"R01";"R02";"R03";"R04";"R05";"R06";"R11"]);
+cabinFn = @(x) cabin_total(cfg,x);
+[cabinT,cabinC] = evaluate_assumption_sensitivity(cabinFn,a,register, ...
+    ["K02";"C10";"C11";"C12";"C13";"C14";"C15";"C16";"C17";"C19";"C20";"C21";"C22"]);
+
+% Winding resistance: rated speed is not a register row, so it is swept
+% directly; the controller-loss row is varied at the adopted base speed.
+rise = g.motor.referenceWinding_C-g.motor.referenceCoolant_C;
+sweep = calibrate_winding_resistance(curves,g.motor.ratedSpeedSweep_rpm, ...
+    a.M01,a.M02,rise);
+m02 = register(register.ID=="M02",:);
+atLow = calibrate_winding_resistance(curves,transient.ratedSpeedBasis_rpm,a.M01,m02.Low,rise);
+atHigh = calibrate_winding_resistance(curves,transient.ratedSpeedBasis_rpm,a.M01,m02.High,rise);
+centralR = transient.motorToCoolantResistance_KW;
+motorT = table(["RATED_SPEED";"M02"], ...
+    ["Rated speed 3000-9000 rpm";m02.Parameter],[centralR;centralR], ...
+    [min(sweep.ImpliedWindingToCoolant_KW);atLow.ImpliedWindingToCoolant_KW], ...
+    [max(sweep.ImpliedWindingToCoolant_KW);atHigh.ImpliedWindingToCoolant_KW], ...
+    'VariableNames',{'Assumption','Parameter','Central','OutputAtLow','OutputAtHigh'});
+motorC = struct('Central',centralR, ...
+    'Minimum',transient.motorToCoolantResistanceRange_KW(1), ...
+    'Maximum',transient.motorToCoolantResistanceRange_KW(2));
+
+% 5-95% bands from joint Halton samples of the same register rows (the
+% battery orientation and the unknown rated speed are not sampled; they
+% are deterministic unknowns and appear only in the worst-case range).
+nSamples = g.uncertaintySamples;
+pathValues = sample_assumption_distribution(pathFn,a,register, ...
+    ["B13";"B14";"B15";"B16";"B17";"B18";"B19"],nSamples);
+uaValues = sample_assumption_distribution(uaFn,a,register, ...
+    ["R09";"R01";"R02";"R03";"R04";"R05";"R06";"R11"],nSamples);
+cabinValues = sample_assumption_distribution(cabinFn,a,register, ...
+    ["K02";"C10";"C11";"C12";"C13";"C14";"C15";"C16";"C17";"C19";"C20";"C21";"C22"], ...
+    nSamples);
+bands = [percentile_linear(pathValues,[5 95])'; ...
+    percentile_linear(uaValues,[5 95])'; ...
+    NaN NaN; ...
+    percentile_linear(cabinValues,[5 95])'];
+
+names = ["Battery cell-to-coolant path (K/W)";"Radiator UA, normal driving (W/K)"; ...
+    "Winding-to-coolant resistance (K/W)";"Cabin load, humid heat (kW)"];
+previous = [battery.superseded.baseResistance_KW; ...
+    transient.superseded.radiatorUA_WK; ...
+    transient.superseded.motorToCoolantResistance_KW; ...
+    cfg.cabinCooling.recoveredCabinDuty_kW];
+combined = [pathC;uaC;motorC;cabinC];
+central = [combined.Central]';
+minimum = [combined.Minimum]';
+maximum = [combined.Maximum]';
+% Conclusions: path and UA are below the superseded values, the winding
+% resistance is above it, and the cabin load exceeds the recorded subtotal.
+holds = [maximum(1)<previous(1);maximum(2)<previous(2); ...
+    minimum(3)>previous(3);minimum(4)>previous(4)];
+holdsWithinBand = [bands(1,2)<previous(1);bands(2,2)<previous(2); ...
+    holds(3);bands(4,1)>previous(4)];
+claim = ["Superseded 3.10 K/W lies above the whole range"; ...
+    "Superseded 665 W/K lies above the whole range"; ...
+    "Superseded 0.015 K/W lies below the whole range"; ...
+    "Load exceeds the recorded 4.156 kW subtotal"];
+summary = table(names,central,bands(:,1),bands(:,2),minimum,maximum, ...
+    previous,claim,holdsWithinBand,holds, ...
+    'VariableNames',{'Correction','Central','P05','P95','CombinedMinimum', ...
+    'CombinedMaximum','SupersededValue','Claim','ClaimHoldsWithin5to95', ...
+    'ClaimHoldsAcrossRange'});
+
+pathT.Correction = repmat(names(1),height(pathT),1);
+uaT.Correction = repmat(names(2),height(uaT),1);
+motorT.Correction = repmat(names(3),height(motorT),1);
+cabinT.Correction = repmat(names(4),height(cabinT),1);
+tornado = [pathT;uaT;motorT;cabinT];
+tornado = tornado(:,{'Correction','Assumption','Parameter','Central', ...
+    'OutputAtLow','OutputAtHigh'});
+end
+
+function value = path_of(cfg,a)
+terms = calculate_battery_literature_terms(cfg.batteryCooling, ...
+    cfg.literatureGapFill.battery,a);
+value = terms.pathResistance_KW;
+end
+
+function value = normal_ua(cfg,a,curves,geometry)
+d = derive_corrected_parameters(cfg,a,curves,geometry);
+value = d.radiatorUA_WK;
+end
+
+function value = cabin_total(cfg,a)
+components = calculate_cabin_heat_balance(cfg.cabinCooling.designAmbient_C,a.K02, ...
+    cfg.cabinCooling.cabinSetpoint_C,cfg.cabinCooling.cabinRelativeHumidity_pct, ...
+    cfg.literatureGapFill.cabin,a);
+value = sum(components.Load_kW);
+end
+
 % -------------------------------------------------------------------------
 % Figures
 % -------------------------------------------------------------------------
+function plot_robustness(summary,tornado,outputDir)
+fig = figure('Visible','off','Color','w','Position',[100 100 1500 900]);
+layout = tiledlayout(2,2,'TileSpacing','compact');
+for i = 1:height(summary)
+    nexttile;
+    rows = tornado(tornado.Correction==summary.Correction(i),:);
+    swing = abs(rows.OutputAtHigh-rows.OutputAtLow);
+    [~,order] = sort(swing,'ascend');
+    rows = rows(order,:);
+    hold on;
+    patch([summary.CombinedMinimum(i) summary.CombinedMaximum(i) ...
+        summary.CombinedMaximum(i) summary.CombinedMinimum(i)], ...
+        [0.4 0.4 height(rows)+0.6 height(rows)+0.6],[0.92 0.94 0.98], ...
+        'EdgeColor','none','DisplayName','All worst-case ends combined');
+    if ~isnan(summary.P05(i))
+        patch([summary.P05(i) summary.P95(i) summary.P95(i) summary.P05(i)], ...
+            [0.4 0.4 height(rows)+0.6 height(rows)+0.6],[0.78 0.86 1.0], ...
+            'EdgeColor','none','DisplayName','5-95% of sampled ranges');
+    end
+    for k = 1:height(rows)
+        lo = min(rows.OutputAtLow(k),rows.OutputAtHigh(k));
+        hi = max(rows.OutputAtLow(k),rows.OutputAtHigh(k));
+        patch([lo hi hi lo],[k-0.3 k-0.3 k+0.3 k+0.3],[0.25 0.45 0.85], ...
+            'EdgeColor','none','HandleVisibility','off');
+        % Mark the end that the assumption's high value produces.
+        plot(rows.OutputAtHigh(k),k,'k>','MarkerSize',4,'HandleVisibility','off');
+    end
+    xline(summary.Central(i),'k-','LineWidth',1.5,'DisplayName','Adopted value');
+    xline(summary.SupersededValue(i),'r--','LineWidth',1.8, ...
+        'DisplayName','Superseded value');
+    yticks(1:height(rows));
+    yticklabels(rows.Assumption+": "+rows.Parameter);
+    set(gca,'FontSize',7);
+    grid on;
+    if summary.ClaimHoldsAcrossRange(i)
+        verdict = "holds at every combined extreme";
+    elseif summary.ClaimHoldsWithin5to95(i)
+        verdict = "holds within 5-95%, not at every extreme";
+    else
+        verdict = "does not hold";
+    end
+    title(summary.Correction(i)+" - claim "+verdict,'FontSize',9);
+    legend('Location','best','FontSize',7);
+end
+title(layout,'Do the corrections survive their assumption ranges?');
+exportgraphics(fig,fullfile(outputDir,"gap_correction_robustness.png"),'Resolution',150);
+close(fig);
+end
+
 function plot_operating_points(motorHeat,outputDir)
 curves = motorHeat.curves;
 fig = figure('Visible','off','Color','w','Position',[100 100 1300 520]);
@@ -267,8 +421,10 @@ nexttile;
 plot(cal.AssumedRatedSpeed_rpm,cal.ImpliedWindingToCoolant_KW,'LineWidth',2, ...
     'DisplayName','Implied winding-to-coolant R');
 hold on;
-yline(cal.ConfiguredMotorToCoolant_KW(1),'r--','LineWidth',1.5, ...
-    'DisplayName','Configured R');
+yline(cal.SupersededMotorToCoolant_KW(1),'r--','LineWidth',1.5, ...
+    'DisplayName','Superseded R = 0.015 K/W');
+yline(cal.CalibratedAtBaseSpeed_KW(1),'b:','LineWidth',1.5, ...
+    'DisplayName','Adopted: calibrated at base speed');
 grid on; ylim([0 1.2*max(cal.ImpliedWindingToCoolant_KW)]);
 xlabel('Assumed rated operating speed (rpm)');
 ylabel('Winding-to-coolant resistance (K/W)');
@@ -277,7 +433,7 @@ legend('Location','southeast');
 
 nexttile;
 hold on;
-rMid = median(cal.ImpliedWindingToCoolant_KW);
+rMid = cal.CalibratedAtBaseSpeed_KW(1);
 coolant = linspace(45,75,31)';
 nCycles = numel(motorHeat.details)-2;
 colors = lines(2);
@@ -287,9 +443,9 @@ for i = 1:2
     name = motorHeat.summary.Cycle(row);
     plot(coolant,coolant+q*rMid,'-','Color',colors(i,:),'LineWidth',2, ...
         'DisplayName',sprintf('%s: implied R %.3f K/W (upper bound)',name,rMid));
-    plot(coolant,coolant+q*cal.ConfiguredMotorToCoolant_KW(1),'--', ...
+    plot(coolant,coolant+q*cal.SupersededMotorToCoolant_KW(1),'--', ...
         'Color',colors(i,:),'LineWidth',1.2, ...
-        'DisplayName',sprintf('%s: configured R',name));
+        'DisplayName',sprintf('%s: superseded R',name));
 end
 yline(p.motor.insulationClassH_C,'k:','Class H insulation 180 C','HandleVisibility','off');
 yline(150,':','Typical design hot-spot target 150 C','HandleVisibility','off');
@@ -332,8 +488,8 @@ for i = 1:height(motorCooling.radiatorDesign)
     yline(motorCooling.radiatorDesign.RequiredIdealUA_WK(i),'--', ...
         'DisplayName',"Required ideal UA, "+motorCooling.radiatorDesign.Case(i));
 end
-yline(cfg.motorCooling.transient.radiatorUA_WK,':','LineWidth',1.3, ...
-    'DisplayName','UA assumed in two-node model');
+yline(cfg.motorCooling.transient.superseded.radiatorUA_WK,':','LineWidth',1.3, ...
+    'DisplayName','Superseded two-node UA (665 W/K)');
 grid on;
 xlabel('Core-face air velocity (m/s)'); ylabel('UA (W/K)');
 title('Estimated achieved UA vs requirement and model input');
@@ -355,7 +511,7 @@ hold on;
 plot(soc,repmat(current^2*terms.dcir(45),size(soc)),'LineWidth',2, ...
     'DisplayName','Joule, DCIR at 45 C');
 plot(soc,repmat(current^2*battery.resistanceProxy_Ohm,size(soc)),'k--', ...
-    'DisplayName','Current ACR heat floor');
+    'DisplayName','Superseded ACR heat');
 plot(soc,-current*298.15*terms.entropic_VK(soc),'LineWidth',2, ...
     'DisplayName','Reversible (entropic), 25 C');
 yline(0,'k-','HandleVisibility','off');
@@ -367,17 +523,17 @@ legend('Location','northeast');
 nexttile;
 budget = terms.pathBudget;
 nElements = height(budget);
-stackData = [budget.Resistance_KW' 0; zeros(1,nElements) battery.baseResistance_KW];
+stackData = [budget.Resistance_KW' 0; zeros(1,nElements) battery.superseded.baseResistance_KW];
 barh([1 2],stackData,'stacked');
 yticks([1 2]);
 yticklabels({'Literature build-up','Reconstructed path'});
 legend([budget.PathElement+compose(": %.3f",budget.Resistance_KW); ...
-    sprintf("Reconstructed: %.2f",battery.baseResistance_KW)], ...
+    sprintf("Reconstructed: %.2f",battery.superseded.baseResistance_KW)], ...
     'Location','southeast','FontSize',7);
 grid on;
 xlabel('Thermal resistance (K/W)');
 title(sprintf('Cell-to-coolant resistance: %.2f vs %.2f K/W', ...
-    terms.pathResistance_KW,battery.baseResistance_KW));
+    terms.pathResistance_KW,battery.superseded.baseResistance_KW));
 
 nexttile;
 plot(envelope.C_rate,envelope.ReconstructedMaxCoolant60_C,'r--','LineWidth',2, ...
@@ -418,7 +574,7 @@ for j = 1:numel(p.battery.coolantScenarios_C)
                 t.C_rate(1),terms.pathResistance_KW);
         else
             style = '--'; width = 1.2; label = sprintf('%gC, reconstructed %.2f K/W', ...
-                t.C_rate(1),battery.baseResistance_KW);
+                t.C_rate(1),battery.superseded.baseResistance_KW);
         end
         plot(t.Time_s/60,t.CellTemperature_C,style,'Color',colors(c,:), ...
             'LineWidth',width,'DisplayName',label);

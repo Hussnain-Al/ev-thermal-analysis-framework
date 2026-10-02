@@ -41,9 +41,12 @@ transient.assumedEffectiveSpecificHeat_JkgK = 45000/83.5;
 transient.motorThermalCapacity_JK = transient.driveUnitMass_kg* ...
     transient.assumedEffectiveSpecificHeat_JkgK;
 transient.coolantThermalCapacity_JK = 17500;
-transient.motorToCoolantResistance_KW = 0.015;
-transient.radiatorUA_WK = 665;
-transient.fanOnlyRadiatorUA_WK = 300;
+% Winding-to-coolant resistance and radiator UA are derived in
+% apply_literature_corrections. The values below are superseded and kept
+% only for comparison (docs/CORRECTIONS.md).
+transient.superseded.motorToCoolantResistance_KW = 0.015;
+transient.superseded.radiatorUA_WK = 665;
+transient.superseded.fanOnlyRadiatorUA_WK = 300;
 transient.initialMotorTemperature_C = 45;
 transient.initialCoolantTemperature_C = 45;
 transient.designAmbient_C = 45;
