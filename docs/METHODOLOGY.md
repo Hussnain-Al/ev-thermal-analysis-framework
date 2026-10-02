@@ -85,6 +85,17 @@ cold-plate film). The
 superseded ACR/3.10 K/W result is plotted for comparison. A lumped-cell
 discharge transient is in `modules/literature_gap_fill`.
 
+## Battery heat over the drive cycles
+
+Pack current is `I = P_dc / V_pack` from the drive unit's DC-link power
+(negative during regen), with `V_pack = 108 x 3.2 = 345.6 V`. SOC is
+integrated from 90%. Expected heat per cell is
+`I^2 R_DC(25 C) - I T dU/dT(SOC)`; highest possible heat per cell is
+`I^2 R_DC,high + |I| T |dU/dT|peak`. The cycles are chosen with
+`cfg.batteryCooling.cycleSelection`. Nominal voltage is used instead of an
+OCV curve, which slightly overstates current at high SOC and understates it
+at low SOC.
+
 ## Cabin load
 
 The surface-load subtotal is read from the recovered Excel workbook and checked

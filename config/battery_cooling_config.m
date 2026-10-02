@@ -31,6 +31,12 @@ battery.referenceContinuousRiseLimit_C = 15;
 battery.referencePulseRate_C = 3.0;
 battery.referencePulseDuration_s = 30;
 battery.referencePulseRiseLimit_C = 10;
+% Drive-cycle battery heat. Select "all" or a list of cycle file stems from
+% cfg.cycles.FileStem and cfg.motorHeat.operatingCases.FileStem, e.g.
+% ["highway_cycle","sustained_grade"]. Add a drive cycle by adding a row to
+% vehicle_config.m pointing at a time/speed file.
+battery.cycleSelection = "all";
+battery.cycleInitialSOC_pct = 90;
 battery.modelBoundary = ...
     "Set by apply_literature_corrections";
 end

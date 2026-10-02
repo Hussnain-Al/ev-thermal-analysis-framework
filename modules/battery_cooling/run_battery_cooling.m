@@ -1,5 +1,7 @@
-function out = run_battery_cooling(cfg)
-%RUN_BATTERY_COOLING Sustained battery thermal screen.
+function out = run_battery_cooling(cfg,motorHeat)
+%RUN_BATTERY_COOLING Sustained battery screen and drive-cycle battery heat.
+% With motorHeat, battery heat is also calculated for the drive cycles in
+% cfg.batteryCooling.cycleSelection (see run_battery_cycle_heat).
 % Uses the DC resistance, entropic heat and cell-to-coolant path set by
 % apply_literature_corrections. No coolant temperature is imposed here; the
 % discharge transient is in modules/literature_gap_fill.
@@ -26,6 +28,9 @@ out.specification = table( ...
 writetable(out.screen,fullfile(outputDir,"battery_sustained_screen.csv"));
 writetable(out.specification,fullfile(outputDir,"battery_specification_limits.csv"));
 plot_battery_c_rate_sweep(out.screen,p,outputDir);
+if nargin >= 2
+    out.cycleHeat = run_battery_cycle_heat(cfg,motorHeat);
+end
 end
 
 function plot_battery_c_rate_sweep(screen,battery,outputDir)

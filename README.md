@@ -109,7 +109,7 @@ screen, not a validated temperature prediction.
 |---|---|
 | `motor_heat` | Drive-unit heat for NYCC, HWFET and two hot-weather operating cases |
 | `motor_cooling` | Six-hose pressure loss and radiator requirement sensitivity |
-| `battery_cooling` | Sustained cell heat and coolant-temperature requirement with 5-95% band |
+| `battery_cooling` | Sustained cell heat and coolant-temperature requirement with 5-95% band; battery heat over the selected drive cycles |
 | `cabin_cooling` | Workbook audit and heat-balance cabin load |
 | `literature_gap_fill` | Estimate figures, discharge transient and the robustness test of each correction |
 
@@ -223,6 +223,47 @@ The superseded result implied the cell needs sub-zero coolant at 2C, which
 contradicts its own 2C rating. The corrected result says the battery loop
 needs coolant below about 28 C at 2C. A chiller can supply that; 45 C ambient
 air cannot.
+
+### Battery heat over the drive cycles
+
+<img src="docs/images/results/battery_cycle_heat.png" width="820" alt="Battery heat over each drive cycle, expected and highest possible, and mean drive-unit plus battery heat per cycle">
+
+Battery current follows the drive unit's DC-link power each second
+(`I = P_dc / 345.6 V`, negative during regen), and state of charge is tracked
+from 90%. Two heat results are reported for every cycle:
+
+- **expected**: DC Joule heat (0.571 mOhm) plus entropic heat that follows
+  the actual SOC and current direction;
+- **highest possible**: 0.80 mOhm (top of the DC-resistance range) plus the
+  low-SOC entropic peak at every second.
+
+| Cycle | Mean C-rate | Battery heat, expected | Battery heat, highest possible | Drive-unit heat | Drive unit + battery (expected) |
+|---|---:|---:|---:|---:|---:|
+| NYCC urban | 0.10 | 0.03 kW | 0.20 kW | 0.84 kW | 0.87 kW |
+| HWFET highway | 0.42 | 0.24 kW | 0.98 kW | 1.41 kW | 1.65 kW |
+| 10% grade, 40 km/h | 0.66 | 0.56 kW | 1.75 kW | 2.77 kW | 3.33 kW |
+| 5% grade, 15 km/h | 0.17 | 0.04 kW | 0.32 kW | 1.55 kW | 1.59 kW |
+
+The battery adds 20% to the drive-unit heat on the 10% grade in the
+expected case, and 63% in the highest-possible case. Choose the cycles with
+one setting:
+
+```matlab
+cfg = setup_project();
+cfg.batteryCooling.cycleSelection = ["highway_cycle","sustained_grade"];  % or "all"
+results = run_all(cfg);
+results.batteryCooling.cycleHeat.summary
+```
+
+or, after a full run, for any single cycle:
+
+```matlab
+out = run_battery_cycle_heat(cfg,results.motorHeat,"urban_cycle");
+```
+
+Available names are `urban_cycle`, `highway_cycle`, `sustained_grade` and
+`low_speed_hot_weather`. A new drive cycle is added as one row in
+`config/vehicle_config.m` pointing at a time/speed file.
 
 The Simulink battery requirements screen implements the central calculation
 with one sustained C-rate input and six outputs. It does not add a coolant

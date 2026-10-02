@@ -222,6 +222,38 @@ row = discharge.C_rate==2 & discharge.Coolant_C==25 & ...
     abs(discharge.PathResistance_KW-terms.pathResistance_KW)<1e-12;
 assert(abs(discharge.PeakCellTemperature_C(row)-39.395)<0.01);
 
+% Drive-cycle battery heat: expected and highest-possible values, and the
+% cycle selection interface.
+cycleHeat = results.batteryCooling.cycleHeat.summary;
+assert(height(cycleHeat)==numel(results.motorHeat.fileStems));
+gradeHeat = cycleHeat(cycleHeat.FileStem=="sustained_grade",:);
+assert(abs(gradeHeat.MeanBatteryHeat_kW-0.561627)<1e-5);
+assert(abs(gradeHeat.MeanBatteryHeatUpperBound_kW-1.746951)<1e-5);
+assert(abs(gradeHeat.FinalSOC_pct-67.84043)<1e-4);
+assert(abs(gradeHeat.MeanCombinedHeat_kW-3.330411)<1e-5);
+highwayHeat = cycleHeat(cycleHeat.FileStem=="highway_cycle",:);
+assert(abs(highwayHeat.MeanBatteryHeat_kW-0.240561)<1e-5);
+assert(abs(highwayHeat.MaxTrailing60sBatteryHeat_kW-0.425973)<1e-5);
+urbanHeat = cycleHeat(cycleHeat.FileStem=="urban_cycle",:);
+assert(abs(urbanHeat.MeanCombinedHeat_kW-0.870244)<1e-5);
+assert(all(cycleHeat.MeanBatteryHeatUpperBound_kW>=cycleHeat.MeanBatteryHeat_kW));
+for k = 1:numel(results.batteryCooling.cycleHeat.traces)
+    trace = results.batteryCooling.cycleHeat.traces{k};
+    assert(all(trace.BatteryHeatUpperBound_kW>=trace.BatteryHeat_kW-1e-12));
+end
+selectionCfg = cfg;
+selectionCfg.project.outputDir = string(tempname);
+single = run_battery_cycle_heat(selectionCfg,results.motorHeat,"highway_cycle");
+assert(height(single.summary)==1 && single.summary.FileStem=="highway_cycle");
+assert(abs(single.summary.MeanBatteryHeat_kW-highwayHeat.MeanBatteryHeat_kW)<1e-12);
+try
+    run_battery_cycle_heat(selectionCfg,results.motorHeat,"no_such_cycle");
+    error('EVThermal:TestFailed','Unknown cycle names must be rejected.');
+catch err
+    assert(strcmp(err.identifier,'EVThermal:UnknownCycle'));
+end
+rmdir(selectionCfg.project.outputDir,'s');
+
 fprintf('All simplified EV thermal framework checks passed.\n');
 
 function names = radiator_numeric_columns()

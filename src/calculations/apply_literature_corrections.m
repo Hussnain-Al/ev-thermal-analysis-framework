@@ -22,6 +22,8 @@ ratio = register(register.ID=="B01",:);
 battery.dcResistance25Range_Ohm = battery.resistanceProxy_Ohm./[ratio.High ratio.Low];
 battery.entropicPeak_VK = d.batteryTerms.peakDischargeEntropic_VK;
 battery.entropicReferenceTemperature_C = 25;
+battery.entropicSOC_pct = cfg.literatureGapFill.battery.entropicSOC_pct;
+battery.entropic_mVK = cfg.literatureGapFill.battery.entropic_mVK;
 battery.cellToCoolantResistance_KW = d.cellToCoolantResistance_KW;
 pathFn = @(x) derive_path(cfg,x);
 [~,pathRange] = evaluate_assumption_sensitivity(pathFn,a,register, ...

@@ -15,6 +15,9 @@
   - cabin workbook rows recomputed (2.69 kW, not 4.16 kW) and the cabin load
     rebuilt by heat balance (4.31-5.19 kW at 45 C);
   - design humidity 70% to 44% RH at 45 C (70% implies a 38 C dew point).
+- Added battery heat driven by the drive cycles, expected and highest
+  possible, with a `cycleSelection` setting and `run_battery_cycle_heat`
+  for choosing the cycles.
 - Added a sourced literature register with low/high ranges for every
   estimate (`data/literature/literature_assumption_register.csv`).
 - Tested each correction one assumption at a time, at the combined worst
