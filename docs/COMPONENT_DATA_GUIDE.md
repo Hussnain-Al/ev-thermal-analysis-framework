@@ -21,6 +21,8 @@ the four domain configurations with the vehicle and drive-cycle inputs.
 | Motor heat | `drive_unit_efficiency_map.csv` | `Speed_rpm,Torque_Nm,IntegratedEfficiency_pct` |
 | Motor heat | `controller_loss_reference.csv` | Rated and peak controller-only loss points from the supplied figure |
 | Motor cooling | `inactive_pump_resistance_curve.csv` | Flow, passive pressure loss, digitization uncertainty |
+| Motor cooling | `component_pressure_drop.csv` | Supplier MCU, motor and PDU/OBC/DCDC pressure drop against flow |
+| Battery cooling | `gfl_100ah_rate_test.csv` | Vendor 100 Ah LFP discharge voltage at 0.5C-3C every 5 Ah (resistance cross-check only) |
 | Motor cooling | `propulsion_radiator_geometry.csv` | Unbuilt candidate core envelope and flat-tube/fin geometry; literature-only wall and fin thickness are identified by name |
 | Cabin cooling | `Cabin_Cooling_Load_AutoRecovered.xlsx` | Original recovered surface-load calculation |
 | Cabin cooling | `cabin_load_inputs.csv` | Derived surface, occupant and infiltration totals |

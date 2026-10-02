@@ -24,7 +24,8 @@ for i = 1:nCases
 end
 out.summary = vertcat(summaries{:});
 out.hydraulics = evaluate_hydraulics(g,c,pump, ...
-    cfg.motorCooling.files.inactivePumpCurve);
+    cfg.motorCooling.files.inactivePumpCurve, ...
+    cfg.motorCooling.files.componentPressureDrop);
 out.radiatorCandidate = read_radiator_geometry( ...
     cfg.motorCooling.files.radiatorGeometry);
 designRows = nCases-height(cfg.motorHeat.operatingCases)+(1:height( ...
@@ -49,6 +50,8 @@ writetable(out.hydraulics.sensitivity, ...
     fullfile(outputDir,"loop_sensitivity.csv"));
 writetable(out.hydraulics.pumpCheck, ...
     fullfile(outputDir,"pump_operating_point.csv"));
+writetable(out.hydraulics.componentLosses, ...
+    fullfile(outputDir,"component_pressure_drop.csv"));
 writetable(out.radiatorCandidate, ...
     fullfile(outputDir,"radiator_candidate_geometry.csv"));
 writetable(out.radiatorDesign, ...
@@ -85,7 +88,11 @@ summary = table(trace.Case(1),duration_s,trace.Ambient_C(1), ...
     'AssumedRadiatorUA_WK','ModelBoundary'});
 end
 
-function out = evaluate_hydraulics(g,c,pump,inactivePumpCurveFile)
+function out = evaluate_hydraulics(g,c,pump,inactivePumpCurveFile,componentFile)
+components = read_project_csv(componentFile, ...
+    {'Component','Flow_Lmin','PressureDrop_kPa','EvidenceStatus'}, ...
+    {'Flow_Lmin','PressureDrop_kPa'});
+out.componentData = components;
 flows = g.flowCases_Lmin;
 summaryTables = cell(height(c),1);
 for j = 1:height(c)
@@ -96,6 +103,10 @@ for j = 1:height(c)
         summary.CoolantCase = repmat(string(sprintf('%d C', ...
             c.Temperature_C(j))),height(summary),1);
         summary.Temperature_C = repmat(c.Temperature_C(j),height(summary),1);
+        [~,summary.SupplierComponentLoss_kPa] = ...
+            calculate_component_pressure_drop(components,flows(i));
+        summary.LoopLoss_kPa = summary.HoseAndFittingLoss_kPa+ ...
+            summary.SupplierComponentLoss_kPa;
         local{i} = summary;
         if c.Temperature_C(j)==g.nominalTemperature_C && ...
                 flows(i)==g.nominalFlow_Lmin
@@ -115,18 +126,43 @@ if height(pumpRows)~=1
         pump.referenceFlow_Lmin,pump.checkTemperature_C);
 end
 pumpRow = pumpRows(1,:);
-headRemaining_kPa = pump.minimumHead_kPa-pumpRow.HoseAndFittingLoss_kPa;
-coversKnownHoses = headRemaining_kPa>=0;
-conclusion = "Documented point covers modeled hoses and fittings; radiator and component losses are excluded";
+[out.componentLosses,componentLoss_kPa] = ...
+    calculate_component_pressure_drop(components,pump.referenceFlow_Lmin);
+loopLoss_kPa = pumpRow.HoseAndFittingLoss_kPa+componentLoss_kPa;
+headRemaining_kPa = pump.minimumHead_kPa-loopLoss_kPa;
+coversLoop = headRemaining_kPa>=0;
+
+% Flow at which hoses plus supplier components use the documented head. The
+% pump curve is not available, so this is the flow the documented point
+% guarantees, not the operating point.
+property = c(c.Temperature_C==pump.checkTemperature_C,:);
+searchLoss_kPa = zeros(numel(pump.flowSearch_Lmin),1);
+for i = 1:numel(pump.flowSearch_Lmin)
+    q = pump.flowSearch_Lmin(i);
+    [~,hose] = calculate_cooling_loop_losses(g,q, ...
+        property.Density_kgm3,property.Viscosity_Pas);
+    [~,component_kPa] = calculate_component_pressure_drop(components,q);
+    searchLoss_kPa(i) = hose.HoseAndFittingLoss_kPa+component_kPa;
+end
+out.loopCurve = table(pump.flowSearch_Lmin,searchLoss_kPa, ...
+    'VariableNames',{'Flow_Lmin','LoopLoss_kPa'});
+flowAtHead_Lmin = interp1(searchLoss_kPa,pump.flowSearch_Lmin, ...
+    pump.minimumHead_kPa,'linear');
+if coversLoop
+    conclusion = "Documented point covers hoses and supplier component losses; radiator loss excluded";
+else
+    conclusion = "Hoses plus supplier component losses exceed the documented head at the design flow; the pump curve decides the real flow";
+end
 out.pumpCheck = table(pump.referenceFlow_Lmin,pump.minimumHead_kPa, ...
     pumpRow.Temperature_C,pumpRow.HoseMajorLoss_kPa, ...
     pumpRow.FittingMinorLoss_kPa,pumpRow.HoseAndFittingLoss_kPa, ...
-    headRemaining_kPa,coversKnownHoses,conclusion, ...
+    componentLoss_kPa,loopLoss_kPa,headRemaining_kPa,coversLoop, ...
+    flowAtHead_Lmin,conclusion, ...
     'VariableNames',{'SpecifiedFlow_Lmin','SpecifiedMinimumHead_kPa', ...
     'OperatingCoolantTemperature_C','HoseMajorLoss_kPa', ...
     'FittingMinorLoss_kPa','ModeledHoseAndFittingLoss_kPa', ...
-    'HeadRemainingForUnmodeledItems_kPa', ...
-    'DocumentedPointCoversModeledHoses','Conclusion'});
+    'SupplierComponentLoss_kPa','LoopLoss_kPa','HeadRemaining_kPa', ...
+    'DocumentedPointCoversLoop','FlowAtDocumentedHead_Lmin','Conclusion'});
 
 % Preserve and validate the inactive-pump source curve without including it
 % in the active-loop decision.
@@ -174,23 +210,33 @@ layout = tiledlayout(1,2,'TileSpacing','compact');
 nexttile;
 hold on;
 labels = strings(height(c),1);
+palette = [0 0.447 0.741;0.85 0.33 0.10;0.47 0.67 0.19];
 for j = 1:height(c)
     rows = sensitivity.Temperature_C==c.Temperature_C(j);
-    plot(sensitivity.Flow_Lmin(rows), ...
-        sensitivity.HoseAndFittingLoss_kPa(rows), ...
-        'o-','LineWidth',1.5);
-    labels(j) = string(sprintf('%d C',c.Temperature_C(j)));
+    plot(sensitivity.Flow_Lmin(rows),sensitivity.LoopLoss_kPa(rows), ...
+        'o-','LineWidth',1.5,'Color',palette(j,:));
+    labels(j) = string(sprintf('Hoses + supplier components, %d C',c.Temperature_C(j)));
 end
+hotRows = sensitivity.Temperature_C==pump.checkTemperature_C;
+plot(sensitivity.Flow_Lmin(hotRows),sensitivity.HoseAndFittingLoss_kPa(hotRows), ...
+    '--','Color',[0.5 0.5 0.5],'LineWidth',1.3);
+labels(end+1) = sprintf('Hoses and fittings only, %d C',pump.checkTemperature_C);
 plot(pump.referenceFlow_Lmin,pump.minimumHead_kPa,'rp', ...
     'MarkerSize',13,'MarkerFaceColor','r');
-labels(end+1) = "Documented 20 L/min, 60 kPa reference";
+labels(end+1) = "Pump datasheet: 20 L/min at 60 kPa or more";
+check = hydraulics.pumpCheck;
+plot(check.FlowAtDocumentedHead_Lmin,pump.minimumHead_kPa,'kd', ...
+    'MarkerSize',9,'MarkerFaceColor','k');
+labels(end+1) = sprintf('Loop reaches 60 kPa at %.1f L/min (%d C)', ...
+    check.FlowAtDocumentedHead_Lmin,pump.checkTemperature_C);
 grid on;
 xlabel('Coolant flow (L/min)');
-ylabel('Modeled hose and fitting pressure loss (kPa)');
+ylabel('Pressure loss (kPa)');
 xlim([min(sensitivity.Flow_Lmin) pump.referenceFlow_Lmin+1]);
-ylim([0 1.08*pump.minimumHead_kPa]);
-legend(labels,'Location','northwest');
-title('Known external hoses and fittings only');
+ylim([0 1.25*max(sensitivity.LoopLoss_kPa)]);
+legend(labels,'Location','northwest','FontSize',7);
+title(sprintf('Loop loss at %d L/min and %d C: %.1f kPa against 60 kPa', ...
+    pump.referenceFlow_Lmin,pump.checkTemperature_C,check.LoopLoss_kPa));
 
 nexttile;
 errorbar(passiveCurve.Flow_Lmin, ...
@@ -204,8 +250,8 @@ xlim([0 max(passiveCurve.Flow_Lmin)]);
 ylim([0 1.08*max(passiveCurve.InactivePumpResistance_kPa)]);
 title('Supplied stopped-pump resistance evidence');
 
-title(layout,['Available hydraulic evidence; an active pump curve and ' ...
-    'complete component losses are not available']);
+title(layout,['Hydraulics with supplier MCU, motor and PDU/OBC/DCDC ' ...
+    'losses; the active pump curve and radiator loss are not supplied']);
 exportgraphics(fig,fullfile(outputDir,"loop_sensitivity.png"), ...
     'Resolution',180);
 close(fig);

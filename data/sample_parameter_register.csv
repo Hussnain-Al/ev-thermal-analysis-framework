@@ -4,24 +4,26 @@ V02,Vehicle,Wheel rolling diameter,0.724,m,Project design input,Replace with loa
 V03,Vehicle,Reduction ratio,9.11,-,Project component input,Confirm selected drive unit
 V04,Vehicle,Road-load constant A,566.4645,N,Reconstructed from two operating points,Replace with coast-down data
 V05,Vehicle,Road-load speed term B,0.4185918,N/(m/s)^2,Reconstructed from two operating points,Replace with coast-down data
+V06,Vehicle,Reducer efficiency,0.98,-,Project evidence (power demand1.xlsx; mechanical transmission efficiency),Reducer loss reported separately and not added to coolant heat
 B01,Battery,Cell capacity,134,Ah,SVOLT manufacturer specification,Confirm production cell revision
 B02,Battery,Cell nominal voltage,3.2,V,SVOLT manufacturer specification,Confirm production cell revision
 B03,Battery,Series-cell count,108,count,Project pack topology,Confirm production pack topology
 B04,Battery,Resistance basis,0.571,mOhm,DC resistance = 0.40 mOhm ACR / 0.7 at 25 C (range 0.44-0.80),Replace with HPPC DCIR versus SOC and temperature
-B05,Battery,Cell-to-coolant thermal resistance,1.322,K/W,Project battery network with R1 and sum corrected plus cell internals (5-95% 0.99-1.46; worst case 2.47),Superseded 3.10 K/W reconstruction; validate with a cell-to-plate step test
+B05,Battery,Cell-to-coolant thermal resistance,1.033,K/W,Project battery network with R1 and sum corrected and pad 2 from the TG-A1250 datasheet plus cell internals (5-95% 0.78-1.26; worst case 2.30),Superseded 3.10 K/W reconstruction; validate with a single-cell step test
 B06,Battery,Continuous-charge cutoff,55,degC,SVOLT manufacturer specification,Applies to continuous charging table
 B07,Battery,Absolute operating limit,60,degC,SVOLT manufacturer specification,BMS must stop battery operation
 D01,Drive unit,Integrated efficiency surface,50-95.2,percent,Digitized 125 kW supplier chart,Replace with supplier numerical test map
 D02,Drive unit,Three-in-one assembly mass,83.5,kg,Project component input,Mass confirmed; internal material split unavailable
 D03,Drive unit,Assumed effective specific heat,538.9222,J/(kg K),Calibration assumption,ADC12 applies only to the outer casing
 D04,Drive unit,Assumed thermal capacitance,45000,J/K,Derived sensitivity input,Mass multiplied by assumed effective specific heat
-D05,Drive unit,Winding-to-coolant resistance,0.0331,K/W,Calibrated on supplier 143 C rated point at 4192 rpm base speed (range 0.016-0.051),Superseded 0.015 K/W assumption; confirm rated speed and torque
+D05,Drive unit,Winding-to-coolant resistance,0.0340,K/W,Calibrated on supplier 143 C rated point (60 kW at 125 Nm and 4584 rpm; range 0.030-0.039 from controller loss +/-20%),Superseded 0.015 K/W assumption; supplier point is at 8 L/min
 C01,Coolant,Mixture,50/50 water-glycol,-,Project system input,Use selected coolant properties
 C02,Coolant,Assumed loop thermal capacitance,17500,J/K,Calibration assumption,Replace with measured coolant volume and component masses
 H01,Hydraulics,Hose internal diameter,20,mm,Confirmed project geometry,Applies to all six external hoses
-H02,Hydraulics,Reference flow,16,L/min,Project component basis,Confirm component test conditions
+H02,Hydraulics,Reference flow,16,L/min,Supplier component test flow (motor cooling.doc),MCU and motor pressure drops are measured at this flow
 H03,Pump,Screening operating point,20 L/min at 60 kPa,-,Manufacturer specification point,Only available active-point evidence; do not infer a complete Q-H curve
 H04,Pump,Inactive resistance curve,0-50 L/min,-,Manufacturer digitized evidence,Passive resistance only; never use as active pump head
+H05,Hydraulics,Supplier component pressure drops,MCU 13 / motor 11 / OBC 7.6 kPa at 16 L/min,-,Supplier test (motor cooling.doc),Scaled with flow squared outside the measured points; not temperature corrected
 R01,Radiator,Candidate core envelope,270 x 310 x 26,mm,Retained project geometry,Unbuilt design candidate; depth inferred from tube and fin width
 R02,Radiator,Flat-tube external cross-section,26 x 2,mm,Retained project geometry,The 2 mm value is external depth and not wall thickness
 R03,Radiator,Assumed tube wall thickness,0.2,mm,Comparable tested automotive radiator,Screening geometry only; not measured for this candidate

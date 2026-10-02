@@ -1,5 +1,29 @@
 # Changelog
 
+## 4.6.0 — 2026-10-02
+
+Supplier and project documents replace assumptions wherever they give a
+number (`docs/CORRECTIONS.md`, "Supplier documents folded in"):
+
+- Thermal pad 2 from the T-Global TG-A1250 datasheet: 0.041 K/W at 10 psi over
+  the 4.8e-3 m2 contact (0.020-0.33 K/W range). Battery path 1.32 to
+  1.03 K/W; allowable coolant at 1C 26.9 to 34.1 C.
+- Winding resistance calibrated at the supplier rated point (60 kW, 125 Nm,
+  4584 rpm): 0.0340 K/W, range 0.030-0.039 K/W. The peak reference check uses
+  the supplier peak point (125 kW, 280 Nm).
+- Reducer efficiency 98% (project power-demand sheet) between the wheel and
+  the motor-system map; its loss is reported and kept out of the coolant
+  heat.
+- Supplier MCU, motor and PDU/OBC/DCDC pressure drops added to the hydraulics.
+  The loop needs 71.4 kPa at 20 L/min against the pump's documented 60 kPa,
+  which guarantees 18.3 L/min.
+- Compressor reference set to the DM18A1 rated 2.9 kW (about 0 C evaporating,
+  57 C condensing); 3.63 kW kept as superseded.
+- Cell DC resistance checked against the GFL 100 Ah vendor rate test (within
+  2%) and the SVOLT 10 s power ceiling (1.36 mOhm).
+- L6 added to the radiator design table; parameter register, provenance and
+  regression values updated.
+
 ## 4.5.0 — 2026-10-02
 
 - Corrected six inputs and kept each superseded value for comparison

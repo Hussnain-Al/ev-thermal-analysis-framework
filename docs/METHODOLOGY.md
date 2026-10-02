@@ -26,9 +26,11 @@ C_c\frac{dT_c}{dt}=\frac{T_m-T_c}{R_{mc}}-UA\max(T_c-T_a,0)
 \]
 
 `R_mc` is calibrated on the supplier rated point: 143 C winding with 60 C
-coolant at 60 kW. At base speed (4192 rpm) the efficiency map gives the
-integrated loss; subtracting the 1.58 kW controller loss gives
-`R_mc = 83 K / 2.51 kW = 0.0331 K/W`. `UA` is the Chang-Wang estimate for the
+coolant at 60 kW and 125 Nm (4584 rpm). There the motor-system efficiency
+map gives 93.7%, a 4.02 kW loss; subtracting the 1.58 kW controller loss gives
+`R_mc = 83 K / 2.44 kW = 0.0340 K/W`. The map covers motor and controller; a
+98% reducer (project power-demand sheet) sits between it and the wheel, and
+its loss is reported but not sent to the coolant. `UA` is the Chang-Wang estimate for the
 candidate core: 139.7 W/K at 3.0 m/s face velocity, 122.3 W/K fan-only at
 2.0 m/s. `C_m` and `C_c` remain assumptions. Because the full integrated
 loss crosses the winding resistance, the drive-unit node is an upper bound
@@ -37,9 +39,12 @@ The 83.5 kg three-in-one drive-unit mass is known. Its 45 kJ/K thermal
 capacitance corresponds to an assumed effective specific heat of about
 539 J/(kg K); the complete assembly is not treated as solid ADC12.
 
-Darcy-Weisbach and fitting losses define the six-hose system curve. Motor,
-controller, PDU and radiator pressure drops are excluded. The 60 kPa documented
-pump reference is therefore compared only with the modeled hose requirement.
+Darcy-Weisbach and fitting losses define the six-hose system curve. The
+supplier component drops are added: MCU 13 kPa and motor 11 kPa at 16 L/min,
+and the PDU/OBC/DCDC water-resistance curve, scaled with flow squared outside
+the measured points. The loop needs 71.4 kPa at 20 L/min against the pump's
+documented 60 kPa, so that point guarantees 18.3 L/min. The radiator drop
+(about 0.6 kPa, estimated) is excluded.
 The supplied stopped-pump resistance curve is plotted separately as passive
 loss evidence; it is not an active pump curve and cannot define an operating
 point.
@@ -78,10 +83,10 @@ T_{coolant,max}=T_{limit}-\dot Q_{cell}R_{cell\to coolant}
 
 `R_DC = 0.40/0.7 = 0.571 mOhm` at 25 C converts the SVOLT 1 kHz ACR to a DC
 value. The entropic term uses the low-SOC peak of 0.37 mV/K. Both are held
-at their conservative values. `R_cell-to-coolant = 1.32 K/W` follows the
+at their conservative values. `R_cell-to-coolant = 1.03 K/W` follows the
 project battery network R1-R6 (casing, pad 1, 3 mm base plate, pad 2,
 channel wall, 400 W/(m2 K) over 4.8e-3 m2) with R1 recomputed from its
-stated 0.8 mm aluminium, plus cell interior, base insulator and PET wrap. The
+stated 0.8 mm aluminium and both pads from the TG-A1250 datasheet, plus cell interior, base insulator and PET wrap. The
 5-95% band comes from 1024 Halton samples over the register ranges. The
 superseded ACR/3.10 K/W result is plotted for comparison. A lumped-cell
 discharge transient is in `modules/literature_gap_fill`.

@@ -14,7 +14,7 @@ cell-to-coolant path built from sourced literature values. The superseded
 | Continuous discharge | 2C maximum | SVOLT specification at 25 +/- 3 C |
 | Charging cutoff | 55 C | SVOLT continuous-charge table |
 | Absolute limit | 60 C | SVOLT protection requirement |
-| Cell-to-coolant path | 1.32 K/W | Project battery network (R1-R6) with R1 and the sum corrected, plus cell internals; 5-95% 0.99-1.46 K/W |
+| Cell-to-coolant path | 1.03 K/W | Project battery network (R1-R6) with R1 and the sum corrected, pads from the TG-A1250 datasheet, plus cell internals; 5-95% 0.78-1.26 K/W |
 | Superseded base path | 3.10 K/W | Network as written: terms sum to 2.57 K/W and R1 is entered as 1.69 K/W for 0.8 mm aluminium |
 
 The screen reports cell heat and the maximum coolant temperature that keeps

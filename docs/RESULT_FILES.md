@@ -4,7 +4,7 @@
 |---|---|---|
 | Motor heat | `motor_heat_summary.csv`, `*_motor_heat_trace.csv`, `controller_loss_reference_used.csv` | Operating points, integrated-drive heat and controller-only reference points |
 | Motor cooling | `motor_thermal_summary.csv`, `*_motor_thermal_trace.csv` | Two-node screen with calibrated winding resistance and estimated core UA; capacitances assumed |
-| Hydraulics | `loop_sensitivity.csv`, `pump_operating_point.csv` | Hose/fitting system curve and remaining head at the documented reference point |
+| Hydraulics | `loop_sensitivity.csv`, `pump_operating_point.csv`, `component_pressure_drop.csv` | Hose, fitting and supplier component losses; loop loss against the documented pump point and the flow that point guarantees |
 | Radiator design | `radiator_candidate_geometry.csv`, `radiator_design_requirements.csv`, `radiator_airside_sensitivity.csv` | Candidate core, required face velocity and ideal UA sensitivity; no delivered fan/core performance |
 | Battery drive cycles | `battery_cycle_heat_summary.csv`, `*_battery_heat_trace.csv` | Expected and highest-possible battery heat for each selected cycle, with drive-unit heat alongside |
 | Battery | `battery_sustained_screen.csv`, `battery_specification_limits.csv` | DC Joule plus entropic heat, allowable coolant temperature with 5-95% band, superseded ACR result |

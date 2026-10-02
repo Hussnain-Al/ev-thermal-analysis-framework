@@ -10,6 +10,13 @@ vehicle.gravity_ms2 = 9.81;
 vehicle.wheelDiameter_m = 0.724;
 vehicle.wheelRadius_m = vehicle.wheelDiameter_m/2;
 vehicle.gearRatio = 9.11;
+% Single-speed reducer efficiency. Project evidence: power demand1.xlsx
+% (Sheet4, "Mechanical Transmission Efficiency 98%"). The supplied
+% efficiency map is the motor-system map (motor plus controller), so the
+% reducer loss sits between the wheel and the map. That loss is reported
+% separately and not added to the coolant heat: the reducer is oil-splash
+% lubricated and rejects mostly through its own housing.
+vehicle.reducerEfficiency = 0.98;
 
 % Flat-road force model: Froad = A + B*v^2. Replace these reconstructed
 % coefficients with measured coast-down data when it becomes available.

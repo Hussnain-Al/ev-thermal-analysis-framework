@@ -1,7 +1,10 @@
 # Corrections and their defence
 
-Version `4.5.0` replaces six inputs that did not hold up. Each correction
-below is argued the same way:
+Version `4.6.0` replaces six inputs that did not hold up and folds in the
+supplier documents (thermal pad, drive unit, component pressure drops,
+compressor, sister-cell rate test; see
+[Supplier documents folded in](#supplier-documents-folded-in)). Each
+correction below is argued the same way:
 
 1. **Claim**: what changes and in which direction.
 2. **Why the superseded value fails**: the specific defect, not a preference.
@@ -37,15 +40,15 @@ survives only the 5-95% band is reported as such.
 
 | Correction | Adopted | 5-95% | Combined extreme | Superseded | Claim | Verdict |
 |---|---:|---:|---:|---:|---|---|
-| Battery cell-to-coolant path | 1.322 K/W | 0.990-1.464 | 0.590-2.473 | 3.10 K/W | Superseded value is above the whole range | Holds at every extreme; also an arithmetic error in the source network |
+| Battery cell-to-coolant path | 1.033 K/W | 0.777-1.261 | 0.410-2.303 | 3.10 K/W | Superseded value is above the whole range | Holds at every extreme; also an arithmetic error in the source network |
 | Radiator UA, normal driving | 139.7 W/K | 125-161 | 93-201 | 665 W/K | Superseded value is above the whole range | Holds at every extreme |
-| Winding-to-coolant resistance | 0.0331 K/W | not sampled | 0.0158-0.0514 | 0.015 K/W | Superseded value is below the whole range | Holds, narrowly at the low end |
+| Winding-to-coolant resistance | 0.0340 K/W | not sampled | 0.0301-0.0390 | 0.015 K/W | Superseded value is below the whole range | Holds; the low end is twice the superseded value |
 | Cabin load, humid heat | 5.19 kW | 4.58-6.63 | 3.22-9.13 | 4.156 kW | Load exceeds the recorded subtotal | Holds within 5-95%, not at every extreme |
 
-## 1. Battery cell-to-coolant path: 3.10 to 1.32 K/W
+## 1. Battery cell-to-coolant path: 3.10 to 1.03 K/W
 
-**Claim.** The project's own battery network, evaluated correctly, gives
-1.32 K/W, not 3.10 K/W.
+**Claim.** The project's own battery network, evaluated correctly and with
+thermal pad 2 taken from the pad datasheet, gives 1.03 K/W, not 3.10 K/W.
 
 **Why 3.10 K/W fails.** The value comes from the project battery network
 (`docs/images/battery_single_cell_equivalent.png`,
@@ -62,7 +65,8 @@ Two errors are visible in that line:
   the stated casing can produce 1.69 K/W.
 
 **Derivation.** Every term the network defines is kept with its own geometry
-and values. R1 is recomputed from its stated thickness. The cell-internal
+and values. R1 is recomputed from its stated thickness. Both pads are taken
+from the T-Global TG-A1250 datasheet in the project folder. The cell-internal
 terms the network leaves out are added from literature:
 
 | Element | Value (K/W) | Source |
@@ -71,24 +75,33 @@ terms the network leaves out are added from literature:
 | Jelly roll to can base | 0.179 | 0.3 mm polymer insulator, 0.2 W/(m K) |
 | Insulation film | 0.089 | 0.15 mm PET, 0.2 W/(m K) |
 | R1 cell casing | 0.0006 | Network: 0.8 mm aluminium, recomputed |
-| R2 thermal pad 1 | 0.022 | Network value |
+| R2 thermal pad 1 | 0.022 | Network value; TG-A1250 at 10 psi over 8.4e-3 m2 gives 0.023 |
 | R3 module base plate | 0.002 | Network: 3 mm aluminium |
-| R4 thermal pad 2 | 0.330 | Network value |
+| R4 thermal pad 2 | 0.041 | TG-A1250: 0.304 C in2/W at 10 psi over the 4.8e-3 m2 contact (network value 0.33) |
 | R5 channel wall | 0.0005 | Network: 0.6 mm aluminium |
 | R6 coolant convection | 0.521 | Network: h = 400 W/(m2 K) over 4.8e-3 m2 channel contact |
-| **Total** | **1.322** | |
+| **Total** | **1.033** | |
 
 The network areas also fix the cell geometry used here: the 8.4e-3 m2 base
 and 0.0224 m2 side imply a 200 x 42 x 112 mm cell standing upright. That
 replaces the seller listing (220 x 44.6 x 112 mm) and removes orientation as
 an uncertainty.
 
-**What the derivation shows.** Thermal pad 2 and the channel convection are
-64% of the path. They are design choices, not cell properties. A wider
-channel contact (4.8e-3 to 8.4e-3 m2) and a thinner pad 2 are the levers.
+**Pad 2.** The network enters pad 2 as 0.33 K/W without a derivation. The
+same datasheet reproduces the network's own pad 1 value (0.023 against
+0.022 K/W) when its resistance per area is divided by the pad area. Done the
+same way for pad 2 it gives 0.041 K/W at 10 psi, the lowest pressure listed,
+and 0.020 K/W at 50 psi. 0.33 is close to the datasheet's 0.304 per square
+inch, which suggests the area was never applied. The register keeps 0.33 as
+the high end, so the band still covers the network value.
 
-**Robustness.** The combined extreme is 0.59-2.47 K/W and the 5-95% band is
-0.99-1.46 K/W, so 3.10 K/W is above the whole range. The claim no longer
+**What the derivation shows.** The channel convection is now half the path
+(0.52 of 1.03 K/W) and the cell internals another 43%. A wider channel contact
+(4.8e-3 to 8.4e-3 m2) or a higher channel coefficient is the lever; pad 2 no
+longer is, unless it is fitted at far less than 10 psi.
+
+**Robustness.** The combined extreme is 0.41-2.30 K/W and the 5-95% band is
+0.78-1.26 K/W, so 3.10 K/W is above the whole range. The claim no longer
 rests on the range, though: the sum error and the R1 unit error are
 arithmetic and need no assumption.
 
@@ -114,7 +127,15 @@ as the cell warms) and the low-SOC entropic peak.
 
 **Robustness.** The ACR/DCIR ratio range 0.5-0.9 gives 0.44-0.80 mOhm.
 Combined with the path samples, the allowable coolant temperature at 1C is
-22.5-35.1 C (5-95%), against 26.9 C central and 37.7 C superseded.
+27.9-40.4 C (5-95%), against 34.1 C central and 37.7 C superseded. The two
+corrections pull in opposite directions: more heat per cell, a shorter path.
+
+**Checked against measurements.** The vendor rate test of a 100 Ah LFP cell
+in the project folder (GFL, 0.5C to 3C) gives a sustained resistance from the
+0.5C-1C voltage gap. Scaled to 134 Ah by capacity, it is 0.582 mOhm at 50 Ah
+depth and 0.56-0.69 mOhm over 20-80 Ah, against 0.571 mOhm adopted: within
+2%. The SVOLT 10 s power rating (at least 1456 W to 2.5 V at 50% SOC) caps the
+DC resistance at 1.36 mOhm, above the 0.80 mOhm top of the band.
 
 **What would overturn it.** HPPC pulses at 0, 25 and 45 C give DCIR directly;
 an entropic coefficient measurement (OCV against temperature at several
@@ -148,7 +169,7 @@ pitch falls slightly below 100.
 test of the selected core. A turbulator or dimpled tube would raise the
 coolant-side coefficient, which is 30-45% of the total resistance.
 
-## 4. Winding-to-coolant resistance: 0.015 to 0.0331 K/W
+## 4. Winding-to-coolant resistance: 0.015 to 0.0340 K/W
 
 **Claim.** The supplier's own data imply a higher winding-to-coolant
 resistance than assumed.
@@ -156,23 +177,24 @@ resistance than assumed.
 **Why 0.015 K/W fails.** It was an unexplained calibration value. The
 supplier reports 143 C winding with 60 C coolant at the rated point. At
 0.015 K/W, that 83 K rise would need 5.5 kW of motor loss. The efficiency
-map gives about 2.5 kW at 60 kW output near base speed.
+map gives 2.44 kW at the rated point.
 
-**Derivation.** `R = 83 K / (integrated loss - controller loss)` at 60 kW. The
-integrated loss comes from the efficiency map at base speed (4192 rpm, the
-corner of the supplied torque curve). The controller loss is the supplied
-1.58 kW.
+**Derivation.** `R = 83 K / (integrated loss - controller loss)` at the
+supplier rated point: 60 kW at 125 Nm rated torque, so 4584 rpm. The map
+gives 93.7% there, an integrated loss of 4.02 kW. Less the supplied 1.58 kW
+controller loss, 2.44 kW crosses the winding path: `83 / 2440 = 0.0340 K/W`.
+Earlier versions did not have the rated torque and assumed the torque-curve
+corner (4192 rpm, 0.0331 K/W).
 
-**Robustness.** The rated speed is not stated, so it is swept from 3000 to
-9000 rpm. Together with a ±20% controller-loss uncertainty, the range is
-0.0158-0.0514 K/W. The low end barely clears 0.015 K/W, so the claim
-holds, but only narrowly if the rated point were at 3000 rpm. This value is
-a hot-spot resistance. Pushing the full integrated loss (including the
-inverter and reducer) through it makes the drive-unit temperature an upper
-bound on the winding.
+**Robustness.** With the rated point known, only the ±20% controller-loss
+uncertainty remains: 0.0301-0.0390 K/W, at least twice 0.015 K/W. The
+calibration figure still shows the 3000-9000 rpm sweep, to show how far the
+value would move if the rated point were wrong. This value is a hot-spot
+resistance. Pushing the whole motor-plus-controller loss through it makes the
+drive-unit temperature an upper bound on the winding.
 
-**What would overturn it.** The rated speed and torque behind the 143 C figure,
-or a thermocouple step test on the stator.
+**What would overturn it.** Confirmation that the 143 C figure is a steady
+state, or a thermocouple step test on the stator.
 
 ## 5. Cabin load: workbook audit and heat-balance rebuild
 
@@ -231,20 +253,22 @@ exceedance frequency.
 
 | Result | Superseded | Corrected | Spread |
 |---|---:|---:|---|
-| Max coolant for 60 C cell at 1C | 37.7 C | 26.9 C | 22.5-35.1 C (5-95%) |
-| Max coolant for 60 C cell at 2C | -29.1 C | -33.4 C | -47.3 to -9.1 C (5-95%) |
-| Sustained C-rate at the project's 30 C coolant | 1.16C | 0.93C | |
-| 10% grade, drive-unit peak after 20 min | 81.6 C | 98.55 C | Upper bound on winding |
-| 10% grade, coolant peak after 20 min | 48.3 C | 53.9 C | |
-| Low-speed grade, drive-unit peak after 30 min | 70.1 C | 84.3 C | Fan-only UA |
+| Max coolant for 60 C cell at 1C | 37.7 C | 34.1 C | 27.9-40.4 C (5-95%) |
+| Max coolant for 60 C cell at 2C | -29.1 C | -12.9 C | -31.7 to +5.3 C (5-95%) |
+| Sustained C-rate at the project's 30 C coolant | 1.16C | 1.11C | |
+| 10% grade, drive-unit peak after 20 min | 82.5 C | 100.3 C | Upper bound on winding |
+| 10% grade, coolant peak after 20 min | 48.4 C | 54.0 C | |
+| Low-speed grade, drive-unit peak after 30 min | 70.5 C | 85.4 C | Fan-only UA |
+| L6 8% grade full load, drive-unit peak after 20 min | not run | 120.2 C | Upper bound on winding |
 | Cabin subtotal from workbook | 4.16 kW | 2.69 kW | Deterministic audit |
 | Cabin load at 45 C, humid heat | not calculated | 5.19 kW | 4.58-6.63 kW (5-95%) |
 
-With the corrected path and heat, the pack cannot sustain 2C at any
-practical coolant temperature, and at the project's 30 C design coolant it
-sustains about 0.93C. That covers the drive cycles and the 10% grade
-(0.72C), but not archived load case L6 (1.52C mean). The design question is
-the channel and pad 2, not the cell.
+The superseded column is rerun with the 4.6.0 heat (reducer included) so
+only the corrected parameters differ. With the corrected path and heat, the
+pack cannot sustain 2C at any practical coolant temperature, and at the
+project's 30 C design coolant it sustains about 1.11C. That covers the drive
+cycles and the 10% grade (0.73C), but not archived load case L6 (1.55C). The
+design question is the channel coefficient and contact area, not the cell.
 
 ## Limits of the methods
 
@@ -256,12 +280,15 @@ affect.
 |---|---|---|---|
 | Battery path build-up | 1-D series model; ignores lateral spreading in the base plate beyond the channel contact | Overestimates the path slightly | Conservative; the inter-cell paths (16.67 K/W each) carry no net heat when neighbouring cells are equally loaded |
 | Battery path build-up | `H/(3kA)` gives the mean cell temperature; the core hot spot uses `H/(2kA)` | Core is about 0.09 K/W hotter than the mean | Limits apply to the measured surface or mean; add 0.08 K/W if the BMS limit is a core temperature |
-| Battery path build-up | Earlier versions used literature plate values and omitted the project's base plate and pad 2 | Underestimated the path by a factor of three | Corrected: the path now follows the project network (1.32 K/W) |
+| Battery path build-up | Earlier versions used literature plate values and omitted the project's base plate and pad 2 | Underestimated the path by a factor of three | Corrected: the path now follows the project network (1.03 K/W) |
+| Pad 2 | Datasheet resistance at 10 psi over the 4.8e-3 m2 contact; the fitted pressure and pad thickness are not documented | A thicker or less compressed pad raises it | Register high end keeps the network's 0.33 K/W, which sets the 2.30 K/W worst case |
+| DC resistance check | The GFL cell is a different 100 Ah cell, scaled to 134 Ah by capacity | Unknown sign | Used only as a check; it agrees within 2% |
 | DC resistance | ACR/0.7 is a rule of thumb from one practitioner source | Unknown sign | Range 0.5-0.9 is carried in the 5-95% band |
 | Entropic heat | Uses the low-SOC peak for every sustained C-rate and for charging | Overestimates heat at mid SOC; over-conservative for charging | Conservative; the 55 C charge line is pessimistic |
 | Entropic profile | Generic LFP/graphite shape, not measured on this cell | Unknown sign | Only the peak magnitude enters the screen |
 | Winding calibration | Supplier point measured at 8 L/min; model runs at 20 L/min | Overestimates R at 20 L/min | Conservative for winding temperature |
-| Winding calibration | Reducer loss counted as winding-path loss | Underestimates R | Partly offsets the line above; covered by the 3000-9000 rpm sweep |
+| Reducer | 98% from the project power-demand sheet; its loss (0.57 kW on the 10% grade, 1.26 kW on L6) is kept out of the coolant heat | Underestimates coolant heat if part of it reaches the jacket | Reported per case in `motor_heat_summary.csv` |
+| Component pressure drops | Supplier points at 16 L/min, unknown coolant temperature; scaled with flow squared outside them | Unknown sign | The OBC curve itself rises with flow to the power 2.05 |
 | Winding calibration | Assumes the 143 C rated rise is a steady state | Unknown until the duration is confirmed | Disclosed as an open input |
 | Radiator estimate | Chang-Wang correlation assumes louvered fins; the drawing does not say | If the fins are plain, the UA is lower | Strengthens the claim that 665 W/K is unreachable |
 | Radiator estimate | Face velocities of 2-3 m/s are screening values, not measurements | Unknown sign | Even 8 m/s with every favourable value, including +15% correlation scatter, gives 226 W/K |
@@ -281,7 +308,7 @@ evidence the earlier versions of this layer ignored:
 | Battery network figures (`docs/images/battery_*`) | Pack layer stack, areas, pad 2, channel h and contact area | Battery path (section 1) |
 | Archived load cases L1-L7 (git history) | Motor power and pack current per case | Pack voltage under load, 314-336 V (mean 321 V) instead of 345.6 V nominal |
 | Archived load case L6 | 8% continuous grade, full 350 kg load, 61.5 kW at the wheel | New operating case (85.2 km/h, solved from road load) |
-| Archived DM18A1 compressor | 3.63 kW at 4 C evaporating, R134a | Reference line on the cabin load |
+| DM18A1 compressor specification | 2.9 kW at 6000 rpm, about 0 C evaporating and 57 C condensing (the archived 3.63 kW needs a cooler condenser than a 45 C day allows) | Reference line on the cabin load |
 | Archived battery config | 30 C coolant, cooling on at 35 C, 900 J/(kg K) cell specific heat | 30 C used as the design coolant check; 900 J/(kg K) is now the low end of the register range |
 | LubeMax Antifreeze/Coolant 50/50 datasheet | Ethylene glycol 50% v/v; boiling 107 C (129.4 C capped); freeze -36.7 C | Confirms the 50/50 ethylene-glycol property basis; limits added as reference checks. The sheet has no specific heat, viscosity or conductivity table |
 
@@ -289,23 +316,81 @@ The supplier PDFs themselves (SVOLT, 125 kW drive unit, pump, radiator,
 thermal pad) are not in the repository; only the values recorded in
 `references/SOURCE_PROVENANCE.md` and the derived CSVs are.
 
+## Supplier documents folded in
+
+Version 4.6.0 reads every file in the project's cooling-system folder. Where
+a document gives a number the model had assumed, the document now wins:
+
+| Document | Value | Replaces | Effect |
+|---|---|---|---|
+| T-Global TG-A1250 pad datasheet | 0.304 / 0.147 C in2/W at 10 / 50 psi | Pad 2 at 0.33 K/W | Battery path 1.32 to 1.03 K/W; 1C coolant limit 26.9 to 34.1 C |
+| 125 kW drive-unit sheet | Rated 60 kW at 125 Nm (4584 rpm); peak 125 kW at 280 Nm (4263 rpm) | Rated point assumed at the torque-curve corner | Winding R 0.0331 to 0.0340 K/W; range narrowed from 0.016-0.051 to 0.030-0.039 |
+| Power-demand workbook, Sheet4 | Mechanical transmission efficiency 98% | No reducer loss | Drive-unit heat and battery current up 1-4% on every cycle |
+| Motor cooling document | MCU 13 kPa, motor 11 kPa at 16 L/min; PDU/OBC/DCDC curve | Component losses excluded | Loop loss at 20 L/min is 71.4 kPa, above the pump's 60 kPa |
+| DM18A1 compressor specification | 2.9 kW at about 0 C / 57 C | 3.63 kW at 4 C evaporating | Compressor shortfall grows |
+| GFL 100 Ah vendor rate test | Voltage at 0.5C to 3C | Nothing (check only) | DC resistance confirmed within 2% |
+| SVOLT specification | 10 s power at least 1456 W to 2.5 V | Nothing (check only) | DC resistance ceiling 1.36 mOhm |
+
+**Pump.** With the supplier component losses the loop needs 71.4 kPa at the
+20 L/min design flow (60 C coolant), against the pump datasheet's "1200 L/h
+at 60 kPa or more". The documented point therefore guarantees 18.3 L/min,
+not 20. The pump curve itself is "see customer drawing" and not in the
+folder, so the real operating point is unknown. The thermal results do not
+hinge on it: the radiator coolant side is laminar, so its film coefficient
+does not depend on flow, and 18.3 L/min raises the coolant temperature rise
+across the loop by 9%. The radiator's own pressure drop (about 0.6 kPa,
+estimated) is not included.
+
+**The project's earlier estimates.** Two files in the folder hold earlier
+heat estimates. They differ from this model for stated reasons:
+
+| Case | Earlier estimate | This model | Why |
+|---|---:|---:|---|
+| NYCC drive-unit heat | 454 W (constant 95%) | 844 W | NYCC runs at low torque; 71% of its heat comes from points below 85% efficiency |
+| HWFET drive-unit heat | 850 W (constant 95%) | 1418 W | Same reason, smaller share |
+| NYCC battery heat | 100 W | 41 W | Different drive model and voltage; the 4.6.0 value tracks SOC and regen |
+| HWFET battery heat | 432 W | 291 W | As above |
+| L6 battery heat | 1800 W (0.4 mOhm ACR) | 2556 W | DC resistance (ACR/0.7) and entropic heat at low SOC |
+
+The constant-95% estimate is the one to drop: the supplied map shows the
+efficiency falls well below 95% where urban driving operates.
+
+**Battery chiller.** The brazed-plate drawing (FHC008G-40, 0.46 m2 heat-transfer
+area, no capacity rating) is checked by hand, not modelled. Removing L6's
+expected 2.56 kW across a 15 K mean temperature difference needs a UA of about
+170 W/K, so U = 370 W/(m2 K) over 0.46 m2. Brazed-plate water/refrigerant
+units commonly reach 1000 W/(m2 K) or more, so the plate area is not the
+constraint; the 2.9 kW compressor is.
+
+## Documents in the folder that were not used
+
+| Document | Why not |
+|---|---|
+| Heater HSEA-3KW-PTC | Cabin heating; the study is a hot-weather cooling study |
+| Solenoid valve and coolant temperature sensor notes | Part links only |
+| Compact SUV Cooling System Design | Design brief: 35 C / 70% RH, 23 C comfort target, three loops. The 35 C / 70% RH pairing is physical (28.7 C dew point); it was the move to 45 C that broke it |
+| Cell load and Book1 workbooks | Duplicate the ACR heat table and the torque curve already in the repository |
+| SAE paper on radiator inlet temperatures | Already cited; copyrighted |
+
 ## Checks against the project's own references
 
 `modules/literature_gap_fill` writes `reference_checks.csv`:
 
 | Check | Reference | Model | Finding |
 |---|---:|---:|---|
-| Drive unit after 30 s at 125 kW peak, from 60 C | 103 C (supplier) | 69.2 C | The two-node model is too slow for 30 s peaks. Use it for minutes-long duties only |
+| Drive unit after 30 s at 125 kW peak (280 Nm, 4263 rpm), from 60 C | 103 C (supplier) | 69.3 C | The two-node model is too slow for 30 s peaks. Use it for minutes-long duties only |
 | Winding thermal capacitance | 9.8 kJ/K implied by the supplier peak | 45 kJ/K assumed | The lumped value is the whole unit; the winding behaves like about a fifth of it |
 | Cell rise, 1C for 600 s (adiabatic) | SVOLT limit 15 C | 2.1 C | Consistent; reaching the limit would need 3.7 mOhm, so it does not test the resistance |
 | Cell rise, 3C for 30 s (adiabatic) | SVOLT limit 10 C | 1.0 C | Consistent; not a discriminating test |
-| Cabin load, humid heat | DM18A1 3.63 kW | 5.19 kW | The archived compressor is below the cabin load before any battery chiller duty |
+| Cabin load, humid heat | DM18A1 rated 2.9 kW | 5.19 kW | The compressor is below the cabin load before any battery chiller duty |
 | Peak propulsion coolant, all cases | LubeMax boiling point 107 C (no cap) | about 57 C | Large boiling margin even without the 15 psi cap (129.4 C) |
-| Coolant needed for sustained 2C | LubeMax freeze point -36.7 C | -33.4 C | Within 3.3 K of freezing and below it across part of the band; 2C sustained is not a cooling target |
+| Coolant needed for sustained 2C | LubeMax freeze point -36.7 C | -12.9 C | Above freezing but far below a practical chiller supply; 2C sustained is not a cooling target |
+| Cell DC resistance, top of band | SVOLT 10 s power ceiling 1.36 mOhm | 0.80 mOhm | Consistent; a minimum power only caps the resistance |
+| Cell DC resistance, central | GFL 100 Ah rate test, scaled: 0.582 mOhm | 0.571 mOhm | Within 2% |
 
 The compressor finding is the most consequential. On L6 the battery adds
-2.5-6.2 kW of chiller duty on top of the cabin, so cabin plus battery reaches
-7.6-11.4 kW against 3.63 kW.
+2.6-6.4 kW of chiller duty on top of the cabin, so cabin plus battery reaches
+7.7-11.6 kW against 2.9 kW.
 
 ## Remaining assumptions that were not corrected
 

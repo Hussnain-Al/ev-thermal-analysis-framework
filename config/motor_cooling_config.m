@@ -11,6 +11,10 @@ motorCooling.files.thermalReference = fullfile(rootDir,"data", ...
     "motor_cooling","drive_unit_thermal_reference.csv");
 motorCooling.files.radiatorGeometry = fullfile(rootDir,"data", ...
     "motor_cooling","propulsion_radiator_geometry.csv");
+% Supplier component pressure drops (motor cooling.doc): MCU and motor
+% tested at 16 L/min, PDU/OBC/DCDC water-resistance curve.
+motorCooling.files.componentPressureDrop = fullfile(rootDir,"data", ...
+    "motor_cooling","component_pressure_drop.csv");
 
 % Selected coolant: LubeMax Antifreeze/Coolant 50/50 (ethylene glycol,
 % 50% v/v, ASTM D3306). The datasheet gives limits but no thermophysical
@@ -79,4 +83,7 @@ motorCooling.loop = loop;
 motorCooling.pump.referenceFlow_Lmin = 20;
 motorCooling.pump.minimumHead_kPa = 60;
 motorCooling.pump.checkTemperature_C = 60;
+% Flow grid used to find the flow at which the loop loss reaches the pump's
+% documented minimum head (the full pump curve is not available).
+motorCooling.pump.flowSearch_Lmin = (4:0.05:30)';
 end

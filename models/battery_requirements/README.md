@@ -9,7 +9,7 @@ that stops at the battery-to-coolant boundary.
 |---|---|
 | Sustained C-rate | Current |
 | Current, 0.571 mOhm DC resistance and peak entropic coefficient | Cell and pack heat |
-| Cell heat and 1.32 K/W cell-to-coolant path | Required cell-to-coolant temperature difference |
+| Cell heat and 1.03 K/W cell-to-coolant path | Required cell-to-coolant temperature difference |
 | Required temperature difference and SVOLT limits | Maximum allowable coolant temperature |
 
 The DC resistance is the 1 kHz ACR divided by 0.7. The entropic heat uses the

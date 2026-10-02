@@ -54,13 +54,12 @@ cfg.batteryCooling = battery;
 % radiator UA from the candidate core geometry.
 transient = cfg.motorCooling.transient;
 transient.motorToCoolantResistance_KW = d.motorToCoolantResistance_KW;
-transient.ratedSpeedBasis_rpm = d.baseSpeed_rpm;
-sweep = cfg.literatureGapFill.motor.ratedSpeedSweep_rpm;
+transient.ratedSpeedBasis_rpm = d.ratedSpeed_rpm;
 rise = cfg.literatureGapFill.motor.referenceWinding_C- ...
     cfg.literatureGapFill.motor.referenceCoolant_C;
 controller = register(register.ID=="M02",:);
-lowLoss = calibrate_winding_resistance(curves,sweep,a.M01,controller.Low,rise);
-highLoss = calibrate_winding_resistance(curves,sweep,a.M01,controller.High,rise);
+lowLoss = calibrate_winding_resistance(curves,d.ratedSpeed_rpm,a.M01,controller.Low,rise);
+highLoss = calibrate_winding_resistance(curves,d.ratedSpeed_rpm,a.M01,controller.High,rise);
 allR = [lowLoss.ImpliedWindingToCoolant_KW;highLoss.ImpliedWindingToCoolant_KW];
 transient.motorToCoolantResistanceRange_KW = [min(allR) max(allR)];
 

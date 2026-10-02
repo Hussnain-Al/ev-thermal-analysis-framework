@@ -18,6 +18,20 @@ battery.packNominalVoltage_V = battery.seriesCells*battery.nominalVoltage_V;
 % ACR is a 1 kHz measurement; apply_literature_corrections converts it to a
 % DC resistance and adds the cell-to-coolant path built from the register.
 battery.resistanceProxy_Ohm = 0.40e-3;
+% Resistance cross-checks (reference_checks in run_literature_gap_fill):
+% SVOLT 10 s discharge power at 25 C / 50% SOC (>= 1456 W, pulse cut-off
+% 2.5 V above 5 C) caps the DC resistance. The 3.29 V plateau OCV is a
+% typical LFP value at 50% SOC, not an SVOLT figure.
+battery.pulsePower_W = 1456;
+battery.pulseCutoff_V = 2.5;
+battery.plateauOCV_V = 3.29;
+% Vendor rate test of a 100 Ah LFP cell (GFL, 0.5C to 3C discharge at about
+% 26 C), resampled every 5 Ah from the vendor workbook. Scaled to 134 Ah by
+% capacity, the 0.5C-1C voltage gap gives a measured sustained resistance.
+battery.files.siblingRateTest = fullfile(rootDir,"data","battery_cooling", ...
+    "gfl_100ah_rate_test.csv");
+battery.siblingCapacity_Ah = 100;
+battery.siblingReferenceDepth_Ah = 50;
 battery.cRates = [0.1 0.3 0.5 0.75 1 1.25 1.5 1.75 2];
 % Superseded: the reconstructed base path is about ten times the bottom-
 % cooling build-up and is kept only for comparison (docs/CORRECTIONS.md).

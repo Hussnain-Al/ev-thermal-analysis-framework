@@ -18,10 +18,18 @@ gradeForce_N = vehicle.mass_kg*vehicle.gravity_ms2* ...
 requestedWheelForce_N = roadForce_N + inertiaForce_N + gradeForce_N;
 requestedWheelPower_kW = requestedWheelForce_N.*v/1000;
 
+% Motor shaft power: the reducer loss is added when motoring and taken off
+% when regenerating.
+etaReducer = vehicle.reducerEfficiency;
+shaftPower_kW = requestedWheelPower_kW/etaReducer;
+regenerating = requestedWheelPower_kW < 0;
+shaftPower_kW(regenerating) = requestedWheelPower_kW(regenerating)*etaReducer;
+reducerLoss_kW = abs(shaftPower_kW-requestedWheelPower_kW);
+
 requestedMotorTorque_Nm = zeros(size(t));
 moving = motorOmega > 1e-6;
 requestedMotorTorque_Nm(moving) = ...
-    requestedWheelPower_kW(moving)*1000./motorOmega(moving);
+    shaftPower_kW(moving)*1000./motorOmega(moving);
 
 maxTorque_Nm = interp1(curves.torqueRPM,curves.maxTorque_Nm, ...
     motorRPM,'linear','extrap');
@@ -33,7 +41,7 @@ belowFirstPowerPoint = motorRPM < min(curves.powerRPM);
 maxPower_kW(belowFirstPowerPoint) = ...
     maxTorque_Nm(belowFirstPowerPoint).*motorOmega(belowFirstPowerPoint)/1000;
 torqueWithinCurve = abs(requestedMotorTorque_Nm) <= maxTorque_Nm + 1e-6;
-powerWithinCurve = abs(requestedWheelPower_kW) <= maxPower_kW + 1e-6;
+powerWithinCurve = abs(shaftPower_kW) <= maxPower_kW + 1e-6;
 
 eta = estimate_integrated_drive_efficiency( ...
     motorRPM,requestedMotorTorque_Nm,curves);
@@ -42,13 +50,14 @@ eta(~moving) = 1;
 dcLinkPower_kW = zeros(size(t));
 driveHeat_kW = zeros(size(t));
 motoring = requestedWheelPower_kW >= 0;
-dcLinkPower_kW(motoring) = requestedWheelPower_kW(motoring)./eta(motoring);
+dcLinkPower_kW(motoring) = shaftPower_kW(motoring)./eta(motoring);
 driveHeat_kW(motoring) = ...
-    dcLinkPower_kW(motoring)-requestedWheelPower_kW(motoring);
+    dcLinkPower_kW(motoring)-shaftPower_kW(motoring);
 
-regen = requestedWheelPower_kW < 0 & vehicle.regenEnabled;
-dcLinkPower_kW(regen) = requestedWheelPower_kW(regen).*eta(regen);
-driveHeat_kW(regen) = abs(requestedWheelPower_kW(regen)).*(1-eta(regen));
+regen = regenerating & vehicle.regenEnabled;
+dcLinkPower_kW(regen) = shaftPower_kW(regen).*eta(regen);
+driveHeat_kW(regen) = abs(shaftPower_kW(regen)).*(1-eta(regen));
+reducerLoss_kW(regenerating & ~vehicle.regenEnabled) = 0;
 
 result = cycle;
 result.Acceleration_ms2 = a;
@@ -57,6 +66,8 @@ result.RoadForce_N = roadForce_N;
 result.InertiaForce_N = inertiaForce_N;
 result.GradeForce_N = repmat(gradeForce_N,numel(t),1);
 result.RequestedWheelPower_kW = requestedWheelPower_kW;
+result.MotorShaftPower_kW = shaftPower_kW;
+result.ReducerLoss_kW = reducerLoss_kW;
 result.RequestedMotorTorque_Nm = requestedMotorTorque_Nm;
 result.AvailableTorque_Nm = maxTorque_Nm;
 result.AvailablePower_kW = maxPower_kW;

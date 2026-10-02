@@ -15,12 +15,12 @@ are MATLAB outputs from the CI workflow.
 
 | Gap | Estimate | Effect on the model |
 |---|---|---|
-| Battery cell-to-coolant path | 1.32 K/W: project network corrected, plus cell internals | Replaces the 3.10 K/W network result |
+| Battery cell-to-coolant path | 1.03 K/W: project network corrected, pads from the TG-A1250 datasheet, plus cell internals | Replaces the 3.10 K/W network result |
 | Battery heat | DC resistance = ACR/0.7 plus low-SOC entropic heat | Replaces the 1 kHz ACR heat floor |
 | Battery transient | Lumped cell, 2.66 kJ/K | New: cell temperature during full discharges |
-| Radiator performance | Chang-Wang louver j-factor, e-NTU | Two-node UA 140/122 W/K replaces 665/300 W/K; the 10% grade needs about 6.2 m/s face velocity |
+| Radiator performance | Chang-Wang louver j-factor, e-NTU | Two-node UA 140/122 W/K replaces 665/300 W/K; the 10% grade needs about 6.7 m/s face velocity |
 | Radiator pressure drop | Laminar flat-tube friction | About 0.6 kPa at 20 L/min |
-| Winding resistance | Back-calculated from the supplier 143 C rated point | 0.0331 K/W replaces 0.015 K/W |
+| Winding resistance | Back-calculated from the supplier 143 C rated point (60 kW, 125 Nm) | 0.0340 K/W replaces 0.015 K/W |
 | Cabin workbook | Row-by-row recomputation | Body and glazing 1.87 kW, not 3.34 kW |
 | Cabin load | Heat-balance rebuild | 4.31 kW (dry heat) to 5.19 kW (humid heat), plus 0.6-2.4 kW for a 30-minute pull-down |
 | Climate | 45 C with 25% or 44% RH | Replaces 45 C / 70% RH, which has an impossible 38 C dew point |
@@ -42,10 +42,12 @@ rows of the map matter more to cycle heat than its peak-efficiency island.
 <img src="images/gap_fill/gap_motor_resistance_calibration.png" width="900" alt="Winding resistance implied by the supplier rated temperature point">
 
 The supplier reference gives 143 C winding with 60 C coolant at rated
-conditions. Assuming rated output is the 60 kW controller point and
-subtracting the 1.58 kW controller loss gives the motor-plus-reducer loss.
-That loss divided by the 83 K rise is the implied winding-to-coolant
-resistance. The rated speed is not stated, so it is swept. LPTN studies plot
+conditions. The supplier sheet puts the rated point at 60 kW and 125 Nm, so
+4584 rpm. Subtracting the 1.58 kW controller loss from the motor-system loss
+there gives the motor loss; divided into the 83 K rise it is the implied
+winding-to-coolant resistance (0.0340 K/W, the marked point). The left panel
+still sweeps the speed from 3000 to 9000 rpm to show how sensitive the
+calibration would be to a wrong rated point. LPTN studies plot
 winding hot-spot against coolant temperature with the insulation-class limit,
 and the right panel follows that form. The full integrated loss is pushed
 through the winding path, so the solid lines are upper bounds.
@@ -64,7 +66,7 @@ resistance is 30 to 45% of the total. A turbulator or dimpled tube would change
 the result more than any louver assumption would.
 
 The ideal-UA requirement and the estimated UA are not compared at the same
-air flow. At 6.2 m/s the air rises less than 10 K, so a lower UA meets the
+air flow. At 6.7 m/s the air rises less than 10 K, so a lower UA meets the
 duty. Read the left panel for the duty check.
 
 ## Gap fill 4 and 5: battery heat, path and transient

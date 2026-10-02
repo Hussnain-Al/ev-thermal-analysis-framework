@@ -24,9 +24,9 @@ B18,Battery,Cooling-channel heat-transfer coefficient,400,300,800,W/(m2 K),Proje
 B22,Battery,Jelly-roll to can-base insulator thickness,0.3,0.1,0.5,mm,Literature typical value,Polymer bottom insulator sheet inside prismatic cans (PP or PET; 0.1-0.5 mm),Internal base interface missing from the first build-up
 B23,Battery,Jelly-roll to can-base effective conductivity,0.2,0.1,0.3,W/(m K),Material property,Polypropylene 0.2 W/(m K); 0.1 allows for a partial gas gap,Internal base interface missing from the first build-up
 P01,Battery,Cell aluminium casing thickness,0.8,0.6,1.0,mm,Project evidence,Project battery network R1 (0.8 mm; k 155 W/(m K)),Network R1 entered as 1.69 K/W
-P02,Battery,Thermal pad 1 resistance per cell,0.0224,0.0112,0.0448,K/W,Project evidence,Project battery network R2 as written; derivation not shown so +/-50% to x2,Cell-to-plate interface
+P02,Battery,Thermal pad 1 resistance per cell,0.0224,0.0113,0.0448,K/W,Supplier datasheet,T-Global TG-A1250 (12.5 W/(m K)): 0.304 / 0.147 C in2/W at 10 / 50 psi over the 8.4e-3 m2 cell base gives 0.0234 / 0.0113 K/W; project R2 matches; high is x2 for bond-line and ageing,Cell-to-plate interface
 P03,Battery,Module base plate thickness,3.0,2.0,4.0,mm,Project evidence,Project battery network R3 (3 mm aluminium; k 154 W/(m K)),Plate conduction
-P04,Battery,Thermal pad 2 resistance per cell,0.33,0.20,0.50,K/W,Project evidence,Project battery network R4 as written; range for pad compression and tolerance,Plate-to-channel interface
+P04,Battery,Thermal pad 2 resistance per cell,0.04086,0.01976,0.33,K/W,Supplier datasheet,T-Global TG-A1250: 0.304 / 0.147 C in2/W at 10 / 50 psi over the 4.8e-3 m2 channel contact; high keeps the project R4 value (0.33 is close to the per-square-inch datasheet figure so the area looks unapplied),Project R4 0.33 K/W
 P05,Battery,Cooling-channel wall thickness,0.6,0.4,0.8,mm,Project evidence,Project battery network R5 (0.6 mm aluminium),Channel wall conduction
 P06,Battery,Cooling-channel contact area per cell,4.8,4.0,8.4,1e-3 m2,Project evidence,Project battery network R6 area 4.8e-3 m2; upper value is the full cell base,Coolant-side film
 B24,Battery,Pack voltage under load,321,314,345.6,V,Project evidence,Archived project load cases L1-L7: motor power / current = 314-336 V; 345.6 V is 108 x 3.2 V nominal,Drive-cycle pack current

@@ -37,11 +37,11 @@ cold-plate part number followed by `performance map`.
 |---|---|
 | Battery transient temperature | DCIR, cell heat capacity and measured cell-to-plate response |
 | Battery coolant flow and temperature | Cold-plate map, pump curve, radiator/chiller map and coolant inventory |
-| Propulsion operating flow | Not solved. The only pump evidence is retained as a documented point plus an inactive-pump resistance curve; no additional pump curve is requested or fabricated. |
+| Propulsion operating flow | Not solved. With the supplier component drops the loop needs 71.4 kPa at 20 L/min; the documented 60 kPa point guarantees 18.3 L/min. The pump curve ("see customer drawing") is needed for the operating point. |
 | Validated motor/coolant temperatures | Identified thermal capacitances, motor-to-coolant resistance and radiator map |
 | Cabin pull-down and compressor demand | Complete solar, latent, ventilation, thermal-mass and refrigerant-component data |
 
-Version `4.5.0` estimates these inputs from sourced literature values and
+Version `4.6.0` estimates these inputs from sourced literature values and
 carries the estimates into the model with explicit ranges; see
 [`CORRECTIONS.md`](CORRECTIONS.md). The measurements above are still what
 retire each estimate. Until they exist, every affected result is a

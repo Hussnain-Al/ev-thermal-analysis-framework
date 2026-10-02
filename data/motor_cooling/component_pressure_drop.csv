@@ -1,0 +1,11 @@
+Component,Flow_Lmin,PressureDrop_kPa,EvidenceStatus
+MCU,16,13.0,Supplier test (motor cooling.doc): MCU at 16 L/min; temperature rise 4 C
+Motor,16,11.0,Supplier test (motor cooling.doc): motor at 16 L/min; temperature rise 6 C
+PDU/OBC/DCDC,2,0.1,Supplier water-resistance curve (motor cooling.doc) digitized
+PDU/OBC/DCDC,4,0.5,Supplier water-resistance curve (motor cooling.doc) digitized
+PDU/OBC/DCDC,6,1.2,Supplier water-resistance curve (motor cooling.doc) digitized
+PDU/OBC/DCDC,8,1.8,Supplier water-resistance curve (motor cooling.doc) digitized
+PDU/OBC/DCDC,10,2.9,Supplier water-resistance curve (motor cooling.doc) digitized
+PDU/OBC/DCDC,12,4.4,Supplier water-resistance curve (motor cooling.doc) digitized
+PDU/OBC/DCDC,14,5.4,Supplier water-resistance curve (motor cooling.doc) digitized
+PDU/OBC/DCDC,16,7.6,Supplier water-resistance curve (motor cooling.doc) digitized

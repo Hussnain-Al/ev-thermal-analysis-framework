@@ -1,7 +1,7 @@
 function d = derive_corrected_parameters(cfg,a,curves,geometry)
 %DERIVE_CORRECTED_PARAMETERS Model parameters implied by one assumption set.
 % Returns the battery DC resistance and cell-to-coolant path, the winding-
-% to-coolant resistance calibrated at the drive unit's base speed, and the
+% to-coolant resistance calibrated at the supplier rated point, and the
 % estimated radiator UA at the normal-driving and fan-only face velocities.
 % The same function serves the central values and the sensitivity ranges.
 
@@ -11,11 +11,11 @@ d.batteryTerms = terms;
 d.dcResistance25_Ohm = terms.dcir25_Ohm;
 d.cellToCoolantResistance_KW = terms.pathResistance_KW;
 
-% Base speed: highest speed at which the supplied peak-torque curve is still
-% within 2% of its maximum. Rated output is assumed at that corner.
-d.baseSpeed_rpm = max(curves.torqueRPM(curves.maxTorque_Nm>=0.98*max(curves.maxTorque_Nm)));
+% Rated point from the supplier sheet: 60 kW at 125 Nm rated torque, so the
+% rated speed is P/T (4584 rpm). The 143 C winding reference is at this point.
 g = cfg.literatureGapFill.motor;
-calibration = calibrate_winding_resistance(curves,d.baseSpeed_rpm,a.M01,a.M02, ...
+d.ratedSpeed_rpm = a.M01*1000/(g.ratedTorque_Nm*2*pi/60);
+calibration = calibrate_winding_resistance(curves,d.ratedSpeed_rpm,a.M01,a.M02, ...
     g.referenceWinding_C-g.referenceCoolant_C);
 d.motorToCoolantResistance_KW = calibration.ImpliedWindingToCoolant_KW;
 
