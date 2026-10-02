@@ -283,6 +283,24 @@ assert(abs(sizing.sizing.RequiredCapacity_kW(3)-(5.19253+6.420053))<2e-4);
 pullRow = contains(sizing.scenarios.Scenario,"pull-down");
 assert(abs(sizing.scenarios.PullDownExtra_kW(pullRow)-40*55/1800)<1e-9);
 assert(all(sizing.scenarios.RequiredCapacity_kW>2.9));
+% System model: cabin and battery share the compressor on every cycle.
+system = results.systemThermal;
+recommended = system.summary.Compressor=="Recommended";
+assert(all(~isnan(system.summary.TimeToCabinComfort_s(recommended))));
+assert(all(system.summary.TimeCellAbove55C_s(recommended)==0));
+l6Old = system.summary.FileStem=="project_l6_continuous_grade" & ~recommended;
+assert(isnan(system.summary.TimeToCabinComfort_s(l6Old)));
+assert(all(system.summary.MeanCompressorUse_pct<=100+1e-9));
+l6New = system.summary.FileStem=="project_l6_continuous_grade" & recommended;
+assert(abs(system.summary.PeakCell_C(l6Old)-55.946)<0.01);
+assert(system.summary.TimeCellAbove55C_s(l6Old)==171);
+assert(abs(system.summary.CabinAtEnd_C(l6Old)-48.765)<0.01);
+assert(system.summary.TimeToCabinComfort_s(l6New)==406);
+assert(abs(system.summary.PeakCell_C(l6New)-50.306)<0.01);
+assert(abs(system.frontEnd.RadiatorInletIfCondenserUpstream_C(2)-81.07)<0.05);
+% A full-size condenser upstream on the radiator's L6 air stream heats that
+% air past the 65 C coolant; the DM18A1's condenser does not.
+assert(system.frontEnd.RadiatorStillRejects(1) && ~system.frontEnd.RadiatorStillRejects(2));
 % Reducer loss is reported and kept out of the coolant heat.
 assert(all(results.motorHeat.summary.AverageReducerLoss_kW>0));
 assert(all(cycleHeat.MeanBatteryHeatUpperBound_kW>=cycleHeat.MeanBatteryHeat_kW));

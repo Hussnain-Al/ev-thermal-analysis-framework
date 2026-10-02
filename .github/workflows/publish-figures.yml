@@ -36,6 +36,7 @@ jobs:
           cp outputs/battery_cooling/battery_cycle_heat.png docs/images/results/
           cp outputs/cabin_cooling/cabin_load_breakdown.png docs/images/results/
           cp outputs/compressor_sizing/compressor_sizing.png docs/images/results/
+          cp outputs/system_thermal/system_thermal_response.png docs/images/results/
           cp outputs/literature_gap_fill/gap_*.png docs/images/gap_fill/
 
       - name: Commit changed figures

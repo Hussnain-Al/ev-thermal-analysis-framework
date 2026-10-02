@@ -25,6 +25,15 @@ number (`docs/CORRECTIONS.md`, "Supplier documents folded in"):
   scenario at the DM18A1 rating condition. Design 7.75 kW (L6), 9.19 kW with
   the cabin at its 95th percentile: specify at least 9.2 kW (57 cc at
   6000 rpm, 43 cc at 8000 rpm) against the DM18A1's 2.9 kW.
+- New `modules/system_thermal`: cabin and battery loops sharing one
+  compressor on every drive cycle from a 45 C hot soak. With the DM18A1 the
+  cabin never reaches comfort and L6 takes the cells past 55 C; with
+  9.19 kW the cabin is within 2 K after 6.5-6.8 min and L6 peaks at 50.3 C.
+  Front-end check: a 13.9 kW condenser upstream of the radiator would heat its
+  air to 81 C.
+- New Simscape model of the same network (`models/system_thermal`), built,
+  simulated and matched to the MATLAB model in CI (within 0.04 K); CI now
+  installs Simscape.
 - L6 added to the radiator design table; parameter register, provenance and
   regression values updated.
 

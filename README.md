@@ -23,6 +23,28 @@ vendor rate test. The argument for every correction is in
 All plots below are PNG outputs of the MATLAB R2024b workflow, committed by
 the `Publish MATLAB figures` workflow.
 
+## How the modules connect
+
+```mermaid
+flowchart LR
+    DC["Drive cycle or<br/>operating case"] --> MH["motor_heat<br/>wheel, 98% reducer,<br/>motor-system map"]
+    MH -- "drive-unit heat" --> MC["motor_cooling<br/>two-node drive unit,<br/>radiator, pump loop"]
+    MH -- "DC-link power" --> BC["battery_cooling<br/>pack current, SOC,<br/>Joule + entropic heat"]
+    CAB["Cabin heat balance<br/>(literature_gap_fill)"] --> CS["compressor_sizing"]
+    BC -- "battery heat" --> CS
+    CS -- "capacity" --> SYS["system_thermal<br/>cabin + battery share<br/>one compressor"]
+    BC -- "battery heat trace" --> SYS
+    CAB -- "load vs cabin temperature" --> SYS
+    MC -- "radiator air flow" --> FE["front-end check<br/>condenser ahead<br/>of radiator"]
+    CS -- "condenser heat" --> FE
+    SYS --> SIM["Simscape model<br/>matched to MATLAB in CI"]
+```
+
+One drive cycle feeds every loop on the same time base. The propulsion loop
+has its own radiator (three loops, as in the project design brief); the
+cabin and battery loops are coupled through the shared compressor; the
+condenser and radiator are coupled through the front-end air stream.
+
 ## Run
 
 MATLAB R2022b or later; Base MATLAB is sufficient for the numerical framework:
@@ -36,6 +58,14 @@ results.motorHeat
 results.motorCooling
 results.batteryCooling
 results.cabinCooling
+results.compressorSizing
+results.systemThermal
+```
+
+The coupled system model as a Simscape network (needs Simscape):
+
+```matlab
+build_system_thermal_simscape(cfg,results.systemThermal,Overwrite=true);
 ```
 
 The standalone battery requirements screen additionally uses Simulink:
@@ -340,6 +370,33 @@ grade sets 5.9 kW (36 cc at 6000 rpm). The pull-down case (6.5 kW) does not
 set the size. Electrical input uses the DM18A1's COP of 1.93; the condenser
 must reject capacity plus input and shares air with the radiator, so its
 size follows from this choice.
+
+## System model: cabin and battery on one compressor
+
+<img src="docs/images/results/system_thermal_response.png" width="820" alt="Cabin and cell temperatures from hot soak with the DM18A1 and the recommended compressor, compressor duty split on L6, and peak cell temperature per cycle">
+
+`modules/system_thermal` runs the loops together on each drive cycle,
+repeated to 30 minutes from a hot soak on the 45 C day. The cabin starts at
+80 C; the cells and battery coolant start at 45 C. The cabin load follows the
+cabin temperature (heat balance), the battery heat follows the cycle, and both
+loops draw on one compressor. When their demands exceed its capacity, both
+are scaled by the same factor.
+
+| | DM18A1, 2.9 kW | Recommended, 9.19 kW |
+|---|---|---|
+| Cabin within 2 K of 25 C | Never on any cycle; 44.8-48.8 C after 30 min | After 6.5-6.8 min on every cycle |
+| L6 cell temperature | 55.9 C at 30 min, above the 55 C charge cut-off for the last 171 s | Peak 50.3 C; battery coolant held at 30 C |
+| Compressor use (mean) | 100% on every cycle | 76-83% |
+
+The same model, built as a Simscape thermal network
+(`models/system_thermal`), matches the MATLAB result within 0.04 K in CI.
+
+**Front-end finding.** At 9.19 kW the condenser rejects 13.9 kW. It needs
+about 0.83 m3/s of air at a 15 K rise, 2.4 times the radiator's L6 air flow.
+Mounted upstream of the radiator on that stream, it would heat the radiator
+air to 81 C, above the 65 C coolant, and the propulsion radiator would stop
+rejecting heat. The condenser needs its own air path or a larger
+front-end fan; the DM18A1 hid this (56 C air, still workable).
 
 ## Checks against the project's own references
 

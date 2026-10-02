@@ -16,7 +16,7 @@ jobs:
         uses: matlab-actions/setup-matlab@v3
         with:
           release: R2024b
-          products: Simulink
+          products: Simulink Simscape
 
       - name: Run framework and regression checks
         uses: matlab-actions/run-command@v3
@@ -26,7 +26,7 @@ jobs:
       - name: Generate and compile supported Simulink models
         uses: matlab-actions/run-command@v3
         with:
-          command: setup_project(); run_battery_requirements_simulink_checks; run_propulsion_thermal_simulink_checks;
+          command: setup_project(); run_battery_requirements_simulink_checks; run_propulsion_thermal_simulink_checks; run_system_thermal_simscape_checks;
 
       - name: Upload generated result plots
         uses: actions/upload-artifact@v4

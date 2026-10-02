@@ -296,6 +296,7 @@ affect.
 | Cabin pull-down | Mean energy over the pull-down, not a transient simulation | Underestimates the initial peak | Shown as a range over thermal mass, not a compressor size |
 | Workbook audit | Recomputes the workbook's own building-CLTD method, which is not a vehicle method | None for the audit | The audit shows the arithmetic errors; the heat balance replaces the method |
 | Humidity | Rothfusz heat-index inversion is extrapolated at 66 C heat index | About +/-6% RH | Register range 40-50% RH; the 70% RH rejection does not depend on it |
+| System model | Three lumped nodes; compressor is a fixed capacity at the rating condition, shared proportionally; battery heat at 25 C resistance; no heat gain from ambient into the battery loop | Capacity falls in reality as the condenser air warms; ambient gain adds battery-loop load | Both make the DM18A1 result worse, not better; the recommended size has about 17% spare on L6 |
 | Uncertainty bands | Triangular distributions assumed independent | Correlated inputs would widen or narrow the band | Claims are also tested at the combined extreme, which needs no distribution |
 
 ## Project data that had not been used

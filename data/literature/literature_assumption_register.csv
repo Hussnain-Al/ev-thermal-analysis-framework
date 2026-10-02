@@ -52,3 +52,4 @@ C26,Cabin,Hot-soak interior temperature,80,70,85,degC,Project evidence,config/ca
 K01,Climate,Design dry-bulb,45,40,47,degC,Project evidence,config/cabin_cooling_config.m,Unchanged
 K02,Climate,Humid-heat coincident RH,44,40,50,%,Back-calculated,2015 Karachi peak 44.8 C with 66 C heat index (MoCC technical report) via Rothfusz,Physically implausible 45 C / 70% RH pairing
 K03,Climate,Dry-heat coincident RH,25,15,30,%,Screening assumption,Continental wind heat event,Physically implausible 45 C / 70% RH pairing
+S01,System,Battery-loop thermal capacitance (coolant and cold plates),15,8,30,kJ/K,Screening assumption,About 3 L of 50/50 glycol (11 kJ/K) plus about 5 kg of aluminium plate (4.5 kJ/K); volume not documented,Battery coolant node in the system model

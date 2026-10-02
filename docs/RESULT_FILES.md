@@ -10,6 +10,7 @@
 | Battery | `battery_sustained_screen.csv`, `battery_specification_limits.csv` | DC Joule plus entropic heat, allowable coolant temperature with 5-95% band, superseded ACR result |
 | Cabin | `cabin_cooling_summary.csv`, `cabin_load_inputs_used.csv`, `cabin_workbook_audit.csv`, `cabin_heat_balance.csv` | Recorded and recomputed workbook subtotal, heat-balance load for two humidity scenarios |
 | Compressor sizing | `compressor_demand_scenarios.csv`, `compressor_sizing.csv`, `compressor_sizing.png` | Cabin plus battery chiller demand per scenario; required capacity, displacement, electrical input and condenser heat |
+| System model | `system_thermal_summary.csv`, `front_end_air_check.csv`, `cabin_load_curve.csv`, `system_thermal_response.png` | Cabin and cell temperatures from hot soak with each compressor, compressor use, and the condenser/radiator air check |
 | Literature gap fill | `literature_gap_fill/*.csv`, including `correction_robustness.csv`, `correction_sensitivity.csv` and `reference_checks.csv` | Estimates from the literature register and the robustness test of each correction |
 
 Generated plots:

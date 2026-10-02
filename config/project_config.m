@@ -20,5 +20,6 @@ cfg.motorCooling = motor_cooling_config(rootDir);
 cfg.batteryCooling = battery_cooling_config(rootDir);
 cfg.cabinCooling = cabin_cooling_config(rootDir);
 cfg.literatureGapFill = literature_gap_fill_config(rootDir);
+cfg.systemThermal = system_thermal_config(rootDir);
 cfg = apply_literature_corrections(cfg);
 end
