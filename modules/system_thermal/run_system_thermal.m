@@ -1,11 +1,13 @@
 function out = run_system_thermal(cfg,results)
-%RUN_SYSTEM_THERMAL Drive cycle -> battery heat -> shared compressor -> cabin.
-% Couples the modules dynamically on each drive cycle: the battery heat
-% trace (battery_cooling) and the heat-balance cabin load (literature gap
-% fill) draw on one compressor, at the DM18A1 capacity and at the size from
-% compressor_sizing. The propulsion loop has its own radiator; its peak is
-% reported on the same cycle. A front-end check shows what the condenser
-% does to the radiator if both share one air stream.
+%RUN_SYSTEM_THERMAL All three loops driven by each drive cycle, second by second.
+% The drive cycle is repeated to the window length. From its DC-link power
+% the pack current, state of charge and battery heat are computed with SOC
+% carried continuously across repeats (calculate_battery_cycle_heat); its
+% drive-unit heat drives the propulsion two-node loop and radiator
+% (simulate_motor_coolant_thermal); the battery heat and the heat-balance
+% cabin load draw on one compressor (simulate_system_thermal), at the DM18A1
+% capacity and at the size from compressor_sizing. A front-end check shows
+% what the condenser does to the radiator if both share one air stream.
 
 s = cfg.systemThermal;
 a = cfg.literature.values;
@@ -44,10 +46,11 @@ capacity_kW = [cfg.cabinCooling.compressorRatedCapacity_kW; ...
 out.compressorName = compressorName;
 out.capacity_kW = capacity_kW;
 
-stems = results.batteryCooling.cycleHeat.selection;
+stems = results.motorHeat.fileStems;
 time_s = (0:s.duration_s)';
 nCycles = numel(s.cycles);
 out.traces = cell(nCycles,numel(capacity_kW));
+out.inputs = cell(nCycles,1);
 rows = cell(nCycles*numel(capacity_kW),1);
 r = 0;
 for i = 1:nCycles
@@ -55,19 +58,34 @@ for i = 1:nCycles
     if isempty(index)
         error('EVThermal:UnknownCycle','System cycle %s was not run.',s.cycles(i));
     end
-    heatTrace = results.batteryCooling.cycleHeat.traces{index};
-    heat = heatTrace.BatteryHeat_kW;
-    samples = numel(heat)-1;
-    tiled_kW = heat(mod(time_s,samples)+1);
-    motorRow = results.motorCooling.summary( ...
-        find(results.motorHeat.fileStems==s.cycles(i),1),:);
+    % Repeat the cycle's one-second power and heat to the window length.
+    detail = results.motorHeat.details{index};
+    samples = height(detail)-1;
+    pick = mod(time_s,samples)+1;
+    drive = table(repmat(detail.Cycle(1),numel(time_s),1),time_s, ...
+        detail.DCLinkPower_kW(pick),detail.DriveUnitHeat_kW(pick), ...
+        'VariableNames',{'Cycle','Time_s','DCLinkPower_kW','DriveUnitHeat_kW'});
+    batteryTrace = calculate_battery_cycle_heat(drive,battery);
+    motorParameters = cfg.motorCooling.transient;
+    if results.motorHeat.fanOnly(index)
+        motorParameters.radiatorUA_WK = motorParameters.fanOnlyRadiatorUA_WK;
+    end
+    ambient_C = results.motorHeat.ambient_C(index);
+    propulsion = simulate_motor_coolant_thermal(drive,ambient_C,motorParameters);
+    out.inputs{i} = struct('drive',drive,'ambient_C',ambient_C, ...
+        'radiatorUA_WK',motorParameters.radiatorUA_WK);
     for j = 1:numel(capacity_kW)
-        trace = simulate_system_thermal(time_s,tiled_kW,cabinGrid_C, ...
-            cabinLoad_kW,capacity_kW(j),p);
+        trace = simulate_system_thermal(time_s,batteryTrace.BatteryHeat_kW, ...
+            cabinGrid_C,cabinLoad_kW,capacity_kW(j),p);
+        trace.DCLinkPower_kW = drive.DCLinkPower_kW;
+        trace.SOC_pct = batteryTrace.SOC_pct;
+        trace.DriveUnitHeat_kW = drive.DriveUnitHeat_kW;
+        trace.DriveUnit_C = propulsion.MotorTemperature_C;
+        trace.PropulsionCoolant_C = propulsion.CoolantTemperature_C;
         out.traces{i,j} = trace;
         r = r+1;
-        rows{r} = summarize(trace,heatTrace.Cycle(1),s.cycles(i), ...
-            compressorName(j),capacity_kW(j),s,motorRow);
+        rows{r} = summarize(trace,detail.Cycle(1),s.cycles(i), ...
+            compressorName(j),capacity_kW(j),s);
     end
 end
 out.summary = vertcat(rows{:});
@@ -96,7 +114,7 @@ writetable(out.cabinLoadCurve,fullfile(outputDir,"cabin_load_curve.csv"));
 plot_system(out,s,battery,outputDir);
 end
 
-function row = summarize(trace,cycleName,stem,compressor,capacity_kW,s,motorRow)
+function row = summarize(trace,cycleName,stem,compressor,capacity_kW,s)
 t = trace.Time_s;
 comfort = find(trace.Cabin_C<=s.cabinSetpoint_C+s.comfortBand_C,1);
 timeToComfort_s = NaN;
@@ -107,18 +125,19 @@ dt = [diff(t);0];
 row = table(cycleName,stem,compressor,capacity_kW,timeToComfort_s, ...
     trace.Cabin_C(end),max(trace.Cell_C),trace.Cell_C(end), ...
     sum(dt(trace.Cell_C>55)),trace.BatteryCoolant_C(end), ...
-    100*mean(trace.CompressorUse),motorRow.PeakMotorTemperature_C, ...
+    100*mean(trace.CompressorUse),trace.SOC_pct(end), ...
+    max(trace.DriveUnit_C),max(trace.PropulsionCoolant_C), ...
     'VariableNames',{'Cycle','FileStem','Compressor','Capacity_kW', ...
     'TimeToCabinComfort_s','CabinAtEnd_C','PeakCell_C','CellAtEnd_C', ...
     'TimeCellAbove55C_s','BatteryCoolantAtEnd_C','MeanCompressorUse_pct', ...
-    'PeakDriveUnit_C'});
+    'SOCAtEnd_pct','PeakDriveUnit_C','PeakPropulsionCoolant_C'});
 end
 
 function plot_system(out,s,battery,outputDir)
 blue = [0.165 0.471 0.839]; orange = [0.922 0.408 0.204];
 colors = [orange;blue];
-fig = figure('Visible','off','Color','w','Position',[100 100 1400 900]);
-layout = tiledlayout(2,2,'TileSpacing','compact');
+fig = figure('Visible','off','Color','w','Position',[100 100 1400 1300]);
+layout = tiledlayout(3,2,'TileSpacing','compact');
 shown = ["project_l6_continuous_grade";"urban_cycle"];
 for k = 1:2
     i = find(s.cycles==shown(k));
@@ -173,7 +192,32 @@ set(gca,'TickLabelInterpreter','none');
 ylabel('Peak cell temperature in 30 min (C)');
 legend(compose('%s %.1f kW',out.compressorName,out.capacity_kW),'Location','northwest');
 title('Peak cell temperature per cycle');
-title(layout,'System model: cabin and battery sharing one compressor, 45 C day from hot soak');
+cycleColors = [0.165 0.471 0.839;0.922 0.408 0.204;0.106 0.686 0.478; ...
+    0.929 0.631 0;0.910 0.482 0.643];
+nexttile;
+hold on;
+for i = 1:numel(s.cycles)
+    tr = out.traces{i,end};
+    plot(tr.Time_s/60,tr.DriveUnit_C,'-','Color',cycleColors(i,:),'LineWidth',1.6, ...
+        'DisplayName',out.summary.Cycle(2*i));
+    plot(tr.Time_s/60,tr.PropulsionCoolant_C,':','Color',cycleColors(i,:), ...
+        'LineWidth',1.4,'HandleVisibility','off');
+end
+yline(150,':','150 C hot-spot target','HandleVisibility','off');
+grid on; xlabel('Time (min)'); ylabel('Temperature (C)');
+title('Propulsion loop: drive unit (solid) and its coolant (dotted)');
+legend('Location','northwest','FontSize',7,'Interpreter','none');
+nexttile;
+hold on;
+for i = 1:numel(s.cycles)
+    tr = out.traces{i,end};
+    plot(tr.Time_s/60,tr.SOC_pct,'-','Color',cycleColors(i,:),'LineWidth',1.6, ...
+        'DisplayName',out.summary.Cycle(2*i));
+end
+grid on; xlabel('Time (min)'); ylabel('State of charge (%)'); ylim([0 100]);
+title('Battery state of charge, integrated from the cycle current');
+legend('Location','southwest','FontSize',7,'Interpreter','none');
+title(layout,'System model: every loop driven by the drive cycle from a hot soak on a 45 C day');
 exportgraphics(fig,fullfile(outputDir,"system_thermal_response.png"),'Resolution',160);
 close(fig);
 end

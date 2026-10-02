@@ -1,13 +1,17 @@
 function modelFile = build_system_thermal_simscape(cfg,systemThermal,options)
-%BUILD_SYSTEM_THERMAL_SIMSCAPE Simscape model of the cabin and battery loops.
-% Builds the coupled system of run_system_thermal as a Simscape thermal
-% network (foundation library) with the compressor allocation in Simulink:
-%   - cabin, cell (pack) and battery-coolant thermal masses;
-%   - pack-to-coolant thermal resistance (cell path / series cells);
-%   - heat-flow sources for battery heat (drive-cycle trace), net cabin heat
-%     and chiller extraction;
-%   - Simulink logic: cabin load lookup, demands, proportional sharing of
-%     the compressor capacity.
+%BUILD_SYSTEM_THERMAL_SIMSCAPE Simscape model of all three loops on a drive cycle.
+% Builds the system of run_system_thermal as three Simscape thermal networks
+% (foundation library), all driven by one drive cycle:
+%   - battery: pack current = DC-link power / loaded pack voltage, SOC
+%     integrated from that current, heat = I^2 R_DC - I T dU/dT(SOC) per
+%     cell; cell and battery-coolant thermal masses joined by the
+%     cell-to-coolant resistance; chiller extraction;
+%   - cabin: thermal mass with the heat-balance load at its own temperature
+%     less the evaporator duty;
+%   - propulsion: drive-unit and coolant thermal masses joined by the
+%     winding-to-coolant resistance, drive-unit heat from the cycle, radiator
+%     rejection UA max(T_coolant - T_ambient, 0);
+%   - Simulink: compressor demands and proportional sharing of its capacity.
 % Example:
 %   cfg = setup_project(); results = run_all(cfg);
 %   build_system_thermal_simscape(cfg,results.systemThermal, ...
@@ -38,7 +42,11 @@ if isempty(cycleIndex)
     error('EVThermal:UnknownCycle','Unknown system cycle %s.',options.CycleStem);
 end
 trace = systemThermal.traces{cycleIndex,1};
+inputs = systemThermal.inputs{cycleIndex};
+drive = inputs.drive;
 curve = systemThermal.cabinLoadCurve;
+battery = cfg.batteryCooling;
+motor = cfg.motorCooling.transient;
 
 modelDir = fullfile(cfg.project.rootDir,'models','system_thermal');
 modelName = "system_thermal_simscape";
@@ -77,6 +85,7 @@ fromPS = sprintf('nesl_utility/PS-Simulink\nConverter');
 solverLib = sprintf('nesl_utility/Solver\nConfiguration');
 add_block(solverLib,[m '/Cabin solver'],'Position',[780 160 840 190]);
 add_block(solverLib,[m '/Battery solver'],'Position',[780 600 840 630]);
+add_block(solverLib,[m '/Propulsion solver'],'Position',[780 1000 840 1030]);
 add_mass(m,'Cabin',massLib,p.cabinCapacitance_JK,p.cabinInitial_C+K0,[700 80 760 140]);
 add_mass(m,'Cell',massLib,p.packCapacitance_JK,p.packInitial_C+K0,[700 300 760 360]);
 add_mass(m,'Battery coolant',massLib,p.batteryCoolantCapacitance_JK, ...
@@ -89,6 +98,22 @@ connect(m,'Cell to coolant path','RConn',1,'Battery coolant','LConn',1);
 connect(m,'Cabin solver','RConn',1,'Cabin','LConn',1);
 connect(m,'Battery solver','RConn',1,'Cell','LConn',1);
 
+% Propulsion loop.
+add_mass(m,'Drive unit',massLib,motor.motorThermalCapacity_JK, ...
+    motor.initialMotorTemperature_C+K0,[700 900 760 960]);
+add_mass(m,'Propulsion coolant',massLib,motor.coolantThermalCapacity_JK, ...
+    motor.initialCoolantTemperature_C+K0,[700 1100 760 1160]);
+add_block([thermal 'Thermal Elements/Thermal Resistance'],[m '/Winding to coolant'], ...
+    'Position',[820 1020 880 1050], ...
+    'resistance',num2str(motor.motorToCoolantResistance_KW,12),'resistance_unit','K/W');
+connect(m,'Drive unit','LConn',1,'Winding to coolant','LConn',1);
+connect(m,'Winding to coolant','RConn',1,'Propulsion coolant','LConn',1);
+connect(m,'Propulsion solver','RConn',1,'Drive unit','LConn',1);
+add_source(m,'Drive-unit heat',sourceLib,toPS,'Drive unit',[560 900 620 960]);
+add_source(m,'Radiator rejection',sourceLib,toPS,'Propulsion coolant',[560 1100 620 1160]);
+add_sensor(m,'Drive unit',sensorLib,fromPS,[900 900 960 960]);
+add_sensor(m,'Propulsion coolant',sensorLib,fromPS,[900 1100 960 1160]);
+
 add_source(m,'Cabin net heat',sourceLib,toPS,'Cabin',[560 80 620 140]);
 add_source(m,'Battery heat',sourceLib,toPS,'Cell',[560 300 620 360]);
 add_source(m,'Chiller extraction',sourceLib,toPS,'Battery coolant',[560 480 620 540]);
@@ -96,14 +121,57 @@ add_sensor(m,'Cabin',sensorLib,fromPS,[900 80 960 140]);
 add_sensor(m,'Cell',sensorLib,fromPS,[900 260 960 320]);
 add_sensor(m,'Battery coolant',sensorLib,fromPS,[900 480 960 540]);
 
-% Battery heat from the drive-cycle trace.
-add_block('simulink/Sources/Clock',[m '/Clock'],'Position',[60 320 90 340]);
-add_block('simulink/Lookup Tables/1-D Lookup Table',[m '/Battery heat trace W'], ...
-    'Position',[140 310 220 350], ...
-    'BreakpointsForDimension1',mat2str(trace.Time_s'), ...
-    'Table',mat2str(1000*trace.BatteryHeat_kW',10),'ExtrapMethod','Clip');
-add_line(m,'Clock/1','Battery heat trace W/1');
-add_line(m,'Battery heat trace W/1','Battery heat input/1');
+% Drive cycle: one-second DC-link power and drive-unit heat, held over
+% each second as in the MATLAB model.
+add_block('simulink/Sources/Clock',[m '/Clock'],'Position',[40 700 70 720]);
+cycleTable(m,'DC-link power W',drive.Time_s,1000*drive.DCLinkPower_kW,[120 690 200 730]);
+cycleTable(m,'Drive-unit heat W',drive.Time_s,1000*drive.DriveUnitHeat_kW,[120 900 200 940]);
+add_line(m,'Clock/1','DC-link power W/1');
+add_line(m,'Clock/1','Drive-unit heat W/1');
+add_line(m,'Drive-unit heat W/1','Drive-unit heat input/1');
+
+% Battery electrical side: current, state of charge, Joule and entropic heat.
+gain(m,'Pack current A',1/battery.cycleVoltage_V,[240 695 290 725]);
+add_line(m,'DC-link power W/1','Pack current A/1');
+gain(m,'SOC rate',-100/(battery.capacity_Ah*3600),[320 760 370 790]);
+add_line(m,'Pack current A/1','SOC rate/1');
+add_block('simulink/Continuous/Integrator',[m '/SOC'], ...
+    'InitialCondition',num2str(battery.cycleInitialSOC_pct,12),'Position',[400 760 430 790]);
+add_line(m,'SOC rate/1','SOC/1');
+add_block('simulink/Discontinuities/Saturation',[m '/SOC 0-100'],'UpperLimit','100', ...
+    'LowerLimit','0','Position',[460 760 500 790]);
+add_line(m,'SOC/1','SOC 0-100/1');
+add_block('simulink/Lookup Tables/1-D Lookup Table',[m '/dUdT V per K'], ...
+    'Position',[530 755 600 795], ...
+    'BreakpointsForDimension1',mat2str(battery.entropicSOC_pct), ...
+    'Table',mat2str(1e-3*battery.entropic_mVK),'ExtrapMethod','Clip');
+add_line(m,'SOC 0-100/1','dUdT V per K/1');
+product2(m,'Current squared',[330 640 360 690]);
+add_line(m,'Pack current A/1','Current squared/1');
+add_line(m,'Pack current A/1','Current squared/2');
+gain(m,'Joule heat W',battery.dcResistance25_Ohm*battery.seriesCells,[390 650 450 680]);
+add_line(m,'Current squared/1','Joule heat W/1');
+product2(m,'Current x dUdT',[630 720 660 790]);
+add_line(m,'Pack current A/1','Current x dUdT/1');
+add_line(m,'dUdT V per K/1','Current x dUdT/2');
+gain(m,'Entropic heat W', ...
+    -(battery.entropicReferenceTemperature_C+K0)*battery.seriesCells,[690 740 750 770]);
+add_line(m,'Current x dUdT/1','Entropic heat W/1');
+sum2(m,'Battery heat W','++',[470 300 500 360]);
+add_line(m,'Joule heat W/1','Battery heat W/1');
+add_line(m,'Entropic heat W/1','Battery heat W/2');
+add_line(m,'Battery heat W/1','Battery heat input/1');
+
+% Radiator: UA max(T_coolant - T_ambient, 0), taken out of the coolant.
+bias(m,'Above ambient',-inputs.ambient_C,[1100 1110 1150 1140]);
+add_line(m,'Propulsion coolant C/1','Above ambient/1');
+gain(m,'Radiator UA',inputs.radiatorUA_WK,[1180 1110 1230 1140]);
+add_line(m,'Above ambient/1','Radiator UA/1');
+floor0(m,'Radiator duty W',[1260 1110 1300 1140]);
+add_line(m,'Radiator UA/1','Radiator duty W/1');
+gain(m,'Reject',-1,[400 1115 440 1145]);
+add_line(m,'Radiator duty W/1','Reject/1');
+add_line(m,'Reject/1','Radiator rejection input/1');
 
 % Compressor allocation (same equations as simulate_system_thermal).
 add_block('simulink/Lookup Tables/1-D Lookup Table',[m '/Cabin load W'], ...
@@ -169,7 +237,8 @@ gain(m,'Extract',-1,[400 495 440 525]);
 add_line(m,'Chiller duty W/1','Extract/1');
 add_line(m,'Extract/1','Chiller extraction input/1');
 
-names = ["Cabin C","Cell C","Battery coolant C","Evaporator duty W","Chiller duty W"];
+names = ["Cabin C","Cell C","Battery coolant C","Evaporator duty W","Chiller duty W", ...
+    "Drive unit C","Propulsion coolant C","Battery heat W","SOC 0-100"];
 for k = 1:numel(names)
     out = sprintf('%s/%s out',m,names(k));
     add_block('simulink/Sinks/Out1',out,'Position',[1800 60+80*k 1830 74+80*k]);
@@ -177,6 +246,12 @@ for k = 1:numel(names)
 end
 save_system(modelName,modelFile);
 close_system(modelName,0);
+end
+
+function cycleTable(m,name,time_s,values,position)
+add_block('simulink/Lookup Tables/1-D Lookup Table',[m '/' name],'Position',position, ...
+    'BreakpointsForDimension1',mat2str(time_s'),'Table',mat2str(values',10), ...
+    'InterpMethod','Flat','ExtrapMethod','Clip');
 end
 
 function add_mass(m,name,lib,capacitance_JK,initial_K,position)

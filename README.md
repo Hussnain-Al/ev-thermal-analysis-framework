@@ -375,21 +375,49 @@ size follows from this choice.
 
 <img src="docs/images/results/system_thermal_response.png" width="820" alt="Cabin and cell temperatures from hot soak with the DM18A1 and the recommended compressor, compressor duty split on L6, and peak cell temperature per cycle">
 
-`modules/system_thermal` runs the loops together on each drive cycle,
-repeated to 30 minutes from a hot soak on the 45 C day. The cabin starts at
-80 C; the cells and battery coolant start at 45 C. The cabin load follows the
-cabin temperature (heat balance), the battery heat follows the cycle, and both
-loops draw on one compressor. When their demands exceed its capacity, both
-are scaled by the same factor.
+`modules/system_thermal` runs all three loops second by second on each
+drive cycle, repeated to 30 minutes from a hot soak on the 45 C day:
+
+- **battery**: pack current from the cycle's DC-link power, state of charge
+  integrated from it (carried across repeats), Joule plus entropic heat into
+  the cells, cells to battery coolant through the 1.03 K/W path, chiller;
+- **cabin**: 80 C start, heat-balance load at the cabin's own temperature,
+  evaporator;
+- **propulsion**: drive-unit heat from the cycle into the two-node drive
+  unit and coolant, radiator to the 45 C ambient (fan-only UA where the case
+  says so);
+- **compressor**: cabin and chiller demands share one capacity; when they
+  exceed it both are scaled by the same factor.
 
 | | DM18A1, 2.9 kW | Recommended, 9.19 kW |
 |---|---|---|
 | Cabin within 2 K of 25 C | Never on any cycle; 44.8-48.8 C after 30 min | After 6.5-6.8 min on every cycle |
-| L6 cell temperature | 55.9 C at 30 min, above the 55 C charge cut-off for the last 171 s | Peak 50.3 C; battery coolant held at 30 C |
+| L6 cell temperature | 57.1 C at 30 min, above the 55 C charge cut-off for the last 225 s | Peak 51.5 C; battery coolant held at 30 C |
 | Compressor use (mean) | 100% on every cycle | 76-83% |
 
-The same model, built as a Simscape thermal network
-(`models/system_thermal`), matches the MATLAB result within 0.04 K in CI.
+The propulsion loop does not depend on the compressor. Held for 30 minutes,
+L6 takes the drive unit to 143 C (still below the 150 C hot-spot target, and
+an upper bound on the winding) and the pack to 12.5% SOC; the 10% grade
+reaches 117 C.
+
+The same model is built as a Simscape thermal network
+(`models/system_thermal`): three physical networks with the battery's
+electrical side, the drive cycle and the compressor sharing in Simulink. CI
+simulates it on all five cycles and it matches the MATLAB model within 0.13 K
+on every temperature and 0.05 points of SOC.
+
+What is dynamic and what is not:
+
+| Result | Driven second by second by the drive cycle | In Simscape |
+|---|---|---|
+| Drive-unit heat, battery current and heat, SOC | Yes | Yes (battery side) |
+| Cabin, cell, battery coolant, drive unit, propulsion coolant temperatures | Yes | Yes |
+| Compressor sharing between cabin and chiller | Yes | Yes |
+| Sustained battery screen (coolant limit per C-rate) | No: steady sizing screen | No |
+| Radiator design requirement, compressor sizing, hydraulics | No: steady or cycle-mean sizing | No |
+
+The steady screens answer "what size"; the dynamic model checks that the
+chosen sizes hold up over the cycles.
 
 **Front-end finding.** At 9.19 kW the condenser rejects 13.9 kW. It needs
 about 0.83 m3/s of air at a 15 K rise, 2.4 times the radiator's L6 air flow.

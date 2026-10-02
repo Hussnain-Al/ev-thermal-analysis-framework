@@ -17,9 +17,14 @@ sys = results.systemThermal;
 disp(sys.summary);
 disp(sys.frontEnd);
 
-stem = "project_l6_continuous_grade";
-i = find(cfg.systemThermal.cycles==stem,1);
-for j = 1:numel(sys.capacity_kW)
+% Every cycle with the recommended compressor, and L6 with the DM18A1.
+runs = [(1:numel(cfg.systemThermal.cycles))' repmat(numel(sys.capacity_kW),numel(cfg.systemThermal.cycles),1); ...
+    find(cfg.systemThermal.cycles=="project_l6_continuous_grade") 1];
+columns = ["Cabin_C","Cell_C","BatteryCoolant_C","DriveUnit_C","PropulsionCoolant_C","SOC_pct"];
+outports = [1 2 3 6 7 9];
+for r = 1:size(runs,1)
+    i = runs(r,1); j = runs(r,2);
+    stem = cfg.systemThermal.cycles(i);
     modelFile = build_system_thermal_simscape(cfg,sys,CycleStem=stem, ...
         Capacity_kW=sys.capacity_kW(j),Overwrite=true);
     cleanupModel = onCleanup(@() remove_generated_model(modelFile)); %#ok<NASGU>
@@ -28,16 +33,15 @@ for j = 1:numel(sys.capacity_kW)
     simOut = sim(modelName,'ReturnWorkspaceOutputs','on');
     y = simOut.yout;
     reference = sys.traces{i,j};
-    columns = ["Cabin_C","Cell_C","BatteryCoolant_C"];
     for k = 1:numel(columns)
-        values = y{k}.Values;
-        simscape_C = interp1(values.Time,squeeze(values.Data),reference.Time_s);
-        difference = max(abs(simscape_C-reference.(columns(k))));
-        fprintf('Simscape vs MATLAB, %s, %.2f kW, %s: max difference %.3f K, end %.3f vs %.3f C\n', ...
-            stem,sys.capacity_kW(j),columns(k),difference,simscape_C(end), ...
+        values = y{outports(k)}.Values;
+        simscape = interp1(values.Time,squeeze(values.Data),reference.Time_s);
+        difference = max(abs(simscape-reference.(columns(k))));
+        fprintf('Simscape vs MATLAB, %s, %.2f kW, %s: max difference %.3f, end %.3f vs %.3f\n', ...
+            stem,sys.capacity_kW(j),columns(k),difference,simscape(end), ...
             reference.(columns(k))(end));
         assert(difference<1.0,'EVThermal:SimscapeMismatch', ...
-            'Simscape and MATLAB differ by %.3f K on %s.',difference,columns(k));
+            'Simscape and MATLAB differ by %.3f on %s (%s).',difference,columns(k),stem);
     end
     close_system(modelName,0);
     clear cleanupModel

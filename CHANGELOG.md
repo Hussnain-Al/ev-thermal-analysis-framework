@@ -28,12 +28,15 @@ number (`docs/CORRECTIONS.md`, "Supplier documents folded in"):
 - New `modules/system_thermal`: cabin and battery loops sharing one
   compressor on every drive cycle from a 45 C hot soak. With the DM18A1 the
   cabin never reaches comfort and L6 takes the cells past 55 C; with
-  9.19 kW the cabin is within 2 K after 6.5-6.8 min and L6 peaks at 50.3 C.
+  9.19 kW the cabin is within 2 K after 6.5-6.8 min and L6 peaks at 51.5 C.
   Front-end check: a 13.9 kW condenser upstream of the radiator would heat its
   air to 81 C.
-- New Simscape model of the same network (`models/system_thermal`), built,
-  simulated and matched to the MATLAB model in CI (within 0.04 K); CI now
-  installs Simscape.
+- The system model drives all three loops from the cycle: battery current,
+  SOC (carried across repeats) and heat; drive unit and radiator; cabin and
+  chiller on the shared compressor.
+- New Simscape model of the same three loops (`models/system_thermal`),
+  simulated on all five cycles in CI and matched to the MATLAB model within
+  0.13 K and 0.05 points of SOC; CI now installs Simscape.
 - L6 added to the radiator design table; parameter register, provenance and
   regression values updated.
 

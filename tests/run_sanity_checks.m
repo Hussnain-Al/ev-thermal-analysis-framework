@@ -287,16 +287,22 @@ assert(all(sizing.scenarios.RequiredCapacity_kW>2.9));
 system = results.systemThermal;
 recommended = system.summary.Compressor=="Recommended";
 assert(all(~isnan(system.summary.TimeToCabinComfort_s(recommended))));
-assert(all(system.summary.TimeCellAbove55C_s(recommended)==0));
 l6Old = system.summary.FileStem=="project_l6_continuous_grade" & ~recommended;
 assert(isnan(system.summary.TimeToCabinComfort_s(l6Old)));
 assert(all(system.summary.MeanCompressorUse_pct<=100+1e-9));
+assert(all(system.summary.TimeCellAbove55C_s(recommended)==0));
+% Every loop is driven by the repeated cycle; values for L6 over 30 min.
 l6New = system.summary.FileStem=="project_l6_continuous_grade" & recommended;
-assert(abs(system.summary.PeakCell_C(l6Old)-55.946)<0.01);
-assert(system.summary.TimeCellAbove55C_s(l6Old)==171);
-assert(abs(system.summary.CabinAtEnd_C(l6Old)-48.765)<0.01);
+assert(abs(system.summary.PeakCell_C(l6Old)-57.142)<0.01);
+assert(system.summary.TimeCellAbove55C_s(l6Old)==225);
+assert(abs(system.summary.CabinAtEnd_C(l6Old)-48.839)<0.01);
 assert(system.summary.TimeToCabinComfort_s(l6New)==406);
-assert(abs(system.summary.PeakCell_C(l6New)-50.306)<0.01);
+assert(abs(system.summary.PeakCell_C(l6New)-51.473)<0.01);
+assert(abs(system.summary.PeakDriveUnit_C(l6New)-143.18)<0.01);
+assert(abs(system.summary.SOCAtEnd_pct(l6New)-12.537)<0.01);
+% SOC is carried across cycle repeats, not reset.
+urbanTrace = system.traces{cfg.systemThermal.cycles=="urban_cycle",end};
+assert(urbanTrace.SOC_pct(end)<urbanTrace.SOC_pct(1200));
 assert(abs(system.frontEnd.RadiatorInletIfCondenserUpstream_C(2)-81.07)<0.05);
 % A full-size condenser upstream on the radiator's L6 air stream heats that
 % air past the 65 C coolant; the DM18A1's condenser does not.
