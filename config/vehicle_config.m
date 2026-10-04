@@ -18,8 +18,13 @@ vehicle.gearRatio = 9.11;
 % lubricated and rejects mostly through its own housing.
 vehicle.reducerEfficiency = 0.98;
 
-% Flat-road force model: Froad = A + B*v^2. Replace these reconstructed
-% coefficients with measured coast-down data when it becomes available.
+% Laden test mass (project owner): driver, passengers and payload included.
+% Flat-road force model: Froad = A + B*v^2. A and B reproduce the project's
+% own load cases L1 (60 km/h, 11379 W) and L2 (100 km/h, 24707 W) at the
+% wheel, which the project computed from projected-area aero drag, tyre
+% rolling resistance and driveline friction. A = 566 N is an effective
+% rolling coefficient of 0.030 at 1950 kg, about twice a typical EV tyre,
+% so wheel power is on the high side. Replace with coast-down data.
 vehicle.roadLoadA_N = 566.4645;
 vehicle.roadLoadB_N_per_ms2 = 0.4185918;
 vehicle.grade_pct = 0;

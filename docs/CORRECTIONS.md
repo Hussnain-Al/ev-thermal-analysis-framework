@@ -43,7 +43,7 @@ survives only the 5-95% band is reported as such.
 | Battery cell-to-coolant path | 1.033 K/W | 0.777-1.261 | 0.410-2.303 | 3.10 K/W | Superseded value is above the whole range | Holds at every extreme; also an arithmetic error in the source network |
 | Radiator UA, normal driving | 139.7 W/K | 125-161 | 93-201 | 665 W/K | Superseded value is above the whole range | Holds at every extreme |
 | Winding-to-coolant resistance | 0.0340 K/W | not sampled | 0.0301-0.0390 | 0.015 K/W | Superseded value is below the whole range | Holds; the low end is twice the superseded value |
-| Cabin load, humid heat | 5.19 kW | 4.58-6.63 | 3.22-9.13 | 4.156 kW | Load exceeds the recorded subtotal | Holds within 5-95%, not at every extreme |
+| Cabin load, humid heat | 4.26 kW | 3.96-5.02 | 2.88-6.98 | 4.156 kW | Load exceeds the recorded subtotal | No longer holds with recirculation at full load; the workbook's arithmetic errors still stand. Was: holds within 5-95%, not at every extreme |
 
 ## 1. Battery cell-to-coolant path: 3.10 to 1.03 K/W
 
@@ -235,15 +235,18 @@ evidence); `audit_cabin_workbook` performs the recomputation.
 glazing conduction, transmitted and absorbed solar (ASHRAE clear-sky
 irradiance for 15:00 on 21 June at 24.9 N), road-side floor, occupant
 sensible and latent heat, fresh-air sensible and latent heat, and internal
-gains. The result is 4.31 kW in dry heat and 5.19 kW in humid heat.
+gains. With recirculation at full load (the project owner's decision; 2.5 L/s
+of fresh air per occupant, range 1.5-5) the result is 3.82 kW in dry heat and
+4.26 kW in humid heat. With the earlier 5 L/s it was 4.31 and 5.19 kW.
 
-**Robustness.** The claim holds within the 5-95% band (4.58-6.63 kW, all
-above 4.16 kW) but not at the combined extreme (3.22 kW). The fresh-air rate
-dominates the spread: 2.5-10 L/s per occupant moves the load by 2.8 kW.
-The audit findings do not depend on any assumption.
+**Robustness.** With recirculation the load (5-95% band 3.96-5.02 kW) now
+overlaps the recorded 4.16 kW subtotal, so the claim that the true load is
+higher no longer holds. The subtotal is still wrong: its rows are mis-computed
+and it leaves out solar, latent and fresh-air terms; the total just happens
+to land near it. The audit findings do not depend on any assumption.
 
-**What would overturn it.** A measured fresh-air rate for the HVAC recirculation
-setting, then a soak and pull-down test.
+**What would overturn it.** A measured leakage rate in recirculation, then a
+soak and pull-down test.
 
 ## 6. Design humidity: 70% to 44% RH at 45 C
 
@@ -271,9 +274,9 @@ exceedance frequency.
 | 10% grade, winding peak after 20 min | 82.5 C | 129.0 C | Supplier-calibrated winding node |
 | 10% grade, coolant peak after 20 min | 48.4 C | 62.3 C | |
 | Low-speed grade, winding peak after 30 min | 70.5 C | 103.7 C | Fan-only UA |
-| L6 8% grade full load, winding peak after 20 min | not run | 139.1 C | Levels off near 148 C |
+| L6 8% grade laden, winding peak after 20 min | not run | 134.6 C | Levels off below 150 C |
 | Cabin subtotal from workbook | 4.16 kW | 2.69 kW | Deterministic audit |
-| Cabin load at 45 C, humid heat | not calculated | 5.19 kW | 4.58-6.63 kW (5-95%) |
+| Cabin load at 45 C, humid heat, recirculation | not calculated | 4.26 kW | 3.96-5.02 kW (5-95%) |
 
 The superseded column is rerun with the 4.6.0 heat (reducer included) so
 only the corrected parameters differ. With the corrected path and heat, the
@@ -321,7 +324,9 @@ evidence the earlier versions of this layer ignored:
 |---|---|---|
 | Battery network figures (`docs/images/battery_*`) | Pack layer stack, areas, pad 2, channel h and contact area | Battery path (section 1) |
 | Archived load cases L1-L7 (git history) | Motor power and pack current per case | Pack voltage under load, 314-336 V (mean 321 V) instead of 345.6 V nominal |
-| Archived load case L6 | 8% continuous grade, full 350 kg load, 61.5 kW at the wheel | New operating case (85.2 km/h, solved from road load) |
+| Archived load case L6 | 8% continuous grade, full load, 61.5 kW at the wheel | Operating case at the 1950 kg laden mass: 93.3 km/h solved from the road load so the wheel power matches |
+| Battery pack BOM (CS-201) | 108 cells in 6 modules of 18; T-Global ultra-soft pads; 3 cooling-channel plates (2.35 kg), 6 headers, 12 mounts | 108S confirmed; pad 1 product confirmed; battery-loop capacitance 19.3 kJ/K from the plate mass (8.1 kJ/K) plus 1.5-5 L of coolant |
+| Power-demand workbook L1/L2 | 11379 W at 60 km/h and 24707 W at 100 km/h, from aero drag, tyre and driveline friction | Source of the road-load coefficients A and B (effective rolling coefficient 0.030, CdA about 0.70 m2) |
 | DM18A1 compressor specification | 2.9 kW at 6000 rpm, about 0 C evaporating and 57 C condensing (the archived 3.63 kW needs a cooler condenser than a 45 C day allows) | Reference line on the cabin load |
 | Archived battery config | 30 C coolant, cooling on at 35 C, 900 J/(kg K) cell specific heat | 30 C used as the design coolant check; 900 J/(kg K) is now the low end of the register range |
 | LubeMax Antifreeze/Coolant 50/50 datasheet | Ethylene glycol 50% v/v; boiling 107 C (129.4 C capped); freeze -36.7 C | Confirms the 50/50 ethylene-glycol property basis; limits added as reference checks. The sheet has no specific heat, viscosity or conductivity table |
@@ -396,18 +401,19 @@ constraint; the 2.9 kW compressor is.
 | Winding thermal capacitance | 9.8 kJ/K implied by the supplier peak | 9.0 kJ/K from the rated heating curve | Consistent |
 | Cell rise, 1C for 600 s (adiabatic) | SVOLT limit 15 C | 2.1 C | Consistent; reaching the limit would need 3.7 mOhm, so it does not test the resistance |
 | Cell rise, 3C for 30 s (adiabatic) | SVOLT limit 10 C | 1.0 C | Consistent; not a discriminating test |
-| Cabin load, humid heat | DM18A1 rated 2.9 kW | 5.19 kW | The compressor is below the cabin load before any battery chiller duty |
+| Cabin load, humid heat | DM18A1 rated 2.9 kW | 4.26 kW | The compressor is below the cabin load before any battery chiller duty |
 | Peak propulsion coolant, all cases | LubeMax boiling point 107 C (no cap) | about 69 C | Large boiling margin even without the 15 psi cap (129.4 C) |
 | Coolant needed for sustained 2C | LubeMax freeze point -36.7 C | -12.9 C | Above freezing but far below a practical chiller supply; 2C sustained is not a cooling target |
 | Cell DC resistance, top of band | SVOLT 10 s power ceiling 1.36 mOhm | 0.80 mOhm | Consistent; a minimum power only caps the resistance |
 | Cell DC resistance, central | GFL 100 Ah rate test, scaled: 0.582 mOhm | 0.571 mOhm | Within 2% |
 
 The compressor finding is the most consequential. On L6 the battery adds
-2.6-6.4 kW of chiller duty on top of the cabin, so cabin plus battery reaches
-7.7-11.6 kW against 2.9 kW. `modules/compressor_sizing` turns this into a
-size: at least 9.2 kW at the DM18A1 rating condition (57 cc at 6000 rpm, or
-43 cc at 8000 rpm). Reducing fresh air helps but does not avoid the change:
-at the register's lowest fresh-air rate the cabin alone is still 4.26 kW.
+2.5-6.4 kW of chiller duty on top of the cabin, so cabin plus battery reaches
+6.8-10.7 kW against 2.9 kW, even with recirculation. `modules/compressor_sizing`
+turns this into a size: at least 7.6 kW at the DM18A1 rating condition (47 cc
+at 6000 rpm, or 35 cc at 8000 rpm). The closed-loop system model confirms it:
+on L6 the recommended size runs at 98% and holds the cabin and the cells,
+while the DM18A1 can protect the cells only by leaving the cabin at 72 C.
 
 ## Remaining assumptions that were not corrected
 

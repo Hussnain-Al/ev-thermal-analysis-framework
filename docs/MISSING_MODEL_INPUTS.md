@@ -41,7 +41,7 @@ cold-plate part number followed by `performance map`.
 | Validated motor/coolant temperatures | Identified thermal capacitances, motor-to-coolant resistance and radiator map |
 | Cabin pull-down and compressor demand | Complete solar, latent, ventilation, thermal-mass and refrigerant-component data |
 
-Version `4.6.0` estimates these inputs from sourced literature values and
+Version `4.7.0` estimates these inputs from sourced literature values and
 carries the estimates into the model with explicit ranges; see
 [`CORRECTIONS.md`](CORRECTIONS.md). The measurements above are still what
 retire each estimate. Until they exist, every affected result is a

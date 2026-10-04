@@ -1,22 +1,24 @@
 function modelFile = build_system_thermal_simscape(cfg,systemThermal,options)
-%BUILD_SYSTEM_THERMAL_SIMSCAPE Simscape model of all three loops on a drive cycle.
+%BUILD_SYSTEM_THERMAL_SIMSCAPE Closed-loop Simscape model of all three loops.
 % Builds the system of run_system_thermal as three Simscape thermal networks
-% (foundation library), all driven by one drive cycle:
-%   - battery: pack current = DC-link power / loaded pack voltage, SOC
-%     integrated from that current, heat = I^2 R_DC - I T dU/dT(SOC) per
-%     cell; cell and battery-coolant thermal masses joined by the
-%     cell-to-coolant resistance; chiller extraction;
+% (foundation library) driven by one drive cycle, with the thermal
+% management controls in Simulink:
+%   - battery: delivered DC power / loaded pack voltage = current; state of
+%     charge integrated from it; heat = I^2 R_DC - I T dU/dT(SOC) per cell;
+%     cell and battery-coolant masses joined by the cell-to-coolant path;
 %   - cabin: thermal mass with the heat-balance load at its own temperature
 %     less the evaporator duty;
-%   - propulsion: winding and coolant thermal masses joined by the
-%     winding-to-coolant resistance, motor loss into the winding and
-%     controller loss into the coolant from the cycle, radiator
-%     rejection UA max(T_coolant - T_ambient, 0);
-%   - Simulink: compressor demands and proportional sharing of its capacity.
+%   - propulsion: winding and coolant masses joined by the winding-to-coolant
+%     resistance; motor loss into the winding, controller loss into the
+%     coolant; radiator UA max(T_coolant - T_ambient, 0);
+%   - controls: cabin and battery-coolant PI loops with back-calculation
+%     anti-windup, a cascade that lowers the coolant set point when the cells
+%     run hot, a compressor priority relay with hysteresis, and BMS and motor
+%     derating of the requested power.
 % Example:
 %   cfg = setup_project(); results = run_all(cfg);
 %   build_system_thermal_simscape(cfg,results.systemThermal, ...
-%       CycleStem="project_l6_continuous_grade",Capacity_kW=9.19,Overwrite=true);
+%       CycleStem="project_l6_continuous_grade",Capacity_kW=8,Overwrite=true);
 % Requires Simulink and Simscape. No refrigerant circuit is modelled.
 
 arguments
@@ -33,7 +35,6 @@ if isempty(ver('simulink')) || isempty(ver('simscape'))
 end
 
 s = cfg.systemThermal;
-p = systemThermal.parameters;
 capacity_kW = options.Capacity_kW;
 if isnan(capacity_kW)
     capacity_kW = systemThermal.capacity_kW(end);
@@ -42,12 +43,13 @@ cycleIndex = find(s.cycles==options.CycleStem,1);
 if isempty(cycleIndex)
     error('EVThermal:UnknownCycle','Unknown system cycle %s.',options.CycleStem);
 end
-trace = systemThermal.traces{cycleIndex,1};
-inputs = systemThermal.inputs{cycleIndex};
-drive = inputs.drive;
+p = systemThermal.plants{cycleIndex};
+c = p.control;
+battery = p.battery;
+motor = p.motor;
+drive = systemThermal.inputs{cycleIndex}.drive;
 curve = systemThermal.cabinLoadCurve;
-battery = cfg.batteryCooling;
-motor = cfg.motorCooling.transient;
+cap_W = 1000*capacity_kW;
 
 modelDir = fullfile(cfg.project.rootDir,'models','system_thermal');
 modelName = "system_thermal_simscape";
@@ -68,7 +70,7 @@ new_system(modelName,'Model');
 load_system(modelName);
 set_param(modelName,'SolverType','Variable-step','Solver','ode23t', ...
     'MaxStep','1','RelTol','1e-5','StartTime','0', ...
-    'StopTime',num2str(trace.Time_s(end)), ...
+    'StopTime',num2str(drive.Time_s(end)), ...
     'SaveOutput','on','OutputSaveName','yout','SaveFormat','Dataset');
 m = char(modelName);
 K0 = 273.15;
@@ -79,11 +81,9 @@ sourceLib = [thermal sprintf('Thermal Sources/Controlled Heat Flow\nRate Source'
 sensorLib = [thermal 'Thermal Sensors/Temperature Sensor'];
 toPS = sprintf('nesl_utility/Simulink-PS\nConverter');
 fromPS = sprintf('nesl_utility/PS-Simulink\nConverter');
-
-% Physical network.
-% The cabin and battery networks are physically separate, so each has
-% its own solver configuration.
 solverLib = sprintf('nesl_utility/Solver\nConfiguration');
+
+% Physical networks (three, each with its own solver configuration).
 add_block(solverLib,[m '/Cabin solver'],'Position',[780 160 840 190]);
 add_block(solverLib,[m '/Battery solver'],'Position',[780 600 840 630]);
 add_block(solverLib,[m '/Propulsion solver'],'Position',[780 1000 840 1030]);
@@ -98,8 +98,6 @@ connect(m,'Cell','LConn',1,'Cell to coolant path','LConn',1);
 connect(m,'Cell to coolant path','RConn',1,'Battery coolant','LConn',1);
 connect(m,'Cabin solver','RConn',1,'Cabin','LConn',1);
 connect(m,'Battery solver','RConn',1,'Cell','LConn',1);
-
-% Propulsion loop.
 add_mass(m,'Drive unit',massLib,motor.motorThermalCapacity_JK, ...
     motor.initialMotorTemperature_C+K0,[700 900 760 960]);
 add_mass(m,'Propulsion coolant',massLib,motor.coolantThermalCapacity_JK, ...
@@ -110,130 +108,149 @@ add_block([thermal 'Thermal Elements/Thermal Resistance'],[m '/Winding to coolan
 connect(m,'Drive unit','LConn',1,'Winding to coolant','LConn',1);
 connect(m,'Winding to coolant','RConn',1,'Propulsion coolant','LConn',1);
 connect(m,'Propulsion solver','RConn',1,'Drive unit','LConn',1);
-add_source(m,'Motor loss',sourceLib,toPS,'Drive unit',[560 900 620 960]);
-add_source(m,'Controller loss',sourceLib,toPS,'Propulsion coolant',[560 1000 620 1060]);
-add_source(m,'Radiator rejection',sourceLib,toPS,'Propulsion coolant',[560 1100 620 1160]);
-add_sensor(m,'Drive unit',sensorLib,fromPS,[900 900 960 960]);
-add_sensor(m,'Propulsion coolant',sensorLib,fromPS,[900 1100 960 1160]);
 
 add_source(m,'Cabin net heat',sourceLib,toPS,'Cabin',[560 80 620 140]);
 add_source(m,'Battery heat',sourceLib,toPS,'Cell',[560 300 620 360]);
 add_source(m,'Chiller extraction',sourceLib,toPS,'Battery coolant',[560 480 620 540]);
+add_source(m,'Motor loss',sourceLib,toPS,'Drive unit',[560 900 620 960]);
+add_source(m,'Controller loss',sourceLib,toPS,'Propulsion coolant',[560 1000 620 1060]);
+add_source(m,'Radiator rejection',sourceLib,toPS,'Propulsion coolant',[560 1100 620 1160]);
 add_sensor(m,'Cabin',sensorLib,fromPS,[900 80 960 140]);
 add_sensor(m,'Cell',sensorLib,fromPS,[900 260 960 320]);
 add_sensor(m,'Battery coolant',sensorLib,fromPS,[900 480 960 540]);
+add_sensor(m,'Drive unit',sensorLib,fromPS,[900 900 960 960]);
+add_sensor(m,'Propulsion coolant',sensorLib,fromPS,[900 1100 960 1160]);
 
-% Drive cycle: one-second DC-link power and drive-unit heat, held over
-% each second as in the MATLAB model.
+% Drive cycle: requested DC-link power and losses, held over each second.
 add_block('simulink/Sources/Clock',[m '/Clock'],'Position',[40 700 70 720]);
-cycleTable(m,'DC-link power W',drive.Time_s,1000*drive.DCLinkPower_kW,[120 690 200 730]);
-cycleTable(m,'Motor loss W',drive.Time_s,1000*drive.MotorLoss_kW,[120 900 200 940]);
-cycleTable(m,'Controller loss W',drive.Time_s,1000*drive.ControllerLoss_kW,[120 1000 200 1040]);
-add_line(m,'Clock/1','DC-link power W/1');
-add_line(m,'Clock/1','Motor loss W/1');
-add_line(m,'Clock/1','Controller loss W/1');
+cycleTable(m,'Requested power W',drive.Time_s,1000*drive.DCLinkPower_kW,[120 690 200 730]);
+cycleTable(m,'Motor loss request W',drive.Time_s,1000*drive.MotorLoss_kW,[120 900 200 940]);
+cycleTable(m,'Controller loss request W',drive.Time_s,1000*drive.ControllerLoss_kW,[120 1000 200 1040]);
+add_line(m,'Clock/1','Requested power W/1');
+add_line(m,'Clock/1','Motor loss request W/1');
+add_line(m,'Clock/1','Controller loss request W/1');
+
+% Derating: BMS discharge and charge curves on cell temperature, motor
+% curve on winding temperature; regen (negative request) uses the charge curve.
+ramp(m,'BMS discharge',c.dischargeDerate_C,[1300 600 1370 630]);
+ramp(m,'BMS charge',c.chargeDerate_C,[1300 660 1370 690]);
+ramp(m,'Motor derate',c.motorDerate_C,[1300 900 1370 930]);
+add_line(m,'Cell C/1','BMS discharge/1');
+add_line(m,'Cell C/1','BMS charge/1');
+add_line(m,'Drive unit C/1','Motor derate/1');
+minmax(m,'Discharge factor','min',[1400 600 1430 640]);
+add_line(m,'BMS discharge/1','Discharge factor/1');
+add_line(m,'Motor derate/1','Discharge factor/2');
+minmax(m,'Charge factor','min',[1400 660 1430 700]);
+add_line(m,'BMS charge/1','Charge factor/1');
+add_line(m,'Motor derate/1','Charge factor/2');
+switch3(m,'Derate factor',0,[1460 620 1500 700]);
+add_line(m,'Discharge factor/1','Derate factor/1');
+add_line(m,'Requested power W/1','Derate factor/2');
+add_line(m,'Charge factor/1','Derate factor/3');
+product2(m,'Delivered power W',[240 690 270 740]);
+add_line(m,'Requested power W/1','Delivered power W/1');
+add_line(m,'Derate factor/1','Delivered power W/2');
+product2(m,'Motor loss W',[240 900 270 950]);
+add_line(m,'Motor loss request W/1','Motor loss W/1');
+add_line(m,'Derate factor/1','Motor loss W/2');
 add_line(m,'Motor loss W/1','Motor loss input/1');
+product2(m,'Controller loss W',[240 1000 270 1050]);
+add_line(m,'Controller loss request W/1','Controller loss W/1');
+add_line(m,'Derate factor/1','Controller loss W/2');
 add_line(m,'Controller loss W/1','Controller loss input/1');
 
-% Battery electrical side: current, state of charge, Joule and entropic heat.
-gain(m,'Pack current A',1/battery.cycleVoltage_V,[240 695 290 725]);
-add_line(m,'DC-link power W/1','Pack current A/1');
-gain(m,'SOC rate',-100/(battery.capacity_Ah*3600),[320 760 370 790]);
+% Battery electrical side on the delivered power.
+gain(m,'Pack current A',1/battery.cycleVoltage_V,[300 695 350 725]);
+add_line(m,'Delivered power W/1','Pack current A/1');
+gain(m,'SOC rate',-100/(battery.capacity_Ah*3600),[380 760 430 790]);
 add_line(m,'Pack current A/1','SOC rate/1');
 add_block('simulink/Continuous/Integrator',[m '/SOC'], ...
-    'InitialCondition',num2str(battery.cycleInitialSOC_pct,12),'Position',[400 760 430 790]);
+    'InitialCondition',num2str(battery.cycleInitialSOC_pct,12),'Position',[460 760 490 790]);
 add_line(m,'SOC rate/1','SOC/1');
 add_block('simulink/Discontinuities/Saturation',[m '/SOC 0-100'],'UpperLimit','100', ...
-    'LowerLimit','0','Position',[460 760 500 790]);
+    'LowerLimit','0','Position',[520 760 560 790]);
 add_line(m,'SOC/1','SOC 0-100/1');
 add_block('simulink/Lookup Tables/1-D Lookup Table',[m '/dUdT V per K'], ...
-    'Position',[530 755 600 795], ...
+    'Position',[590 755 660 795], ...
     'BreakpointsForDimension1',mat2str(battery.entropicSOC_pct), ...
     'Table',mat2str(1e-3*battery.entropic_mVK),'ExtrapMethod','Clip');
 add_line(m,'SOC 0-100/1','dUdT V per K/1');
-product2(m,'Current squared',[330 640 360 690]);
+product2(m,'Current squared',[390 640 420 690]);
 add_line(m,'Pack current A/1','Current squared/1');
 add_line(m,'Pack current A/1','Current squared/2');
-gain(m,'Joule heat W',battery.dcResistance25_Ohm*battery.seriesCells,[390 650 450 680]);
+gain(m,'Joule heat W',battery.dcResistance25_Ohm*battery.seriesCells,[450 650 510 680]);
 add_line(m,'Current squared/1','Joule heat W/1');
-product2(m,'Current x dUdT',[630 720 660 790]);
+product2(m,'Current x dUdT',[690 720 720 790]);
 add_line(m,'Pack current A/1','Current x dUdT/1');
 add_line(m,'dUdT V per K/1','Current x dUdT/2');
 gain(m,'Entropic heat W', ...
-    -(battery.entropicReferenceTemperature_C+K0)*battery.seriesCells,[690 740 750 770]);
+    -(battery.entropicReferenceTemperature_C+K0)*battery.seriesCells,[750 740 810 770]);
 add_line(m,'Current x dUdT/1','Entropic heat W/1');
 sum2(m,'Battery heat W','++',[470 300 500 360]);
 add_line(m,'Joule heat W/1','Battery heat W/1');
 add_line(m,'Entropic heat W/1','Battery heat W/2');
 add_line(m,'Battery heat W/1','Battery heat input/1');
 
-% Radiator: UA max(T_coolant - T_ambient, 0), taken out of the coolant.
-bias(m,'Above ambient',-inputs.ambient_C,[1100 1110 1150 1140]);
-add_line(m,'Propulsion coolant C/1','Above ambient/1');
-gain(m,'Radiator UA',inputs.radiatorUA_WK,[1180 1110 1230 1140]);
-add_line(m,'Above ambient/1','Radiator UA/1');
-floor0(m,'Radiator duty W',[1260 1110 1300 1140]);
-add_line(m,'Radiator UA/1','Radiator duty W/1');
-gain(m,'Reject',-1,[400 1115 440 1145]);
-add_line(m,'Radiator duty W/1','Reject/1');
-add_line(m,'Reject/1','Radiator rejection input/1');
+% Thermal management: PI loops with back-calculation anti-windup.
+bias(m,'Cabin error',-p.cabinSetpoint_C,[1100 40 1150 70]);
+add_line(m,'Cabin C/1','Cabin error/1');
+% Cascade: coolant set point = nominal - gain (T_cell - target), clamped
+% between the floor and the nominal value.
+bias(m,'Cell excess',-c.cellTarget_C,[950 380 1000 410]);
+add_line(m,'Cell C/1','Cell excess/1');
+gain(m,'Set point drop',-c.cascadeGain_KK,[1010 380 1050 410]);
+add_line(m,'Cell excess/1','Set point drop/1');
+bias(m,'Coolant set point raw',p.batteryCoolantSetpoint_C,[1060 380 1100 410]);
+add_line(m,'Set point drop/1','Coolant set point raw/1');
+add_block('simulink/Discontinuities/Saturation',[m '/Coolant set point'], ...
+    'UpperLimit',num2str(p.batteryCoolantSetpoint_C),'LowerLimit', ...
+    num2str(c.coolantSetpointFloor_C),'Position',[1110 380 1150 410]);
+add_line(m,'Coolant set point raw/1','Coolant set point/1');
+sum2(m,'Battery error','+-',[1160 300 1190 360]);
+add_line(m,'Battery coolant C/1','Battery error/1');
+add_line(m,'Coolant set point/1','Battery error/2');
+add_pi(m,'Cabin',c.cabinKp_WK,c.cabinKi_WKs,cap_W,[1100 40]);
+add_pi(m,'Battery',c.batteryKp_WK,c.batteryKi_WKs,cap_W,[1100 300]);
 
-% Compressor allocation (same equations as simulate_system_thermal).
+% Compressor priority: battery first between the relay's on and off points.
+add_block('simulink/Discontinuities/Relay',[m '/Battery priority'], ...
+    'OnSwitchValue',num2str(c.priorityOn_C),'OffSwitchValue',num2str(c.priorityOff_C), ...
+    'OnOutputValue','1','OffOutputValue','0','Position',[1300 200 1340 230]);
+add_line(m,'Cell C/1','Battery priority/1');
+add_block('simulink/Sources/Constant',[m '/Capacity W'],'Value',num2str(cap_W,12), ...
+    'Position',[1300 140 1360 160]);
+sum2(m,'Capacity left after battery','+-',[1400 120 1430 170]);
+add_line(m,'Capacity W/1','Capacity left after battery/1');
+add_line(m,'Battery demand/1','Capacity left after battery/2');
+minmax(m,'Evaporator battery first','min',[1460 60 1490 120]);
+add_line(m,'Cabin demand/1','Evaporator battery first/1');
+add_line(m,'Capacity left after battery/1','Evaporator battery first/2');
+sum2(m,'Capacity left after cabin','+-',[1400 260 1430 310]);
+add_line(m,'Capacity W/1','Capacity left after cabin/1');
+add_line(m,'Cabin demand/1','Capacity left after cabin/2');
+minmax(m,'Chiller cabin first','min',[1460 300 1490 360]);
+add_line(m,'Battery demand/1','Chiller cabin first/1');
+add_line(m,'Capacity left after cabin/1','Chiller cabin first/2');
+switch3(m,'Evaporator duty W',0.5,[1540 60 1580 140]);
+add_line(m,'Evaporator battery first/1','Evaporator duty W/1');
+add_line(m,'Battery priority/1','Evaporator duty W/2');
+add_line(m,'Cabin demand/1','Evaporator duty W/3');
+switch3(m,'Chiller duty W',0.5,[1540 280 1580 360]);
+add_line(m,'Battery demand/1','Chiller duty W/1');
+add_line(m,'Battery priority/1','Chiller duty W/2');
+add_line(m,'Chiller cabin first/1','Chiller duty W/3');
+
+% Anti-windup feedback: what each loop actually got.
+add_line(m,'Evaporator duty W/1','Cabin tracking/1');
+add_line(m,'Chiller duty W/1','Battery tracking/1');
+
+% Cabin net heat and chiller extraction.
 add_block('simulink/Lookup Tables/1-D Lookup Table',[m '/Cabin load W'], ...
-    'Position',[1100 40 1180 80], ...
+    'Position',[1100 160 1180 200], ...
     'BreakpointsForDimension1',mat2str(curve.Cabin_C'), ...
     'Table',mat2str(1000*curve.CabinLoad_kW',10),'ExtrapMethod','Linear');
 add_line(m,'Cabin C/1','Cabin load W/1');
-gain(m,'Cabin error gain',p.controllerGain_WK,[1180 120 1230 150]);
-bias(m,'Cabin error',-p.cabinSetpoint_C,[1100 120 1150 150]);
-add_line(m,'Cabin C/1','Cabin error/1');
-add_line(m,'Cabin error/1','Cabin error gain/1');
-sum2(m,'Cabin demand raw','++',[1260 60 1290 130]);
-add_line(m,'Cabin load W/1','Cabin demand raw/1');
-add_line(m,'Cabin error gain/1','Cabin demand raw/2');
-floor0(m,'Cabin demand',[1320 80 1360 110]);
-add_line(m,'Cabin demand raw/1','Cabin demand/1');
-
-sum2(m,'Cell minus coolant','+-',[1100 280 1130 340]);
-add_line(m,'Cell C/1','Cell minus coolant/1');
-add_line(m,'Battery coolant C/1','Cell minus coolant/2');
-gain(m,'Heat to coolant',1/p.packResistance_KW,[1160 295 1210 325]);
-add_line(m,'Cell minus coolant/1','Heat to coolant/1');
-bias(m,'Coolant error',-p.batteryCoolantSetpoint_C,[1100 380 1150 410]);
-add_line(m,'Battery coolant C/1','Coolant error/1');
-gain(m,'Coolant error gain',p.controllerGain_WK,[1180 380 1230 410]);
-add_line(m,'Coolant error/1','Coolant error gain/1');
-sum2(m,'Battery demand raw','++',[1260 300 1290 400]);
-add_line(m,'Heat to coolant/1','Battery demand raw/1');
-add_line(m,'Coolant error gain/1','Battery demand raw/2');
-floor0(m,'Battery demand',[1320 335 1360 365]);
-add_line(m,'Battery demand raw/1','Battery demand/1');
-
-sum2(m,'Total demand','++',[1400 180 1430 240]);
-add_line(m,'Cabin demand/1','Total demand/1');
-add_line(m,'Battery demand/1','Total demand/2');
-add_block('simulink/Sources/Constant',[m '/Small demand'],'Value','1e-6', ...
-    'Position',[1400 260 1440 280]);
-minmax(m,'Nonzero demand','max',[1460 200 1490 260]);
-add_line(m,'Total demand/1','Nonzero demand/1');
-add_line(m,'Small demand/1','Nonzero demand/2');
-add_block('simulink/Sources/Constant',[m '/Compressor capacity W'], ...
-    'Value',num2str(1000*capacity_kW,12),'Position',[1460 140 1520 160]);
-add_block('simulink/Math Operations/Product',[m '/Capacity over demand'], ...
-    'Inputs','*/','Position',[1540 150 1570 230]);
-add_line(m,'Compressor capacity W/1','Capacity over demand/1');
-add_line(m,'Nonzero demand/1','Capacity over demand/2');
-add_block('simulink/Sources/Constant',[m '/One'],'Value','1','Position',[1540 250 1570 270]);
-minmax(m,'Share','min',[1600 180 1630 260]);
-add_line(m,'Capacity over demand/1','Share/1');
-add_line(m,'One/1','Share/2');
-product2(m,'Evaporator duty W',[1680 80 1710 140]);
-add_line(m,'Share/1','Evaporator duty W/1');
-add_line(m,'Cabin demand/1','Evaporator duty W/2');
-product2(m,'Chiller duty W',[1680 330 1710 390]);
-add_line(m,'Share/1','Chiller duty W/1');
-add_line(m,'Battery demand/1','Chiller duty W/2');
-
 sum2(m,'Cabin net','+-',[400 90 430 150]);
 add_line(m,'Cabin load W/1','Cabin net/1');
 add_line(m,'Evaporator duty W/1','Cabin net/2');
@@ -242,8 +259,19 @@ gain(m,'Extract',-1,[400 495 440 525]);
 add_line(m,'Chiller duty W/1','Extract/1');
 add_line(m,'Extract/1','Chiller extraction input/1');
 
+% Radiator: UA max(T_coolant - T_ambient, 0), taken out of the coolant.
+bias(m,'Above ambient',-p.ambient_C,[1100 1110 1150 1140]);
+add_line(m,'Propulsion coolant C/1','Above ambient/1');
+gain(m,'Radiator UA',p.radiatorUA_WK,[1180 1110 1230 1140]);
+add_line(m,'Above ambient/1','Radiator UA/1');
+floor0(m,'Radiator duty W',[1260 1110 1300 1140]);
+add_line(m,'Radiator UA/1','Radiator duty W/1');
+gain(m,'Reject',-1,[400 1115 440 1145]);
+add_line(m,'Radiator duty W/1','Reject/1');
+add_line(m,'Reject/1','Radiator rejection input/1');
+
 names = ["Cabin C","Cell C","Battery coolant C","Evaporator duty W","Chiller duty W", ...
-    "Drive unit C","Propulsion coolant C","Battery heat W","SOC 0-100"];
+    "Drive unit C","Propulsion coolant C","Battery heat W","SOC 0-100","Derate factor"];
 for k = 1:numel(names)
     out = sprintf('%s/%s out',m,names(k));
     add_block('simulink/Sinks/Out1',out,'Position',[1800 60+80*k 1830 74+80*k]);
@@ -251,6 +279,45 @@ for k = 1:numel(names)
 end
 save_system(modelName,modelFile);
 close_system(modelName,0);
+end
+
+function add_pi(m,name,kp,ki,limit_W,origin)
+% PI on the existing [name ' error'] signal. Back-calculation anti-windup:
+% the integrator input is Ki e + (Ki/Kp) (delivered - unsaturated demand);
+% the delivered duty is wired into [name ' tracking'] input 1 later.
+x = origin(1)+60; y = origin(2);
+gain(m,[name ' Kp'],kp,[x+80 y x+130 y+30]);
+gain(m,[name ' Ki'],ki,[x+80 y+50 x+130 y+80]);
+sum2(m,[name ' tracking'],'+-',[x+80 y+100 x+110 y+150]);
+gain(m,[name ' back-calculation'],ki/kp,[x+120 y+110 x+160 y+140]);
+sum2(m,[name ' integrator input'],'++',[x+170 y+50 x+200 y+110]);
+add_block('simulink/Continuous/Integrator',[m '/' name ' integral'], ...
+    'InitialCondition','0','Position',[x+210 y+60 x+240 y+90]);
+sum2(m,[name ' PI'],'++',[x+260 y x+290 y+80]);
+add_block('simulink/Discontinuities/Saturation',[m '/' name ' demand'], ...
+    'UpperLimit',num2str(limit_W,12),'LowerLimit','0','Position',[x+310 y+25 x+350 y+55]);
+add_line(m,[name ' error/1'],[name ' Kp/1']);
+add_line(m,[name ' error/1'],[name ' Ki/1']);
+add_line(m,[name ' Ki/1'],[name ' integrator input/1']);
+add_line(m,[name ' back-calculation/1'],[name ' integrator input/2']);
+add_line(m,[name ' tracking/1'],[name ' back-calculation/1']);
+add_line(m,[name ' integrator input/1'],[name ' integral/1']);
+add_line(m,[name ' Kp/1'],[name ' PI/1']);
+add_line(m,[name ' integral/1'],[name ' PI/2']);
+add_line(m,[name ' PI/1'],[name ' demand/1']);
+add_line(m,[name ' PI/1'],[name ' tracking/2']);
+end
+
+function ramp(m,name,limits,position)
+% 1 at or below limits(1), 0 at or above limits(2), linear between.
+add_block('simulink/Lookup Tables/1-D Lookup Table',[m '/' name],'Position',position, ...
+    'BreakpointsForDimension1',mat2str(limits),'Table','[1 0]','ExtrapMethod','Clip');
+end
+
+function switch3(m,name,threshold,position)
+% Passes input 1 when input 2 >= threshold, otherwise input 3.
+add_block('simulink/Signal Routing/Switch',[m '/' name],'Criteria','u2 >= Threshold', ...
+    'Threshold',num2str(threshold),'Position',position);
 end
 
 function cycleTable(m,name,time_s,values,position)

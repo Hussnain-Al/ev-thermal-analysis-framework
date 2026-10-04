@@ -4,11 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Modular MATLAB screening model for a compact battery-electric SUV under a
-45 C Karachi hot-weather boundary. Version `4.6.0` contains four independent
+45 C Karachi hot-weather boundary. Version `4.7.0` contains four independent
 domains: motor heat, transient propulsion cooling, sustained battery thermal
 screening and the recovered cabin-load calculation.
 
-This is not a validated vehicle model. Version `4.6.0` corrects six inputs
+This is not a validated vehicle model. Version `4.7.0` corrects six inputs
 that did not hold up: the battery cell-to-coolant path, battery heat, radiator
 UA, winding resistance, the cabin workbook and the design humidity. Each
 replacement is derived from project evidence plus a sourced literature
@@ -17,7 +17,10 @@ value is kept for comparison. Version `4.6.0` also takes every number the
 project's supplier documents give (thermal pad, drive-unit rated and peak
 points, reducer efficiency, component pressure drops, compressor rating) in
 place of the earlier assumptions, and checks the battery resistance against a
-vendor rate test. The argument for every correction is in
+vendor rate test. Version `4.7.0` closes the loop: PI thermal management with
+anti-windup, a cell-temperature cascade, compressor priority and BMS and
+motor derating, in MATLAB and in Simscape
+([`docs/CONTROLS.md`](docs/CONTROLS.md)). The argument for every correction is in
 [`docs/CORRECTIONS.md`](docs/CORRECTIONS.md).
 
 All plots below are PNG outputs of the MATLAB R2024b workflow, committed by
@@ -32,7 +35,7 @@ flowchart LR
     MH -- "DC-link power" --> BC["battery_cooling<br/>pack current, SOC,<br/>Joule + entropic heat"]
     CAB["Cabin heat balance<br/>(literature_gap_fill)"] --> CS["compressor_sizing"]
     BC -- "battery heat" --> CS
-    CS -- "capacity" --> SYS["system_thermal<br/>cabin + battery share<br/>one compressor"]
+    CS -- "capacity" --> SYS["system_thermal<br/>closed loop: PI, cascade,<br/>priority, derating"]
     BC -- "battery heat trace" --> SYS
     CAB -- "load vs cabin temperature" --> SYS
     MC -- "radiator air flow" --> FE["front-end check<br/>condenser ahead<br/>of radiator"]
@@ -178,7 +181,7 @@ map. NYCC and HWFET are supplemented by:
 |---|---:|---:|---:|---:|---:|
 | Sustained grade | 40 km/h | 10% | 0 kg | 20 min | 45 C |
 | Low-speed hot-weather grade | 15 km/h | 5% | 0 kg | 30 min | 45 C |
-| Project L6: 8% continuous grade | 85.2 km/h | 8% | 350 kg | 20 min | 45 C |
+| Project L6: 8% continuous grade | 93.3 km/h | 8% | none (1950 kg is laden) | 20 min | 45 C |
 
 L6 is archived project load case L6 (61.5 kW at the wheel). Its speed is
 solved from the road-load model so the wheel power matches; its duration is
@@ -203,7 +206,7 @@ Checked on a point it was not fitted to: 30 s at the supplier's 125 kW peak
 gives 104.8 C against the supplier's 103 C. The radiator UA is the
 candidate-core estimate: 139.7 W/K normal, 122.3 W/K fan-only. On the
 20-minute 10% grade the winding reaches 129.0 C and the coolant 62.3 C; L6
-reaches 139.1 C. The superseded parameters gave 82.5 C on the grade, but only
+reaches 134.6 C. The superseded parameters gave 82.5 C on the grade, but only
 because 45 kJ/K heated slowly: held long enough they settled far higher (about
 200 C on L6), because the whole loss crossed the winding resistance.
 
@@ -307,10 +310,10 @@ heat results are reported for every cycle:
 | HWFET highway | 0.46 | 0.29 kW | 1.15 kW | 1.42 kW | 1.71 kW |
 | 10% grade, 40 km/h | 0.73 | 0.67 kW | 2.06 kW | 2.84 kW | 3.50 kW |
 | 5% grade, 15 km/h | 0.19 | 0.05 kW | 0.36 kW | 1.58 kW | 1.62 kW |
-| Project L6: 8% grade, full load | 1.55 | 2.56 kW | 6.42 kW | 3.86 kW | 6.42 kW |
+| Project L6: 8% grade, laden | 1.55 | 2.55 kW | 6.40 kW | 3.75 kW | 6.29 kW |
 
-On L6 the battery adds 66% to the drive-unit heat in the expected case and
-166% in the highest-possible case, and the pack falls from 90% to 38% SOC
+On L6 the battery adds 68% to the drive-unit heat in the expected case and
+171% in the highest-possible case, and the pack falls from 90% to 38% SOC
 in 20 minutes. Choose the cycles with
 one setting:
 
@@ -347,8 +350,9 @@ with Celsius temperatures, and a roof CLTD on the floor. Recomputed with the
 workbook's own inputs, the subtotal is 2.69 kW. The workbook file itself is
 left unchanged as hashed source evidence.
 
-The heat-balance rebuild at 45 C gives 4.31 kW in dry heat (25% RH) and
-5.19 kW in humid heat (44% RH, the 2015 heat-wave peak). The configured
+The heat-balance rebuild at 45 C, with recirculation at full load (2.5 L/s
+of fresh air per occupant), gives 3.82 kW in dry heat (25% RH) and 4.26 kW in
+humid heat (44% RH, the 2015 heat-wave peak). The configured
 45 C / 70% RH pairing was dropped because its 38 C dew point exceeds any
 recorded. The red line is the DM18A1 compressor's rated 2.9 kW (6000 rpm,
 about 0 C evaporating and 57 C condensing, which matches a 45 C day; the
@@ -360,80 +364,86 @@ alone, before any battery chiller duty. No compressor is selected here; the line
 <img src="docs/images/results/compressor_sizing.png" width="820" alt="Refrigeration demand per scenario against the DM18A1, and the displacement that meets it">
 
 The DM18A1 cannot carry the cabin alone, so `modules/compressor_sizing` works
-out what can. Demand is the humid-heat cabin load plus the battery chiller
-duty (the battery's mean heat on each cycle), plus a 30-minute pull-down from
-the 80 C hot soak. All of it is evaluated at the DM18A1's own rating condition
-(about 0 C evaporating, 57 C condensing, R134a), which matches a 45 C day, so
-capacity scales with displacement:
+out what can. Demand is the humid-heat cabin load with recirculation at full
+load, plus the battery chiller duty (the battery's mean heat on each cycle),
+plus a 30-minute pull-down from the 80 C hot soak. All of it is evaluated at
+the DM18A1's own rating condition (about 0 C evaporating, 57 C condensing,
+R134a), which matches a 45 C day, so capacity scales with displacement:
 
 | Basis | Required capacity | Displacement at 6000 rpm | At 8000 rpm | Electrical input | Condenser heat |
 |---|---:|---:|---:|---:|---:|
-| Design: L6 with expected battery heat | 7.75 kW | 48 cc | 36 cc | 4.0 kW | 11.8 kW |
-| Same, cabin load at its 95th percentile | 9.19 kW | 57 cc | 43 cc | 4.8 kW | 13.9 kW |
-| Bound: highest-possible battery heat | 11.6 kW | 72 cc | 54 cc | 6.0 kW | 17.6 kW |
+| Design: L6 with expected battery heat | 6.81 kW | 42 cc | 32 cc | 3.5 kW | 10.3 kW |
+| Same, cabin load at its 95th percentile | 7.57 kW | 47 cc | 35 cc | 3.9 kW | 11.5 kW |
+| Bound: highest-possible battery heat | 10.7 kW | 66 cc | 50 cc | 5.5 kW | 16.2 kW |
 
-The DM18A1 gives 2.9 kW from 18 cc. **Specify at least 9.2 kW at 0 C / 57 C**:
+The DM18A1 gives 2.9 kW from 18 cc. **Specify at least 7.6 kW at 0 C / 57 C**:
 that covers the project's worst sustained case (L6) with the cabin load at
 the top of its uncertainty band. If L6 is dropped as a design case, the 10%
-grade sets 5.9 kW (36 cc at 6000 rpm). The pull-down case (6.5 kW) does not
+grade sets 4.9 kW (31 cc at 6000 rpm). The pull-down case (5.5 kW) does not
 set the size. Electrical input uses the DM18A1's COP of 1.93; the condenser
 must reject capacity plus input and shares air with the radiator, so its
-size follows from this choice.
+size follows from this choice. Recirculation at full load is what brings the
+requirement down from 9.2 kW.
 
-## System model: cabin and battery on one compressor
+## System model: closed-loop thermal management
 
-<img src="docs/images/results/system_thermal_response.png" width="820" alt="Cabin and cell temperatures from hot soak with the DM18A1 and the recommended compressor, compressor duty split on L6, and peak cell temperature per cycle">
+<img src="docs/images/results/system_thermal_response.png" width="820" alt="Cabin and cell temperatures from hot soak with the DM18A1 and the recommended compressor, PI demands and duty split on L6, derating and priority, winding and coolant temperatures and state of charge per cycle">
 
 `modules/system_thermal` runs all three loops second by second on each
-drive cycle, repeated to 30 minutes from a hot soak on the 45 C day:
+drive cycle, repeated to 30 minutes from a hot soak on the 45 C day, with
+the thermal management controllers in the loop
+([`docs/CONTROLS.md`](docs/CONTROLS.md)):
 
-- **battery**: pack current from the cycle's DC-link power, state of charge
-  integrated from it (carried across repeats), Joule plus entropic heat into
-  the cells, cells to battery coolant through the 1.03 K/W path, chiller;
-- **cabin**: 80 C start, heat-balance load at the cabin's own temperature,
-  evaporator;
-- **propulsion**: drive-unit heat from the cycle into the two-node drive
-  unit and coolant, radiator to the 45 C ambient (fan-only UA where the case
-  says so);
-- **compressor**: cabin and chiller demands share one capacity; when they
-  exceed it both are scaled by the same factor.
+- **plant**: pack current from the delivered DC-link power, state of charge
+  carried across repeats, Joule plus entropic heat into the cells, cells to
+  battery coolant through the 1.03 K/W path; cabin from 80 C with the
+  heat-balance load at its own temperature; motor loss into the winding,
+  controller loss into its coolant, radiator to the 45 C ambient;
+- **controls**: cabin and battery-coolant PI loops tuned by lambda (IMC)
+  tuning from the plant, with back-calculation anti-windup; a cascade that
+  lowers the battery coolant set point from 30 C toward 20 C when the cells
+  pass 40 C; a compressor priority relay (battery first from 50 C cell, back
+  at 48 C); BMS derating of discharge (50 to 58 C) and regen (45 to 53 C) and
+  motor derating (150 to 170 C winding), with the undelivered traction power
+  recorded.
 
-| | DM18A1, 2.9 kW | Recommended, 9.19 kW |
+| | DM18A1, 2.9 kW | Recommended, 7.57 kW |
 |---|---|---|
-| Cabin within 2 K of 25 C | Never on any cycle; 44.8-48.8 C after 30 min | After 6.5-6.8 min on every cycle |
-| L6 cell temperature | 57.1 C at 30 min, above the 55 C charge cut-off for the last 225 s | Peak 51.5 C; battery coolant held at 30 C |
-| Compressor use (mean) | 100% on every cycle | 76-83% |
+| Cabin within 2 K of 25 C | Never: 38 C after 30 min on most cycles, 72 C on L6 | After 6.5 min on every cycle; holds 25.0 C |
+| L6 cells | 50.7 C peak, but only by taking compressor priority for 21 min and derating traction (2.1% of the energy not delivered) | 49.7 C peak, no derating; the cascade takes the coolant down to 20 C |
+| Compressor use (mean, L6) | 100% | 98% |
 
-The propulsion loop does not depend on the compressor. Held for 30 minutes,
-L6 takes the winding to 145 C, where it levels off (steady about 148 C,
-below the 150 C hot-spot target), and the pack to 12.5% SOC; the 10% grade
-reaches 134 C.
+The trade the small compressor forces is visible: protecting the cells
+starves the cabin. The recommended size runs at 98% on L6, so it is just
+enough, not oversized. Held for 30 minutes, L6 takes the winding to 140 C and
+the pack to 12.7% SOC; the motor derating never acts.
 
-The same model is built as a Simscape thermal network
-(`models/system_thermal`): three physical networks with the battery's
-electrical side, the drive cycle and the compressor sharing in Simulink. CI
-simulates it on all five cycles and it matches the MATLAB model within 0.35 K
-on every temperature and 0.05 points of SOC.
+The same closed loop is built as a Simscape thermal network
+(`models/system_thermal`): three physical networks, with the battery's
+electrical side, the PI loops, the cascade, the priority relay and the
+derating in Simulink. CI simulates it on all five cycles and it matches the
+MATLAB model within 0.22 K on every temperature, 0.03 points of SOC and 0.023
+on the derate factor.
 
 What is dynamic and what is not:
 
 | Result | Driven second by second by the drive cycle | In Simscape |
 |---|---|---|
-| Drive-unit heat, battery current and heat, SOC | Yes | Yes (battery side) |
-| Cabin, cell, battery coolant, drive unit, propulsion coolant temperatures | Yes | Yes |
-| Compressor sharing between cabin and chiller | Yes | Yes |
+| Drive-unit losses, battery current and heat, SOC | Yes | Yes (battery side) |
+| Cabin, cell, battery coolant, winding, propulsion coolant temperatures | Yes | Yes |
+| PI control, cascade, compressor priority, derating | Yes | Yes |
 | Sustained battery screen (coolant limit per C-rate) | No: steady sizing screen | No |
 | Radiator design requirement, compressor sizing, hydraulics | No: steady or cycle-mean sizing | No |
 
-The steady screens answer "what size"; the dynamic model checks that the
+The steady screens answer "what size"; the closed loop checks that the
 chosen sizes hold up over the cycles.
 
-**Front-end finding.** At 9.19 kW the condenser rejects 13.9 kW. It needs
-about 0.83 m3/s of air at a 15 K rise, 2.4 times the radiator's L6 air flow.
+**Front-end finding.** At 7.57 kW the condenser rejects 11.5 kW. It needs
+about 0.69 m3/s of air at a 15 K rise, twice the radiator's L6 air flow.
 Mounted upstream of the radiator on that stream, it would heat the radiator
-air to 81 C, above the 65 C coolant, and the propulsion radiator would stop
+air to 76 C, above the 65 C coolant, and the propulsion radiator would stop
 rejecting heat. The condenser needs its own air path or a larger
-front-end fan; the DM18A1 hid this (56 C air, still workable).
+front-end fan; the DM18A1 hid this (57 C air, still workable).
 
 ## Are the peaks realistic? Benchmark against a comparable car
 
@@ -442,32 +452,31 @@ The closest production car is the MG ZS EV (2021 facelift, standard range):
 gross ([zecar](https://zecar.com/electric-vehicles/mg/zs-ev/2022-1/standard-range),
 [auto-data](https://www.auto-data.net/en/mg-zs-ev-facelift-2021-51.1-kwh-176hp-45484)).
 This project has the same peak torque, a 46.3 kWh LFP pack and a 1950 kg
-test mass.
+laden mass.
 
 | Peak | This model | Benchmark | Verdict |
 |---|---|---|---|
 | Winding, 30 s at 125 kW from 60 C | 104.8 C | 103 C, supplier test of this motor | Matches |
 | Winding at rated output, steady | 143 C (calibration) | 143 C, supplier | Same point |
-| Winding on L6, 30 min | 145 C, levelling at about 148 C | L6 needs 64 kW at the shaft, 7% over the 60 kW rating; the supplier's rated case is 143 C | Consistent: L6 runs the motor at its continuous limit |
+| Winding on L6, 20 min | 134.6 C, levelling below 150 C | L6 needs about 64 kW at the shaft, 7% over the 60 kW rating; the supplier's rated case is 143 C | Consistent: L6 runs the motor at its continuous limit |
 | Previous model on L6 | rising past 143 C toward about 200 C | as above | Was too peaked; corrected |
 | Cell resistance | 0.571 mOhm | 0.582 mOhm from a vendor 100 Ah LFP test, scaled | Matches within 2% |
-| Pack power per kWh on L6 | 68.8 kW from 46.3 kWh: 1.49 per hour | About 63 kW from 51 kWh for the ZS EV at its 2060 kg gross mass on the same grade and speed: 1.23 per hour (same road-load model) | Higher by design: heavier car, smaller pack. Cell heat goes with current squared, so about 1.5 times the ZS EV's per cell |
-| Cabin pull-down from 80 C | 6.8 min (40 kJ/K interior) | 3.6-13.4 min over 20-80 kJ/K | Depends on the assumed interior mass; no measured pull-down for this cabin |
+| Pack load on L6 | 1.55C mean | The ZS EV on the same grade at its 2060 kg gross mass: about 1.2C | Higher by design: smaller pack. Cell heat goes with current squared, so about 1.5 times the ZS EV's per cell |
+| Cabin pull-down from 80 C | 6.5 min (40 kJ/K interior) | 3.7-28.5 min over 20-80 kJ/K | Depends on the assumed interior mass; no measured pull-down for this cabin |
 
 What this means:
 
 - **The drive unit was too peaked** in the earlier model: the controller loss
   went through the winding and a 45 kJ/K node hid it for the first 20 minutes.
   It now matches the supplier's own tests of this motor.
-- **The battery peaks are a load question, not a model question.** L6 at
-  2300 kg is 240 kg over the comparable car's gross mass. Check whether the
-  1950 kg test mass already includes payload: if it does, L6 double counts
-  350 kg, and every L6 peak (cells, drive unit, compressor duty) is
-  overstated.
+- **L6 is now at the right mass.** 1950 kg is the laden mass, so L6 keeps the
+  project's 61.5 kW at the wheel on 8% and runs at 93 km/h, with no payload
+  added on top. Your load-case workbook cannot be inverted to a single mass
+  (L5 against L6 and L3 against L4 imply different masses), so the wheel
+  power is what is kept.
 - **The cabin pull-down is the least certain.** The supplier data does not
-  cover it, and the measured-test sources I tried were blocked in this
-  environment. 6.8 min from an 80 C soak is at the fast end; quote the 3.6-13.4
-  min range until a soak test fixes the interior mass.
+  cover it. 6.5 min from an 80 C soak is at the fast end; quote the range
+  until a soak test fixes the interior mass.
 
 ## Checks against the project's own references
 
@@ -480,7 +489,7 @@ assumptions with the supplier and project references:
 | Winding thermal capacitance | 9.8 kJ/K (implied by the peak) | 9.0 kJ/K (rated heating curve) | Consistent |
 | Cell rise, 1C for 600 s | 15 C (SVOLT) | 2.1 C | Consistent, not discriminating |
 | Cell rise, 3C for 30 s | 10 C (SVOLT) | 1.0 C | Consistent, not discriminating |
-| Cabin load vs DM18A1 | 2.9 kW rated | 5.19 kW | Compressor undersized |
+| Cabin load vs DM18A1 | 2.9 kW rated | 4.26 kW | Compressor undersized |
 | Peak propulsion coolant, all cases | 107 C boiling (LubeMax, no cap) | 69 C | Large boiling margin |
 | Coolant needed for sustained 2C | -36.7 C freeze (LubeMax) | -12.9 C | 2C sustained is not a cooling target |
 | Cell DC resistance, top of band | 1.36 mOhm ceiling (SVOLT 10 s power) | 0.80 mOhm | Consistent |
@@ -500,7 +509,7 @@ deterministic Halton samples over triangular distributions.
 | Battery cell-to-coolant path | 1.03 K/W | 0.78-1.26 | 0.41-2.30 | 3.10 K/W | Holds at every extreme; also an arithmetic error in the source network |
 | Radiator UA, normal driving | 139.7 W/K | 125-161 | 93-201 | 665 W/K | Holds at every extreme |
 | Winding-to-coolant resistance | 0.0340 K/W | not sampled | 0.0301-0.0390 | 0.015 K/W | Holds; low end is twice the superseded value |
-| Cabin load, humid heat | 5.19 kW | 4.58-6.63 | 3.22-9.13 | 4.156 kW | Holds within 5-95%, not at every extreme |
+| Cabin load, humid heat | 4.26 kW | 3.96-5.02 | 2.88-6.98 | 4.156 kW | No longer holds: with recirculation the load overlaps the recorded subtotal (the workbook's arithmetic errors still stand) |
 
 Every literature value, with its range and source, is in
 [`data/literature/literature_assumption_register.csv`](data/literature/literature_assumption_register.csv).

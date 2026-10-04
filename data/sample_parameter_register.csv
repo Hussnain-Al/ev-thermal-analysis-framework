@@ -1,9 +1,9 @@
 ID,Domain,Parameter,Value,Unit,EvidenceClass,Limitation
-V01,Vehicle,Test mass,1950,kg,Project design input,Replace with measured test mass
+V01,Vehicle,Laden test mass,1950,kg,Project owner (laden: occupants and payload included),Replace with a weighed laden mass
 V02,Vehicle,Wheel rolling diameter,0.724,m,Project design input,Replace with loaded rolling radius
 V03,Vehicle,Reduction ratio,9.11,-,Project component input,Confirm selected drive unit
-V04,Vehicle,Road-load constant A,566.4645,N,Reconstructed from two operating points,Replace with coast-down data
-V05,Vehicle,Road-load speed term B,0.4185918,N/(m/s)^2,Reconstructed from two operating points,Replace with coast-down data
+V04,Vehicle,Road-load constant A,566.4645,N,Project load cases L1 and L2 (aero; tyre and driveline friction),Effective rolling coefficient 0.030; replace with coast-down data
+V05,Vehicle,Road-load speed term B,0.4185918,N/(m/s)^2,Project load cases L1 and L2 (CdA about 0.70 m2),Replace with coast-down data
 V06,Vehicle,Reducer efficiency,0.98,-,Project evidence (power demand1.xlsx; mechanical transmission efficiency),Reducer loss reported separately and not added to coolant heat
 B01,Battery,Cell capacity,134,Ah,SVOLT manufacturer specification,Confirm production cell revision
 B02,Battery,Cell nominal voltage,3.2,V,SVOLT manufacturer specification,Confirm production cell revision

@@ -43,7 +43,7 @@ C17,Cabin,Inward-flowing fraction of absorbed solar,0.40,0.30,0.50,-,Literature 
 C18,Cabin,Occupants,5,1,5,persons,Project evidence,Workbook metabolic term (594 W at 119 W each),Occupant load
 C19,Cabin,Sensible heat per occupant,70,65,75,W,Property table,ASHRAE Handbook Fundamentals Ch.18 seated very light work,Occupant split
 C20,Cabin,Latent heat per occupant,45,30,55,W,Property table,ASHRAE Handbook Fundamentals Ch.18 seated very light work,Occupant split
-C21,Cabin,Fresh air per occupant,5,2.5,10,L/s,Screening assumption,CO2 control in recirculation-biased automotive HVAC,Infiltration-only workbook term
+C21,Cabin,Fresh air per occupant,2.5,1.5,5,L/s,Project decision,Recirculation at full load (project owner); leakage plus a minimum CO2 bleed; high end is the earlier recirculation-biased 5 L/s,5 L/s fresh-air assumption
 C22,Cabin,Electronics and blower heat,150,80,250,W,Screening assumption,Blower motor and displays,Missing internal gains
 C23,Cabin,Effective interior thermal mass (low),20,20,20,kJ/K,Screening assumption,Pull-down sensitivity,Missing transient term
 C24,Cabin,Effective interior thermal mass (central),40,40,40,kJ/K,Screening assumption,Pull-down sensitivity,Missing transient term
@@ -52,4 +52,4 @@ C26,Cabin,Hot-soak interior temperature,80,70,85,degC,Project evidence,config/ca
 K01,Climate,Design dry-bulb,45,40,47,degC,Project evidence,config/cabin_cooling_config.m,Unchanged
 K02,Climate,Humid-heat coincident RH,44,40,50,%,Back-calculated,2015 Karachi peak 44.8 C with 66 C heat index (MoCC technical report) via Rothfusz,Physically implausible 45 C / 70% RH pairing
 K03,Climate,Dry-heat coincident RH,25,15,30,%,Screening assumption,Continental wind heat event,Physically implausible 45 C / 70% RH pairing
-S01,System,Battery-loop thermal capacitance (coolant and cold plates),15,8,30,kJ/K,Screening assumption,About 3 L of 50/50 glycol (11 kJ/K) plus about 5 kg of aluminium plate (4.5 kJ/K); volume not documented,Battery coolant node in the system model
+S01,System,Battery-loop thermal capacitance (coolant and cold plates),19.3,13.7,26.8,kJ/K,Project evidence,Battery pack BOM: 3 cooling-channel plates 2.35 kg + 6 headers 0.13 kg + 12 mounts 0.1 kg = 9.0 kg 6061 (8.1 kJ/K) plus 1.5-5 L of 50/50 glycol (central 3 L),Battery coolant node in the system model

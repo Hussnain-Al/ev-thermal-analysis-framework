@@ -1,5 +1,27 @@
 # Changelog
 
+## 4.7.0 — 2026-10-04
+
+Project-owner answers and a closed control loop:
+
+- 1950 kg is the laden mass: L6 no longer adds 350 kg; it keeps the project's
+  61.5 kW at the wheel on 8% and runs at 93.3 km/h.
+- Road-load A and B traced to the project's L1/L2 load cases (aero, tyre and
+  driveline friction); documented as such.
+- Recirculation at full load: 2.5 L/s fresh air per occupant (1.5-5). Cabin
+  load 4.26 kW humid, 3.82 kW dry. The "load exceeds the workbook subtotal"
+  claim no longer holds; the workbook's arithmetic errors still stand.
+- Battery pack BOM: 108S confirmed; battery-loop capacitance 19.3 kJ/K from
+  the cold-plate mass plus coolant.
+- Compressor requirement 7.57 kW (47 cc at 6000 rpm), down from 9.19 kW.
+- Closed-loop thermal management (`docs/CONTROLS.md`): lambda-tuned PI loops
+  with back-calculation anti-windup, a cell-temperature cascade on the
+  battery coolant set point (floor 20 C, the design-day dew point is 30 C),
+  compressor priority with hysteresis, BMS discharge and regen derating and
+  motor derating, with undelivered traction energy reported.
+- The Simscape model carries the same controllers and matches the MATLAB
+  model on all five cycles within 0.22 K.
+
 ## 4.6.0 — 2026-10-02
 
 Supplier and project documents replace assumptions wherever they give a

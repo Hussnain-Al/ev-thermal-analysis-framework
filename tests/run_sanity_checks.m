@@ -2,7 +2,7 @@
 rootDir = fileparts(fileparts(mfilename('fullpath')));
 addpath(rootDir,'-begin');
 cfg = setup_project();
-assert(strcmp(cfg.project.version,"4.6.0"));
+assert(strcmp(cfg.project.version,"4.7.0"));
 assert(~isfield(cfg,'sharedCompressor'));
 
 % Every active CSV is imported through the deterministic project reader.
@@ -187,17 +187,20 @@ assert(abs(designCheck.EstimatedCoolantPressureDrop_kPa(1)-0.583)<0.01);
 assert(all(gap.motorCalibration.ImpliedWindingToCoolant_KW> ...
     cfg.motorCooling.transient.superseded.motorToCoolantResistance_KW));
 assert(isequal(gap.robustness.ClaimHoldsAcrossRange,[true;true;true;false]));
-assert(isequal(gap.robustness.ClaimHoldsWithin5to95,[true;true;true;true]));
+assert(isequal(gap.robustness.ClaimHoldsWithin5to95,[true;true;true;false]));
 assert(abs(gap.robustness.CombinedMaximum(1)-2.302559)<1e-5);
 assert(abs(gap.robustness.CombinedMaximum(2)-200.590)<0.01);
-assert(abs(gap.robustness.CombinedMinimum(4)-3.21884)<1e-4);
+assert(abs(gap.robustness.CombinedMinimum(4)-2.88325)<1e-4);
 % Deterministic Halton 5-95% bands.
 assert(abs(gap.robustness.P05(1)-0.777107)<1e-5);
 assert(abs(gap.robustness.P95(1)-1.261279)<1e-5);
 assert(abs(gap.robustness.P05(2)-125.0465)<1e-3);
 assert(abs(gap.robustness.P95(2)-160.5949)<1e-3);
-assert(abs(gap.robustness.P05(4)-4.58164)<1e-4);
-assert(gap.robustness.P05(4)>cfg.cabinCooling.recoveredCabinDuty_kW);
+assert(abs(gap.robustness.P05(4)-3.96245)<1e-4);
+assert(abs(gap.robustness.P95(4)-5.01854)<1e-4);
+% With recirculation at full load the cabin load overlaps the recorded
+% 4.156 kW workbook subtotal, so that claim no longer holds.
+assert(gap.robustness.P05(4)<cfg.cabinCooling.recoveredCabinDuty_kW);
 screen2C = results.batteryCooling.screen(results.batteryCooling.screen.C_rate==2,:);
 assert(abs(screen2C.MaximumCoolantForDischarge_C+12.94574)<1e-4);
 assert(abs(screen2C.MaximumCoolantForDischargeP05_C+31.71208)<1e-4);
@@ -214,8 +217,8 @@ lowRow = thermal.Case=="Low-speed hot-weather grade";
 assert(abs(thermal.PeakMotorTemperature_C(gradeRow)-128.957)<0.01);
 assert(abs(thermal.PeakCoolantTemperature_C(gradeRow)-62.290)<0.01);
 assert(abs(thermal.PeakMotorTemperature_C(lowRow)-103.674)<0.01);
-l6Row = thermal.Case=="Project L6: 8% continuous grade, full load";
-assert(abs(thermal.PeakMotorTemperature_C(l6Row)-139.123)<0.01);
+l6Row = thermal.Case=="Project L6: 8% continuous grade, laden";
+assert(abs(thermal.PeakMotorTemperature_C(l6Row)-134.620)<0.01);
 supersededParameters = cfg.motorCooling.transient;
 supersededParameters.motorToCoolantResistance_KW = ...
     supersededParameters.superseded.motorToCoolantResistance_KW;
@@ -235,11 +238,11 @@ oldLow = simulate_motor_coolant_thermal(removevars(results.motorHeat.details{4},
 assert(abs(max(oldLow.MotorTemperature_C)-70.537)<0.01);
 assert(abs(results.cabinCooling.summary.CorrectedWorkbookSubtotal_kW- ...
     (1.871665+0.594+0.226))<1e-4);
-assert(abs(results.cabinCooling.summary.HeatBalanceHumidHeat_kW-5.19253)<1e-4);
+assert(abs(results.cabinCooling.summary.HeatBalanceHumidHeat_kW-4.25968)<1e-4);
 assert(abs(sum(gap.cabinAudit.RecordedInWorkbook_W)-3335.94)<0.01);
 assert(abs(sum(gap.cabinAudit.Recomputed_W)-1871.67)<0.1);
 humid = gap.cabinHeatBalance.Scenario==cfg.literatureGapFill.cabin.scenarioNames(end);
-assert(abs(sum(gap.cabinHeatBalance.Load_kW(humid))-5.193)<0.01);
+assert(abs(sum(gap.cabinHeatBalance.Load_kW(humid))-4.260)<0.01);
 discharge = gap.batteryTransientSummary;
 row = discharge.C_rate==2 & discharge.Coolant_C==25 & ...
     abs(discharge.PathResistance_KW-terms.pathResistance_KW)<1e-12;
@@ -260,9 +263,9 @@ assert(abs(highwayHeat.MaxTrailing60sBatteryHeat_kW-0.515510)<1e-5);
 urbanHeat = cycleHeat(cycleHeat.FileStem=="urban_cycle",:);
 assert(abs(urbanHeat.MeanCombinedHeat_kW-0.885777)<1e-5);
 l6Heat = cycleHeat(cycleHeat.FileStem=="project_l6_continuous_grade",:);
-assert(abs(l6Heat.MeanDriveUnitHeat_kW-3.864308)<1e-5);
-assert(abs(l6Heat.MeanBatteryHeat_kW-2.556141)<1e-5);
-assert(abs(l6Heat.MeanBatteryHeatUpperBound_kW-6.420053)<1e-5);
+assert(abs(l6Heat.MeanDriveUnitHeat_kW-3.746155)<1e-5);
+assert(abs(l6Heat.MeanBatteryHeat_kW-2.546817)<1e-5);
+assert(abs(l6Heat.MeanBatteryHeatUpperBound_kW-6.401783)<1e-5);
 
 % Supplier and specification reference checks.
 checks = gap.referenceChecks;
@@ -274,7 +277,7 @@ assert(abs(checks.ModelValue(3)-2.1418)<1e-3);
 assert(abs(checks.ModelValue(4)-0.9868)<1e-3);
 assert(checks.ModelValue(5)>checks.ReferenceValue(5));
 assert(checks.ReferenceValue(5)==2.9);
-assert(abs(checks.ModelValue(6)-68.9688)<1e-3);
+assert(abs(checks.ModelValue(6)-68.2713)<1e-3);
 assert(abs(checks.ModelValue(7)+12.94574)<1e-4);
 assert(abs(checks.ReferenceValue(7)+36.7)<1e-12);
 % Cell resistance against the SVOLT pulse-power ceiling and the GFL test.
@@ -285,13 +288,13 @@ assert(abs(checks.ModelValue(9)/checks.ReferenceValue(9)-1)<0.02);
 % Compressor sizing: cabin (humid heat) plus battery chiller at the DM18A1
 % rating condition. The design scenario is L6 with the expected battery heat.
 sizing = results.compressorSizing;
-assert(abs(sizing.designCapacity_kW-(5.19253+2.556141))<2e-4);
+assert(abs(sizing.designCapacity_kW-(4.25968+2.546817))<2e-4);
 assert(contains(sizing.sizing.Scenario(1),"L6"));
 assert(abs(sizing.sizing.DisplacementAt6000rpm_cc(1)-18*sizing.designCapacity_kW/2.9)<1e-9);
-assert(abs(sizing.sizing.DisplacementAt6000rpm_cc(1)-48.095)<0.01);
-assert(abs(sizing.sizing.DisplacementAtAlternativeSpeed_cc(1)-36.071)<0.01);
-assert(abs(sizing.sizing.RequiredCapacity_kW(2)-(gap.robustness.P95(4)+2.556141))<1e-5);
-assert(abs(sizing.sizing.RequiredCapacity_kW(3)-(5.19253+6.420053))<2e-4);
+assert(abs(sizing.sizing.DisplacementAt6000rpm_cc(1)-42.247)<0.01);
+assert(abs(sizing.sizing.DisplacementAtAlternativeSpeed_cc(1)-31.685)<0.01);
+assert(abs(sizing.sizing.RequiredCapacity_kW(2)-(gap.robustness.P95(4)+2.546817))<1e-5);
+assert(abs(sizing.sizing.RequiredCapacity_kW(3)-(4.25968+6.401783))<2e-4);
 pullRow = contains(sizing.scenarios.Scenario,"pull-down");
 assert(abs(sizing.scenarios.PullDownExtra_kW(pullRow)-40*55/1800)<1e-9);
 assert(all(sizing.scenarios.RequiredCapacity_kW>2.9));
@@ -305,12 +308,16 @@ assert(all(system.summary.MeanCompressorUse_pct<=100+1e-9));
 assert(all(system.summary.TimeCellAbove55C_s(recommended)==0));
 % Every loop is driven by the repeated cycle; values for L6 over 30 min.
 l6New = system.summary.FileStem=="project_l6_continuous_grade" & recommended;
-assert(abs(system.summary.PeakCell_C(l6Old)-57.142)<0.01);
-assert(system.summary.TimeCellAbove55C_s(l6Old)==225);
-assert(abs(system.summary.CabinAtEnd_C(l6Old)-48.839)<0.01);
-assert(system.summary.TimeToCabinComfort_s(l6New)==406);
-assert(abs(system.summary.PeakCell_C(l6New)-51.473)<0.01);
-assert(abs(system.summary.PeakDriveUnit_C(l6New)-145.081)<0.01);
+assert(abs(system.summary.PeakCell_C(l6Old)-50.696)<0.01);
+assert(system.summary.TimeCellAbove55C_s(l6Old)==0);
+% The DM18A1 can protect the cells only by starving the cabin and derating.
+assert(system.summary.TimeBatteryPriority_s(l6Old)==1266);
+assert(abs(system.summary.UnmetTractionEnergy_pct(l6Old)-2.1373)<1e-3);
+assert(abs(system.summary.CabinAtEnd_C(l6Old)-72.089)<0.01);
+assert(system.summary.TimeToCabinComfort_s(l6New)==388);
+assert(abs(system.summary.PeakCell_C(l6New)-49.710)<0.01);
+assert(system.summary.UnmetTractionEnergy_pct(l6New)==0);
+assert(abs(system.summary.PeakDriveUnit_C(l6New)-140.335)<0.01);
 % Pull-down slows as the cabin thermal mass grows.
 assert(all(diff(system.cabinMassSensitivity.TimeToComfortL6Recommended_min)>0));
 % Motor plus controller loss equals the drive-unit heat on every case.
@@ -319,14 +326,23 @@ for k = 1:numel(results.motorHeat.details)
     assert(max(abs(d.MotorLoss_kW+d.ControllerLoss_kW-d.DriveUnitHeat_kW))<1e-12);
     assert(all(d.ControllerLoss_kW>=0 & d.MotorLoss_kW>=-1e-12));
 end
-assert(abs(system.summary.SOCAtEnd_pct(l6New)-12.537)<0.01);
+assert(abs(system.summary.SOCAtEnd_pct(l6New)-12.674)<0.01);
 % SOC is carried across cycle repeats, not reset.
 urbanTrace = system.traces{cfg.systemThermal.cycles=="urban_cycle",end};
 assert(urbanTrace.SOC_pct(end)<urbanTrace.SOC_pct(1200));
-assert(abs(system.frontEnd.RadiatorInletIfCondenserUpstream_C(2)-81.07)<0.05);
+assert(abs(system.frontEnd.RadiatorInletIfCondenserUpstream_C(2)-75.64)<0.05);
 % A full-size condenser upstream on the radiator's L6 air stream heats that
 % air past the 65 C coolant; the DM18A1's condenser does not.
 assert(system.frontEnd.RadiatorStillRejects(1) && ~system.frontEnd.RadiatorStillRejects(2));
+% Controls: lambda-tuned PI gains, set point held without offset, cascade
+% floor respected.
+gains = system.controllerGains;
+assert(all(abs(gains.Kp_WK-1000*gains.PlantCapacitance_kJK./gains.Lambda_s)<1e-9));
+assert(all(abs(gains.Ki_WKs-gains.PlantConductance_WK./gains.Lambda_s)<1e-12));
+assert(all(abs(system.summary.CabinAtEnd_C(recommended)-25)<0.05));
+l6Trace = system.traces{cfg.systemThermal.cycles=="project_l6_continuous_grade",end};
+assert(min(l6Trace.CoolantSetpoint_C)>=cfg.systemThermal.control.coolantSetpointFloor_C-1e-12);
+assert(min(l6Trace.CoolantSetpoint_C)<cfg.systemThermal.batteryCoolantSetpoint_C);
 % Reducer loss is reported and kept out of the coolant heat.
 assert(all(results.motorHeat.summary.AverageReducerLoss_kW>0));
 assert(all(cycleHeat.MeanBatteryHeatUpperBound_kW>=cycleHeat.MeanBatteryHeat_kW));

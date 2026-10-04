@@ -22,9 +22,10 @@ heat traces to `motor_cooling`. Battery and cabin results are independent.
 | `src/calculations/` | Reusable equations |
 | `tests/` | Regression, energy-balance and interface checks |
 
-`modules/system_thermal` couples the cabin and battery loops through the
-shared compressor on each drive cycle, and `models/system_thermal` builds the
-same network in Simscape, checked against it in CI.
+`modules/system_thermal` runs the three loops in closed loop on each drive
+cycle (PI thermal management, cascade, compressor priority, derating; see
+`docs/CONTROLS.md`), and `models/system_thermal` builds the same system in
+Simscape, checked against it in CI.
 `modules/compressor_sizing` sizes the compressor from the cabin load and the
 battery chiller duty at the DM18A1 rating condition. It is a capacity screen:
 the model still contains no refrigerant circuit, evaporator or condenser, and

@@ -22,7 +22,7 @@ are MATLAB outputs from the CI workflow.
 | Radiator pressure drop | Laminar flat-tube friction | About 0.6 kPa at 20 L/min |
 | Winding resistance | Back-calculated from the supplier 143 C rated point (60 kW, 125 Nm) | 0.0340 K/W replaces 0.015 K/W |
 | Cabin workbook | Row-by-row recomputation | Body and glazing 1.87 kW, not 3.34 kW |
-| Cabin load | Heat-balance rebuild | 4.31 kW (dry heat) to 5.19 kW (humid heat), plus 0.6-2.4 kW for a 30-minute pull-down |
+| Cabin load | Heat-balance rebuild, recirculation at full load | 3.82 kW (dry heat) to 4.26 kW (humid heat), plus 0.6-2.4 kW for a 30-minute pull-down |
 | Climate | 45 C with 25% or 44% RH | Replaces 45 C / 70% RH, which has an impossible 38 C dew point |
 
 ## Gap fill 1: drive-unit operating points
